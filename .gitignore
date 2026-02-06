@@ -1,0 +1,5 @@
+/backend/node_modules
+/backend/config
+/backend/cats.csv
+/backend/hash.js
+/frontend/node_modules
