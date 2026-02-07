@@ -381,7 +381,7 @@ export const FormGroup = styled.div`
 export const Label = styled.label`
   display: block;
   margin-bottom: ${({ theme }) => theme.spacing[2]};
-  font-weight: ${({ theme }) => theme.fontWeights.medium};
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
   font-size: ${({ theme }) => theme.fontSizes.sm};
   color: ${({ theme }) => theme.colors.text.primary};
 
