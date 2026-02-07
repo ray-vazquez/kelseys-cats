@@ -1,4 +1,4 @@
-// Toast notification component
+// Toast notification component - Simplified design
 import React, { useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 
@@ -41,7 +41,12 @@ const ToastContainer = styled.div`
 `;
 
 const ToastItem = styled.div`
-  background: ${({ theme, $variant }) => {
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.text.primary};
+  padding: ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[4]};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  box-shadow: ${({ theme }) => theme.shadows.lg};
+  border-left: 4px solid ${({ theme, $variant }) => {
     switch ($variant) {
       case 'success':
         return theme.colors.success;
@@ -55,19 +60,14 @@ const ToastItem = styled.div`
         return theme.colors.info;
     }
   }};
-  color: ${({ theme }) => theme.colors.white};
-  padding: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[5]};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  box-shadow: ${({ theme }) => theme.shadows.xl};
   min-width: 300px;
-  max-width: 500px;
+  max-width: 450px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: ${({ theme }) => theme.spacing[3]};
   animation: ${({ $isClosing }) => ($isClosing ? slideOut : slideIn)}
-    ${({ theme }) => theme.transitions.base} ${({ theme }) => theme.easings.easeOut};
+    0.2s ease-out;
   pointer-events: auto;
-  position: relative;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     min-width: 0;
@@ -75,98 +75,44 @@ const ToastItem = styled.div`
   }
 `;
 
-const ToastIcon = styled.span`
-  font-size: ${({ theme }) => theme.fontSizes['2xl']};
-  flex-shrink: 0;
-  line-height: 1;
-`;
-
 const ToastContent = styled.div`
   flex: 1;
 `;
 
-const ToastTitle = styled.div`
-  font-weight: ${({ theme }) => theme.fontWeights.semibold};
-  font-size: ${({ theme }) => theme.fontSizes.base};
-  margin-bottom: ${({ $hasMessage, theme }) => ($hasMessage ? theme.spacing[1] : '0')};
-`;
-
 const ToastMessage = styled.div`
   font-size: ${({ theme }) => theme.fontSizes.sm};
-  opacity: 0.95;
   line-height: ${({ theme }) => theme.lineHeights.relaxed};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const CloseButton = styled.button`
   background: transparent;
   border: none;
-  color: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.text.secondary};
   cursor: pointer;
-  padding: ${({ theme }) => theme.spacing[1]};
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: ${({ theme }) => theme.borderRadius.base};
-  transition: all ${({ theme }) => theme.transitions.fast};
-  opacity: 0.8;
+  width: 20px;
+  height: 20px;
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  transition: all 0.15s;
+  opacity: 0.5;
   flex-shrink: 0;
+  font-size: 18px;
+  line-height: 1;
 
   &:hover {
     opacity: 1;
-    background: rgba(255, 255, 255, 0.1);
+    background: ${({ theme }) => theme.colors.light};
   }
 
   &:focus {
-    outline: 2px solid ${({ theme }) => theme.colors.white};
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: 2px;
   }
 `;
-
-const ProgressBar = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.3);
-  width: 100%;
-  border-radius: 0 0 ${({ theme }) => theme.borderRadius.lg} ${({ theme }) => theme.borderRadius.lg};
-  overflow: hidden;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    background: ${({ theme }) => theme.colors.white};
-    width: 100%;
-    animation: progress ${({ $duration }) => $duration}ms linear;
-  }
-
-  @keyframes progress {
-    from {
-      transform: translateX(-100%);
-    }
-    to {
-      transform: translateX(0);
-    }
-  }
-`;
-
-const getIcon = (variant) => {
-  switch (variant) {
-    case 'success':
-      return '✅';
-    case 'error':
-    case 'danger':
-      return '❌';
-    case 'warning':
-      return '⚠️';
-    case 'info':
-    default:
-      return 'ℹ️';
-  }
-};
 
 export function Toast({
   title,
@@ -174,7 +120,6 @@ export function Toast({
   variant = 'info',
   duration = 5000,
   onClose,
-  showProgress = true,
   isClosing = false,
 }) {
   useEffect(() => {
@@ -186,19 +131,19 @@ export function Toast({
     }
   }, [duration, onClose]);
 
+  // Combine title and message into single text
+  const displayText = title && message ? `${title}: ${message}` : title || message;
+
   return (
     <ToastItem $variant={variant} $isClosing={isClosing} role="alert" aria-live="polite">
-      <ToastIcon>{getIcon(variant)}</ToastIcon>
       <ToastContent>
-        {title && <ToastTitle $hasMessage={!!message}>{title}</ToastTitle>}
-        {message && <ToastMessage>{message}</ToastMessage>}
+        <ToastMessage>{displayText}</ToastMessage>
       </ToastContent>
       {onClose && (
         <CloseButton onClick={onClose} aria-label="Close notification">
-          ✕
+          ×
         </CloseButton>
       )}
-      {showProgress && duration && <ProgressBar $duration={duration} />}
     </ToastItem>
   );
 }
