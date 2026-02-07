@@ -1,4 +1,4 @@
-// Fixed AdminCatEditPage - With improved layout and senior tag
+// Fixed AdminCatEditPage - With improved layout, senior tag, and bio field
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -7,7 +7,12 @@ import { Toast } from '../components/Common/Toast.jsx';
 import http from '../api/http.js';
 
 const PageWrapper = styled.div`
-  padding: ${({ theme }) => theme.spacing['3xl']} 0;
+  padding: ${({ theme }) => theme.spacing['6xl']} 0;
+  min-height: calc(100vh - 200px);
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    padding: ${({ theme }) => theme.spacing['4xl']} 0;
+  }
 `;
 
 const PageTitle = styled.h2`
@@ -98,6 +103,7 @@ export default function AdminCatEditPage({ mode }) {
     age_years: '',
     sex: 'unknown',
     breed: '',
+    bio: '',
     temperament: '',
     good_with_kids: false,
     good_with_cats: false,
@@ -128,6 +134,7 @@ export default function AdminCatEditPage({ mode }) {
             age_years: cat.age_years ?? '',
             sex: cat.sex || 'unknown',
             breed: cat.breed || '',
+            bio: cat.bio || '',
             temperament: cat.temperament || '',
             good_with_kids: cat.good_with_kids || false,
             good_with_cats: cat.good_with_cats || false,
@@ -396,6 +403,21 @@ export default function AdminCatEditPage({ mode }) {
                     disabled={loading}
                     placeholder="e.g., Domestic Shorthair"
                   />
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>Bio</Label>
+                  <Textarea
+                    rows={4}
+                    name="bio"
+                    value={formData.bio}
+                    onChange={handleChange}
+                    disabled={loading}
+                    placeholder="Brief biography or story about the cat..."
+                  />
+                  <StatusHint>
+                    A short introduction or background story that will be displayed on the cat's detail page.
+                  </StatusHint>
                 </FormGroup>
 
                 <FormGroup>
