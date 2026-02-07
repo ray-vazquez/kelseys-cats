@@ -61,6 +61,18 @@ export class CatModel {
       params.push(filters.status);
     }
 
+    // Add featured filter support
+    if (filters.featured !== undefined) {
+      conditions.push("featured = ?");
+      params.push(filters.featured ? 1 : 0);
+    }
+
+    // Add senior filter support
+    if (filters.senior) {
+      conditions.push("age_years >= ?");
+      params.push(10);
+    }
+
     const whereClause = `WHERE ${conditions.join(" AND ")}`;
 
     const rawPage = filters.page ?? 1;
