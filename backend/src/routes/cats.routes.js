@@ -15,8 +15,8 @@ import {
 import {
   getAllAvailableCats,
   getShelterCatsOnly,
-  refreshCache,
-  getCacheStatus
+  scrapeShelterCats,
+  getShelterInfo
 } from "../controllers/shelterCats.controller.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.middleware.js";
 import { uploadCsv } from "../middleware/upload.middleware.js";
@@ -26,8 +26,9 @@ const router = express.Router();
 
 // Public routes
 router.get("/", listCats);
-router.get("/all-available", getAllAvailableCats); // NEW: Foster + Shelter cats (deduplicated)
-router.get("/shelter", getShelterCatsOnly); // NEW: Only shelter cats
+router.get("/all-available", getAllAvailableCats); // Foster + Shelter cats (deduplicated)
+router.get("/shelter", getShelterCatsOnly); // Only shelter cats
+router.get("/shelter-info", getShelterInfo); // Shelter cat database info
 router.get("/:id", getCat);
 
 // Admin routes
@@ -48,8 +49,7 @@ router.post(
 router.post("/import/confirm", requireAuth, requireAdmin, importConfirm);
 router.get("/export/csv", requireAuth, requireAdmin, exportCatsCsv);
 
-// Cache management (admin only)
-router.post("/refresh-cache", requireAuth, requireAdmin, refreshCache);
-router.get("/cache-info", requireAuth, requireAdmin, getCacheStatus);
+// Shelter cat management (admin only)
+router.post("/scrape-shelter", requireAuth, requireAdmin, scrapeShelterCats);
 
 export default router;
