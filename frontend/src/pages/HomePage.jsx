@@ -1,4 +1,4 @@
-// Migrated HomePage - Using Phase 1+2 enhanced components
+// Migrated HomePage - Using Phase 1+2 enhanced components with senior badge
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import {
@@ -139,6 +139,9 @@ export default function HomePage() {
                     <CardFooter>
                       {cat.is_special_needs && (
                         <Badge $variant="warning">Special Needs</Badge>
+                      )}
+                      {cat.is_senior && (
+                        <Badge $variant="secondary">Senior</Badge>
                       )}
                       {cat.bonded_pair_id && (
                         <Badge $variant="info">Bonded Pair</Badge>
