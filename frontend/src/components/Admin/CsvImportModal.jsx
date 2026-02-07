@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { Button } from "../Common/StyledComponents.js";
+import { Button, Spinner, CenteredSpinner } from "../Common/StyledComponents.js";
 import http from "../../api/http.js";
 
 const Backdrop = styled.div`
@@ -11,6 +11,7 @@ const Backdrop = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: ${({ theme }) => theme.spacing[4]};
 `;
 
 const Modal = styled.div`
@@ -19,30 +20,51 @@ const Modal = styled.div`
   box-shadow: ${({ theme }) => theme.shadows.lg};
   max-width: 900px;
   width: 100%;
-  max-height: 80vh;
-  overflow: auto;
-  padding: ${({ theme }) => theme.spacing.lg};
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 `;
 
 const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.lg};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.light};
 `;
 
 const ModalTitle = styled.h2`
   margin: 0;
+  font-size: ${({ theme }) => theme.fontSizes.xl};
 `;
 
 const ModalBody = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.lg};
+  overflow-y: auto;
+  flex: 1;
 `;
 
 const ModalFooter = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: ${({ theme }) => theme.spacing.lg};
+  border-top: 1px solid ${({ theme }) => theme.colors.light};
+  gap: ${({ theme }) => theme.spacing[3]};
+  flex-wrap: wrap;
+`;
+
+const FooterLeft = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+`;
+
+const FooterRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
 `;
 
 const Table = styled.table`
@@ -60,6 +82,9 @@ const Table = styled.table`
 
   th {
     font-weight: ${({ theme }) => theme.fontWeights.semibold};
+    background: ${({ theme }) => theme.colors.light};
+    position: sticky;
+    top: 0;
   }
 
   tbody tr.error {
@@ -69,7 +94,25 @@ const Table = styled.table`
 
 const ErrorText = styled.div`
   color: ${({ theme }) => theme.colors.danger};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  margin-top: ${({ theme }) => theme.spacing[2]};
+`;
+
+const InfoText = styled.div`
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+`;
+
+const CodeBlock = styled.code`
+  display: block;
+  background: ${({ theme }) => theme.colors.light};
+  padding: ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.fontSizes.xs};
+  overflow-x: auto;
+  margin: ${({ theme }) => theme.spacing[3]} 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 `;
 
 export default function CsvImportModal({ onClose, onImported }) {
@@ -178,7 +221,7 @@ export default function CsvImportModal({ onClose, onImported }) {
   }
 
   return (
-    <Backdrop>
+    <Backdrop onClick={(e) => e.target === e.currentTarget && handleClose()}>
       <Modal
         role="dialog"
         aria-modal="true"
@@ -188,7 +231,7 @@ export default function CsvImportModal({ onClose, onImported }) {
       >
         <ModalHeader>
           <ModalTitle id="csv-import-title">Import Cats from CSV</ModalTitle>
-          <Button variant="outline" onClick={handleClose}>
+          <Button $variant="outline" $size="sm" onClick={handleClose}>
             Close
           </Button>
         </ModalHeader>
@@ -197,18 +240,19 @@ export default function CsvImportModal({ onClose, onImported }) {
           {step === "upload" && (
             <>
               <p>
-                Choose a CSV file with headers like:&nbsp;
-                <code>
-                  id, name, age_years, sex, breed, temperament, good_with_kids,
-                  good_with_cats, good_with_dogs, medical_notes,
-                  is_special_needs, status, main_image_url, featured,
-                  bonded_pair_id
-                </code>
+                Choose a CSV file with the following headers:
               </p>
+              <CodeBlock>
+                id, name, age_years, sex, breed, temperament, good_with_kids,
+                good_with_cats, good_with_dogs, medical_notes,
+                is_special_needs, status, main_image_url, featured,
+                bonded_pair_id
+              </CodeBlock>
               <input
                 type="file"
                 accept=".csv,text/csv"
                 onChange={handleFileChange}
+                style={{ marginBottom: '1rem' }}
               />
               {error && <ErrorText>{error}</ErrorText>}
             </>
@@ -216,10 +260,10 @@ export default function CsvImportModal({ onClose, onImported }) {
 
           {step === "preview" && (
             <>
-              <p>
+              <InfoText style={{ marginBottom: '1rem' }}>
                 Preview the rows below. Rows with errors are highlighted and
-                won&apos;t be imported unless fixed in the CSV.
-              </p>
+                won't be imported unless fixed in the CSV.
+              </InfoText>
               {error && <ErrorText>{error}</ErrorText>}
               <Table>
                 <thead>
@@ -289,11 +333,11 @@ export default function CsvImportModal({ onClose, onImported }) {
 
           {step === "summary" && summary && (
             <>
-              <p>Import complete. Here&apos;s what happened:</p>
+              <p>Import complete. Here's what happened:</p>
               <ul>
-                <li>Created: {summary.created}</li>
-                <li>Updated: {summary.updated}</li>
-                <li>Skipped: {summary.skipped}</li>
+                <li><strong>Created:</strong> {summary.created}</li>
+                <li><strong>Updated:</strong> {summary.updated}</li>
+                <li><strong>Skipped:</strong> {summary.skipped}</li>
               </ul>
               {error && <ErrorText>{error}</ErrorText>}
             </>
@@ -303,25 +347,39 @@ export default function CsvImportModal({ onClose, onImported }) {
         <ModalFooter>
           {step === "upload" && (
             <>
-              <span />
-              {loading && (
-                <CenteredSpinner>
-                  <Spinner aria-label="Loading cats" />
-                </CenteredSpinner>
-              )}
+              <FooterLeft>
+                {loading && (
+                  <>
+                    <Spinner size="sm" />
+                    <InfoText>Processing CSV...</InfoText>
+                  </>
+                )}
+              </FooterLeft>
+              <FooterRight>
+                <Button onClick={handleUpload} disabled={loading || !file}>
+                  {loading ? 'Processing...' : 'Preview Import'}
+                </Button>
+              </FooterRight>
             </>
           )}
 
           {step === "preview" && (
             <>
-              <ErrorText>
-                {preview.total} row(s) parsed. Only selected rows without errors
-                will be imported.
-              </ErrorText>
-              <div>
+              <FooterLeft>
+                <InfoText>
+                  {preview.total} row(s) parsed. Only selected rows without errors
+                  will be imported.
+                </InfoText>
+              </FooterLeft>
+              <FooterRight>
+                {loading && (
+                  <>
+                    <Spinner size="sm" />
+                    <InfoText>Importing...</InfoText>
+                  </>
+                )}
                 <Button
-                  variant="secondary"
-                  style={{ marginRight: "0.5rem" }}
+                  $variant="outline"
                   onClick={() => {
                     setPreview({ rows: [], total: 0 });
                     setSelected({});
@@ -331,22 +389,19 @@ export default function CsvImportModal({ onClose, onImported }) {
                 >
                   Start Over
                 </Button>
-                {loading && (
-                  <CenteredSpinner>
-                    <Spinner aria-label="Loading cats" />
-                  </CenteredSpinner>
-                )}
-              </div>
+                <Button onClick={handleConfirm} disabled={loading}>
+                  {loading ? 'Importing...' : 'Confirm Import'}
+                </Button>
+              </FooterRight>
             </>
           )}
 
           {step === "summary" && (
             <>
-              <span />
-              <div>
+              <FooterLeft />
+              <FooterRight>
                 <Button
-                  variant="secondary"
-                  style={{ marginRight: "0.5rem" }}
+                  $variant="outline"
                   onClick={() => {
                     setPreview({ rows: [], total: 0 });
                     setSelected({});
@@ -355,10 +410,10 @@ export default function CsvImportModal({ onClose, onImported }) {
                   }}
                   disabled={loading}
                 >
-                  Import another file
+                  Import Another File
                 </Button>
                 <Button onClick={handleClose}>Done</Button>
-              </div>
+              </FooterRight>
             </>
           )}
         </ModalFooter>
