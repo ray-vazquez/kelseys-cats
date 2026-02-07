@@ -31,12 +31,9 @@ const Brand = styled(Link)`
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   color: ${({ theme }) => theme.colors.white};
   text-decoration: none;
-  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
-  border-radius: ${({ theme }) => theme.borderRadius.base};
   transition: all ${({ theme }) => theme.transitions.fast};
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.secondaryHover};
     color: ${({ theme }) => theme.colors.primary};
   }
 `;
@@ -60,13 +57,11 @@ const NavLink = styled(Link)`
   letter-spacing: 0.05em;
   color: ${({ theme }) => theme.colors.white};
   text-decoration: none;
-  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
-  border-radius: ${({ theme }) => theme.borderRadius.base};
   transition: all ${({ theme }) => theme.transitions.fast};
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.secondaryHover};
     color: ${({ theme }) => theme.colors.primary};
+    text-decoration: underline;
   }
 `;
 
