@@ -1,8 +1,8 @@
 // backend/src/controllers/shelterCats.controller.js
 // Controller for fetching all available cats (foster + shelter)
-// Uses Puppeteer scraper instead of defunct Petfinder API
+// Uses database storage instead of in-memory cache (much faster!)
 
-import { scrapeVoiceCats, clearCache, getCacheInfo } from '../services/petfinderScraper.js';
+import { getVoiceCats, scrapeAndSaveVoiceCats, cleanupOldCats } from '../services/petfinderScraper.js';
 import { query } from '../lib/db.js';
 
 /**
@@ -12,17 +12,13 @@ import { query } from '../lib/db.js';
  */
 export async function getAllAvailableCats(req, res) {
   try {
-    const { forceRefresh } = req.query;
-    
     // 1. Get your foster cats from database
     const fosterCats = await query(
       `SELECT * FROM cats WHERE status = 'available' ORDER BY name ASC`
     );
     
-    // 2. Get Voice shelter cats from Petfinder (scraped)
-    const shelterCats = await scrapeVoiceCats({ 
-      forceRefresh: forceRefresh === 'true' 
-    });
+    // 2. Get Voice shelter cats from database (fast!)
+    const shelterCats = await getVoiceCats();
     
     // 3. Deduplicate: Remove shelter cats that match foster cat names
     const fosterCatNames = new Set(
@@ -63,17 +59,13 @@ export async function getAllAvailableCats(req, res) {
  */
 export async function getShelterCatsOnly(req, res) {
   try {
-    const { forceRefresh } = req.query;
-    
-    const shelterCats = await scrapeVoiceCats({ 
-      forceRefresh: forceRefresh === 'true' 
-    });
+    const shelterCats = await getVoiceCats();
     
     res.json({
       items: shelterCats,
       total: shelterCats.length,
       organization: 'Voice for the Voiceless',
-      source: 'petfinder_scraped'
+      source: 'database'
     });
     
   } catch (error) {
@@ -86,43 +78,64 @@ export async function getShelterCatsOnly(req, res) {
 }
 
 /**
- * POST /api/cats/refresh-cache
- * Manually clear cache and force refresh
+ * POST /api/cats/scrape-shelter
+ * Manually scrape Petfinder and save to database
+ * Admin only - use this to refresh shelter cat data
  */
-export async function refreshCache(req, res) {
+export async function scrapeShelterCats(req, res) {
   try {
-    clearCache();
+    console.log('Starting Petfinder scrape...');
     
-    // Fetch fresh data
-    const shelterCats = await scrapeVoiceCats({ forceRefresh: true });
+    // Scrape and save to database
+    const result = await scrapeAndSaveVoiceCats();
+    
+    // Clean up old cats (likely adopted)
+    const cleanup = await cleanupOldCats();
     
     res.json({
       success: true,
-      message: 'Cache refreshed',
-      cats_fetched: shelterCats.length
+      message: 'Shelter cats updated',
+      scraping: result,
+      cleanup: cleanup
     });
     
   } catch (error) {
-    console.error('Error refreshing cache:', error);
+    console.error('Error scraping shelter cats:', error);
     res.status(500).json({ 
-      error: 'Failed to refresh cache',
+      error: 'Failed to scrape shelter cats',
       message: error.message 
     });
   }
 }
 
 /**
- * GET /api/cats/cache-info
- * Get cache status (for debugging)
+ * GET /api/cats/shelter-info
+ * Get info about shelter cats in database
  */
-export async function getCacheStatus(req, res) {
+export async function getShelterInfo(req, res) {
   try {
-    const info = getCacheInfo();
-    res.json(info);
+    const counts = await query(
+      `SELECT 
+        COUNT(*) as total,
+        MAX(updated_at) as last_updated,
+        MIN(updated_at) as oldest_update
+      FROM vfv_cats`
+    );
+    
+    const info = counts[0] || { total: 0, last_updated: null, oldest_update: null };
+    
+    res.json({
+      total_cats: info.total,
+      last_updated: info.last_updated,
+      oldest_update: info.oldest_update,
+      needs_refresh: info.total === 0 || 
+        (info.oldest_update && new Date() - new Date(info.oldest_update) > 7 * 24 * 60 * 60 * 1000)
+    });
+    
   } catch (error) {
-    console.error('Error getting cache info:', error);
+    console.error('Error getting shelter info:', error);
     res.status(500).json({ 
-      error: 'Failed to get cache info',
+      error: 'Failed to get shelter info',
       message: error.message 
     });
   }
