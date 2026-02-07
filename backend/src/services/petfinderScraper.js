@@ -1,31 +1,55 @@
 // backend/src/services/petfinderScraper.js
 // Scrapes Voice for the Voiceless cats from Petfinder widget
-// Alternative to defunct Petfinder API
+// Saves to vfv_cats database table for fast access
 
 import puppeteer from 'puppeteer';
+import { query } from '../lib/db.js';
 
 const VOICE_WIDGET_URL = 'https://www.petfinder.com/search/pets-for-adoption/?shelter_id=NY1296&type=cat';
-const CACHE_EXPIRY = 6 * 3600 * 1000; // 6 hours
-
-// In-memory cache
-const cache = {
-  cats: null,
-  catsExpiry: 0
-};
 
 /**
- * Scrape Voice for the Voiceless cats from Petfinder search page
- * @param {Object} options
- * @param {boolean} options.forceRefresh - Force bypass cache
+ * Get Voice for the Voiceless cats from database
  * @returns {Promise<Array>} Array of cat objects
  */
-export async function scrapeVoiceCats({ forceRefresh = false } = {}) {
-  // Check cache
-  if (!forceRefresh && cache.cats && Date.now() < cache.catsExpiry) {
-    console.log('Returning cached Voice shelter cats');
-    return cache.cats;
+export async function getVoiceCats() {
+  try {
+    const cats = await query(
+      `SELECT 
+        id,
+        petfinder_id,
+        name,
+        age_text,
+        age_years,
+        breed,
+        gender,
+        main_image_url,
+        petfinder_url as adoptapet_url,
+        description,
+        scraped_at,
+        'voice_shelter' as source
+      FROM vfv_cats 
+      ORDER BY name ASC`
+    );
+    
+    return cats.map(cat => ({
+      ...cat,
+      petfinder_data: {
+        age_text: cat.age_text,
+        gender: cat.gender
+      }
+    }));
+  } catch (error) {
+    console.error('Error fetching Voice cats from database:', error);
+    return [];
   }
+}
 
+/**
+ * Scrape Voice for the Voiceless cats from Petfinder and save to database
+ * This should be run manually via admin endpoint, not on every request
+ * @returns {Promise<Object>} Result with counts
+ */
+export async function scrapeAndSaveVoiceCats() {
   let browser;
   
   try {
@@ -120,20 +144,29 @@ export async function scrapeVoiceCats({ forceRefresh = false } = {}) {
             }
           });
           
-          // Extract location (for petfinder_id)
+          // Extract petfinder ID from URL
           const petfinderId = url ? url.match(/\/(\d+)-/)?.[1] : null;
           
+          // Helper function (runs in browser context)
+          function parseAgeToYears(ageText) {
+            const ageMap = {
+              'Baby': 0.5,
+              'Young': 2,
+              'Adult': 5,
+              'Senior': 10
+            };
+            return ageMap[ageText] || null;
+          }
+          
           results.push({
+            petfinder_id: petfinderId,
             name,
             age_text: age,
             age_years: parseAgeToYears(age),
             breed,
             gender,
             main_image_url: image,
-            adoptapet_url: url,
-            petfinder_id: petfinderId,
-            source: 'voice_shelter',
-            scraped_at: new Date().toISOString()
+            petfinder_url: url
           });
           
         } catch (err) {
@@ -141,28 +174,90 @@ export async function scrapeVoiceCats({ forceRefresh = false } = {}) {
         }
       });
       
-      // Helper function (runs in browser context)
-      function parseAgeToYears(ageText) {
-        const ageMap = {
-          'Baby': 0.5,
-          'Young': 2,
-          'Adult': 5,
-          'Senior': 10
-        };
-        return ageMap[ageText] || null;
-      }
-      
       return results;
     });
     
     await browser.close();
     
-    // Cache results
-    cache.cats = cats;
-    cache.catsExpiry = Date.now() + CACHE_EXPIRY;
+    // Save to database
+    let added = 0;
+    let updated = 0;
+    let errors = 0;
     
-    console.log(`Scraped ${cats.length} cats from Voice for the Voiceless`);
-    return cats;
+    for (const cat of cats) {
+      try {
+        // Check if cat already exists
+        const existing = await query(
+          'SELECT id FROM vfv_cats WHERE petfinder_id = ? OR name = ?',
+          [cat.petfinder_id, cat.name]
+        );
+        
+        if (existing.length > 0) {
+          // Update existing cat
+          await query(
+            `UPDATE vfv_cats SET 
+              name = ?,
+              age_text = ?,
+              age_years = ?,
+              breed = ?,
+              gender = ?,
+              main_image_url = ?,
+              petfinder_url = ?,
+              updated_at = NOW()
+            WHERE id = ?`,
+            [
+              cat.name,
+              cat.age_text,
+              cat.age_years,
+              cat.breed,
+              cat.gender,
+              cat.main_image_url,
+              cat.petfinder_url,
+              existing[0].id
+            ]
+          );
+          updated++;
+        } else {
+          // Insert new cat
+          await query(
+            `INSERT INTO vfv_cats (
+              petfinder_id,
+              name,
+              age_text,
+              age_years,
+              breed,
+              gender,
+              main_image_url,
+              petfinder_url
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              cat.petfinder_id,
+              cat.name,
+              cat.age_text,
+              cat.age_years,
+              cat.breed,
+              cat.gender,
+              cat.main_image_url,
+              cat.petfinder_url
+            ]
+          );
+          added++;
+        }
+      } catch (err) {
+        console.error(`Error saving cat ${cat.name}:`, err);
+        errors++;
+      }
+    }
+    
+    console.log(`Scraping complete: ${added} added, ${updated} updated, ${errors} errors`);
+    
+    return {
+      success: true,
+      added,
+      updated,
+      errors,
+      total: cats.length
+    };
     
   } catch (error) {
     console.error('Error scraping Petfinder:', error);
@@ -171,33 +266,27 @@ export async function scrapeVoiceCats({ forceRefresh = false } = {}) {
       await browser.close();
     }
     
-    // Return cached data if available (even if expired)
-    if (cache.cats) {
-      console.log('Returning stale cached data due to scraping error');
-      return cache.cats;
-    }
-    
-    // Return empty array as fallback
-    return [];
+    throw error;
   }
 }
 
 /**
- * Clear cache
+ * Delete cats that are no longer on Petfinder
+ * (Call this after scrapeAndSaveVoiceCats to clean up adopted cats)
  */
-export function clearCache() {
-  cache.cats = null;
-  cache.catsExpiry = 0;
-  console.log('Petfinder scraper cache cleared');
-}
-
-/**
- * Get cache info
- */
-export function getCacheInfo() {
-  return {
-    hasCachedCats: !!cache.cats,
-    catsCount: cache.cats?.length || 0,
-    catsExpiresIn: cache.catsExpiry > Date.now() ? cache.catsExpiry - Date.now() : 0
-  };
+export async function cleanupOldCats() {
+  try {
+    // Delete cats older than 7 days (likely adopted)
+    const result = await query(
+      'DELETE FROM vfv_cats WHERE updated_at < DATE_SUB(NOW(), INTERVAL 7 DAY)'
+    );
+    
+    return {
+      success: true,
+      deleted: result.affectedRows || 0
+    };
+  } catch (error) {
+    console.error('Error cleaning up old cats:', error);
+    throw error;
+  }
 }
