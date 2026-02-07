@@ -1,4 +1,4 @@
-// Toast notification component - Prominent colors
+// Toast notification component - Prominent colors, bottom right position
 import React, { useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 
@@ -26,7 +26,7 @@ const slideOut = keyframes`
 
 const ToastContainer = styled.div`
   position: fixed;
-  top: ${({ theme }) => theme.spacing[4]};
+  bottom: ${({ theme }) => theme.spacing[4]};
   right: ${({ theme }) => theme.spacing[4]};
   z-index: 9999;
   display: flex;
@@ -37,6 +37,7 @@ const ToastContainer = styled.div`
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     left: ${({ theme }) => theme.spacing[4]};
     right: ${({ theme }) => theme.spacing[4]};
+    bottom: ${({ theme }) => theme.spacing[4]};
   }
 `;
 
