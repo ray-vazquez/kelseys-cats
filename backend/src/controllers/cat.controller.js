@@ -12,7 +12,8 @@ export async function listCats(req, res, next) {
       status: req.query.status,
       page,
       limit,
-      // we’re temporarily not sending featured/senior until the base works
+      // Enable featured filter
+      featured: req.query.featured === 'true' ? true : req.query.featured === 'false' ? false : undefined,
     };
 
     const result = await CatService.listCats(filters);
