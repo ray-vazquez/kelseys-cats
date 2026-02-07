@@ -57,7 +57,7 @@ const HeroWrapper = styled.section`
   padding: ${({ theme, $size }) => {
     switch ($size) {
       case 'sm':
-        return `${theme.spacing[12]} 0`;
+        return `${theme.spacing[10]} 0`;
       case 'lg':
         return `${theme.spacing[24]} 0`;
       case 'xl':
@@ -92,31 +92,49 @@ const HeroContent = styled.div`
 `;
 
 const HeroTitle = styled.h1`
-  font-size: ${({ theme }) => theme.fontSizes['6xl']};
-  font-weight: ${({ theme }) => theme.fontWeights.extrabold};
+  font-size: ${({ theme, $size }) => {
+    if ($size === 'sm') return theme.fontSizes['4xl'];
+    return theme.fontSizes['5xl'];
+  }};
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
   line-height: ${({ theme }) => theme.lineHeights.tight};
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
+  margin-bottom: ${({ theme, $size }) => {
+    if ($size === 'sm') return theme.spacing[3];
+    return theme.spacing[4];
+  }};
   letter-spacing: ${({ theme }) => theme.letterSpacings.tight};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    font-size: ${({ theme }) => theme.fontSizes['4xl']};
+    font-size: ${({ theme, $size }) => {
+      if ($size === 'sm') return theme.fontSizes['3xl'];
+      return theme.fontSizes['4xl'];
+    }};
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    font-size: ${({ theme }) => theme.fontSizes['3xl']};
+    font-size: ${({ theme, $size }) => {
+      if ($size === 'sm') return theme.fontSizes['2xl'];
+      return theme.fontSizes['3xl'];
+    }};
   }
 `;
 
 const HeroSubtitle = styled.p`
-  font-size: ${({ theme }) => theme.fontSizes.xl};
-  font-weight: ${({ theme }) => theme.fontWeights.light};
+  font-size: ${({ theme, $size }) => {
+    if ($size === 'sm') return theme.fontSizes.base;
+    return theme.fontSizes.lg;
+  }};
+  font-weight: ${({ theme }) => theme.fontWeights.normal};
   line-height: ${({ theme }) => theme.lineHeights.relaxed};
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
-  opacity: 0.95;
+  margin-bottom: ${({ theme, $hasActions }) => $hasActions ? theme.spacing[6] : 0};
+  opacity: 0.9;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    font-size: ${({ theme }) => theme.fontSizes.lg};
-    margin-bottom: ${({ theme }) => theme.spacing[6]};
+    font-size: ${({ theme, $size }) => {
+      if ($size === 'sm') return theme.fontSizes.sm;
+      return theme.fontSizes.base;
+    }};
+    margin-bottom: ${({ theme, $hasActions }) => $hasActions ? theme.spacing[4] : 0};
   }
 `;
 
@@ -151,6 +169,7 @@ const HeroActions = styled.div`
  * @param {string} subtitle - Hero subtitle/description
  * @param {React.ReactNode} actions - Call-to-action buttons
  * @param {React.ReactNode} children - Additional custom content
+ * @param {boolean} compactTitle - Use smaller title sizing for short names (like cat names)
  */
 export default function SectionHero({
   variant = 'primary',
@@ -162,14 +181,15 @@ export default function SectionHero({
   subtitle,
   actions,
   children,
+  compactTitle = false,
   ...props
 }) {
   return (
     <HeroWrapper $variant={variant} $size={size} $bgImage={bgImage} {...props}>
       <Container>
         <HeroContent $align={align} $narrow={narrow}>
-          {title && <HeroTitle>{title}</HeroTitle>}
-          {subtitle && <HeroSubtitle>{subtitle}</HeroSubtitle>}
+          {title && <HeroTitle $size={compactTitle ? 'sm' : size}>{title}</HeroTitle>}
+          {subtitle && <HeroSubtitle $size={compactTitle ? 'sm' : size} $hasActions={!!actions}>{subtitle}</HeroSubtitle>}
           {actions && <HeroActions $align={align}>{actions}</HeroActions>}
           {children}
         </HeroContent>
