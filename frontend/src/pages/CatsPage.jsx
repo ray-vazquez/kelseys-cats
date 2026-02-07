@@ -1,5 +1,4 @@
-// Migrated CatsPage - Using Phase 1+2 enhanced components with is_senior badge
-// Added Voice for the Voiceless Adopt-a-Pet widget integration
+// Migrated CatsPage - Using Petfinder API for unified cat display
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import styled from "styled-components";
@@ -12,13 +11,11 @@ import {
   CardBody,
   CardTitle,
   ButtonLink,
-  Button,
   Badge,
   Checkbox,
   CheckboxLabel,
   TextMuted,
   Alert,
-  Divider,
 } from "../components/Common/StyledComponents.js";
 import SectionHero from "../components/Common/SectionHero.jsx";
 import LoadingState from "../components/Common/LoadingState.jsx";
@@ -56,91 +53,95 @@ const CardFooter = styled.div`
   flex-wrap: wrap;
 `;
 
-const SectionHeader = styled.div`
+const SourceBadge = styled(Badge)`
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 10;
+`;
+
+const StatsBar = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing[8]};
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  padding: ${({ theme }) => theme.spacing[6]};
+  background: ${({ theme }) => theme.colors.background.secondary};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+`;
+
+const StatItem = styled.div`
   text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
   
-  h2 {
+  .stat-value {
     font-size: ${({ theme }) => theme.fontSizes['3xl']};
     font-weight: ${({ theme }) => theme.fontWeights.bold};
-    color: ${({ theme }) => theme.colors.text.primary};
-    margin-bottom: ${({ theme }) => theme.spacing[3]};
-    
-    .emoji {
-      margin-right: ${({ theme }) => theme.spacing[2]};
-    }
-  }
-`;
-
-const WidgetContainer = styled.div`
-  background: ${({ theme }) => theme.colors.white};
-  padding: ${({ theme }) => theme.spacing[6]};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  box-shadow: ${({ theme }) => theme.shadows.md};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  
-  iframe {
-    border: none;
-    border-radius: ${({ theme }) => theme.borderRadius.base};
-    width: 100%;
-    height: 800px;
+    color: ${({ theme }) => theme.colors.primary.main};
     display: block;
   }
-`;
-
-const WidgetFooter = styled.div`
-  margin-top: ${({ theme }) => theme.spacing[6]};
-  text-align: center;
-  padding-top: ${({ theme }) => theme.spacing[6]};
-  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  
+  .stat-label {
+    font-size: ${({ theme }) => theme.fontSizes.sm};
+    color: ${({ theme }) => theme.colors.text.secondary};
+    margin-top: ${({ theme }) => theme.spacing[2]};
+  }
 `;
 
 export default function CatsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState({
-    items: [],
+    foster_cats: [],
+    shelter_cats: [],
     total: 0,
-    page: 1,
-    limit: 12,
+    duplicates_removed: 0
   });
   const [loading, setLoading] = useState(true);
   const [seniorOnly, setSeniorOnly] = useState(false);
+  const [showShelterCats, setShowShelterCats] = useState(true);
 
   const page = Number(searchParams.get("page") || "1");
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    params.set("status", "available");
-    params.set("page", String(page));
-    params.set("limit", String(data.limit));
-    if (seniorOnly) params.set("senior", "true");
-
     setLoading(true);
+    
+    // Fetch all available cats (foster + shelter, deduplicated)
     http
-      .get(`/cats?${params.toString()}`)
+      .get('/cats/all-available')
       .then((res) => {
-        const body = res.data;
-        const items = Array.isArray(body) ? body : body.items || [];
-        setData({
-          items,
-          total: body.total ?? items.length,
-          page: body.page ?? page,
-          limit: body.limit ?? data.limit,
-        });
+        setData(res.data);
       })
       .catch((err) => {
         console.error("Failed to load cats", err);
-        setData((prev) => ({ ...prev, items: [], total: 0 }));
+        setData({ foster_cats: [], shelter_cats: [], total: 0, duplicates_removed: 0 });
       })
       .finally(() => setLoading(false));
-  }, [page, seniorOnly]);
+  }, []);
+
+  // Filter cats based on filters
+  const filteredCats = React.useMemo(() => {
+    let allCats = [
+      ...data.foster_cats,
+      ...(showShelterCats ? data.shelter_cats : [])
+    ];
+    
+    if (seniorOnly) {
+      allCats = allCats.filter(cat => 
+        cat.is_senior || 
+        (cat.petfinder_data?.age_text === 'Senior')
+      );
+    }
+    
+    return allCats;
+  }, [data, seniorOnly, showShelterCats]);
+
+  // Pagination
+  const perPage = 12;
+  const startIdx = (page - 1) * perPage;
+  const paginatedCats = filteredCats.slice(startIdx, startIdx + perPage);
 
   function handlePageChange(nextPage) {
-    setSearchParams((prev) => {
-      const p = new URLSearchParams(prev);
-      p.set("page", String(nextPage));
-      return p;
-    });
+    setSearchParams({ page: String(nextPage) });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   return (
@@ -150,7 +151,7 @@ export default function CatsPage() {
         variant="gradient"
         size="md"
         title="Adoptable Cats"
-        subtitle="Meet our foster cats and other wonderful cats available through Voice for the Voiceless"
+        subtitle="Find your perfect feline companion from our foster home and Voice for the Voiceless"
         actions={
           <ButtonLink to="/adoption" $variant="outline" $size="lg">
             How to Adopt
@@ -158,41 +159,62 @@ export default function CatsPage() {
         }
       />
 
-      {/* OUR FOSTER CATS SECTION */}
+      {/* Main Content */}
       <Section $padding="lg">
         <Container>
-          <SectionHeader>
-            <h2>
-              <span className="emoji">🏠</span>
-              Our Current Foster Cats
-            </h2>
-            <TextMuted style={{ fontSize: '1.125rem' }}>
-              Cats currently in our loving home, ready for adoption
-            </TextMuted>
-            {!loading && data.total > 0 && (
-              <Badge $variant="info" style={{ marginTop: '1rem', fontSize: '0.875rem' }}>
-                {data.total} Available
-              </Badge>
-            )}
-          </SectionHeader>
+          {/* Stats Bar */}
+          {!loading && data.total > 0 && (
+            <StatsBar>
+              <StatItem>
+                <span className="stat-value">{data.foster_cats.length}</span>
+                <span className="stat-label">🏠 Our Foster Cats</span>
+              </StatItem>
+              <StatItem>
+                <span className="stat-value">{data.shelter_cats.length}</span>
+                <span className="stat-label">🐾 Voice Shelter Cats</span>
+              </StatItem>
+              <StatItem>
+                <span className="stat-value">{data.total}</span>
+                <span className="stat-label">Total Available</span>
+              </StatItem>
+            </StatsBar>
+          )}
+
+          {/* Info Alert */}
+          {!loading && data.duplicates_removed > 0 && (
+            <Alert $variant="info" style={{ marginBottom: '2rem' }}>
+              <strong>Smart Deduplication:</strong> We automatically removed {data.duplicates_removed} duplicate{data.duplicates_removed !== 1 ? 's' : ''} 
+              {' '}to show you a clean list of all available cats.
+            </Alert>
+          )}
 
           {/* Filter Section */}
           <FilterSection>
             <FilterTitle>Filter Options</FilterTitle>
-            <CheckboxLabel>
-              <Checkbox
-                checked={seniorOnly}
-                onChange={(e) => setSeniorOnly(e.target.checked)}
-              />
-              Show senior cats only
-            </CheckboxLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <CheckboxLabel>
+                <Checkbox
+                  checked={seniorOnly}
+                  onChange={(e) => setSeniorOnly(e.target.checked)}
+                />
+                Show senior cats only
+              </CheckboxLabel>
+              <CheckboxLabel>
+                <Checkbox
+                  checked={showShelterCats}
+                  onChange={(e) => setShowShelterCats(e.target.checked)}
+                />
+                Include cats from Voice for the Voiceless shelter
+              </CheckboxLabel>
+            </div>
           </FilterSection>
 
           {/* Results Count */}
-          {!loading && data.items.length > 0 && (
+          {!loading && filteredCats.length > 0 && (
             <ResultsCount>
-              Showing {data.items.length} of {data.total} cat{data.total !== 1 ? 's' : ''}
+              Showing {paginatedCats.length} of {filteredCats.length} cat{filteredCats.length !== 1 ? 's' : ''}
               {seniorOnly && ' (senior cats only)'}
+              {!showShelterCats && ' (foster cats only)'}
             </ResultsCount>
           )}
 
@@ -205,12 +227,14 @@ export default function CatsPage() {
                 </Card>
               ))}
             </Grid>
-          ) : data.items.length === 0 ? (
+          ) : filteredCats.length === 0 ? (
             /* Empty State */
             <NoCatsFound
               description={
                 seniorOnly
                   ? "No senior cats are currently available. Try clearing the filter to see all cats."
+                  : !showShelterCats
+                  ? "Enable shelter cats filter to see more available cats."
                   : "No cats are currently available. Check back soon for new arrivals!"
               }
               actions={
@@ -230,11 +254,18 @@ export default function CatsPage() {
               }
             />
           ) : (
-            /* Cats Grid */
+            /* Unified Cats Grid */
             <>
               <Grid $cols={3} $mdCols={2}>
-                {data.items.map((cat) => (
-                  <Card key={cat.id} $hover>
+                {paginatedCats.map((cat) => (
+                  <Card key={`${cat.source}-${cat.id || cat.petfinder_id}`} $hover style={{ position: 'relative' }}>
+                    {/* Source Badge */}
+                    <SourceBadge 
+                      $variant={cat.source === 'foster' ? 'success' : 'info'}
+                    >
+                      {cat.source === 'foster' ? '🏠 Our Foster' : '🐾 Voice Shelter'}
+                    </SourceBadge>
+
                     {cat.main_image_url && (
                       <CardImage
                         src={cat.main_image_url}
@@ -242,12 +273,13 @@ export default function CatsPage() {
                         $height="250px"
                       />
                     )}
+                    
                     <CardBody>
                       <CardTitle>{cat.name}</CardTitle>
                       <TextMuted>
                         {cat.age_years
                           ? `${cat.age_years} years old`
-                          : "Age unknown"}{" "}
+                          : cat.petfinder_data?.age_text || "Age unknown"}{" "}
                         · {cat.breed || "Mixed breed"}
                       </TextMuted>
                       
@@ -255,7 +287,7 @@ export default function CatsPage() {
                         {cat.is_special_needs && (
                           <Badge $variant="warning">Special Needs</Badge>
                         )}
-                        {cat.is_senior && (
+                        {(cat.is_senior || cat.petfinder_data?.age_text === 'Senior') && (
                           <Badge $variant="secondary">Senior</Badge>
                         )}
                         {cat.bonded_pair_id && (
@@ -264,9 +296,24 @@ export default function CatsPage() {
                       </CardFooter>
                       
                       <div style={{ marginTop: "1rem" }}>
-                        <ButtonLink to={`/cats/${cat.id}`} $variant="primary" $fullWidth>
-                          View Details
-                        </ButtonLink>
+                        {cat.source === 'foster' ? (
+                          // Foster cats link to your detail page
+                          <ButtonLink to={`/cats/${cat.id}`} $variant="primary" $fullWidth>
+                            View Details
+                          </ButtonLink>
+                        ) : (
+                          // Shelter cats link to Petfinder
+                          <ButtonLink 
+                            as="a"
+                            href={cat.adoptapet_url} 
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            $variant="primary" 
+                            $fullWidth
+                          >
+                            View on Petfinder →
+                          </ButtonLink>
+                        )}
                       </div>
                     </CardBody>
                   </Card>
@@ -274,70 +321,18 @@ export default function CatsPage() {
               </Grid>
 
               {/* Pagination */}
-              {data.total > data.limit && (
+              {filteredCats.length > perPage && (
                 <div style={{ marginTop: '3rem' }}>
                   <PaginationControls
-                    page={data.page}
-                    limit={data.limit}
-                    total={data.total}
+                    page={page}
+                    limit={perPage}
+                    total={filteredCats.length}
                     onPageChange={handlePageChange}
                   />
                 </div>
               )}
             </>
           )}
-        </Container>
-      </Section>
-
-      {/* Divider between sections */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
-        <Divider />
-      </div>
-
-      {/* VOICE FOR THE VOICELESS SECTION */}
-      <Section $padding="lg" $bg="light">
-        <Container>
-          <SectionHeader>
-            <h2>
-              <span className="emoji">🐾</span>
-              More Cats from Voice for the Voiceless
-            </h2>
-            <TextMuted style={{ fontSize: '1.125rem' }}>
-              Additional adoptable cats from our shelter partner
-            </TextMuted>
-          </SectionHeader>
-
-          {/* Info Alert */}
-          <Alert $variant="info" style={{ marginBottom: '2rem' }}>
-            <strong>Note:</strong> Some cats shown below may also appear in our foster list above. 
-            We're currently fostering several cats on behalf of Voice for the Voiceless. 
-            All adoptions are processed through Voice for the Voiceless.
-          </Alert>
-
-          {/* Adopt-a-Pet Widget */}
-          <WidgetContainer>
-            <iframe 
-              src="https://searchtools.adoptapet.com/cgi-bin/searchtools.cgi/portable_pet_list?shelter_id=184939&title=&color=green&size=800x600_list&sort_by=pet_name"
-              title="Voice for the Voiceless Adoptable Cats"
-              loading="lazy"
-            />
-            
-            <WidgetFooter>
-              <TextMuted style={{ marginBottom: '1rem' }}>
-                Widget provided by Adopt-a-Pet.com
-              </TextMuted>
-              <Button
-                as="a"
-                href="https://www.adoptapet.com/shelter/184939-voice-for-the-voiceless-schenectady-new-york"
-                target="_blank"
-                rel="noopener noreferrer"
-                $variant="outline"
-                $size="lg"
-              >
-                View Full Shelter Profile on Adopt-a-Pet →
-              </Button>
-            </WidgetFooter>
-          </WidgetContainer>
         </Container>
       </Section>
     </>
