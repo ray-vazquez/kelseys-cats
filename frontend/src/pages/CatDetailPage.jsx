@@ -1,62 +1,130 @@
-// frontend/src/pages/CatDetailPage.jsx
+// Migrated CatDetailPage - Using Phase 1+2 enhanced components
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import {
   Container,
-  Button,
+  Section,
+  ButtonLink,
   Badge,
-  Skeleton,
-
+  Alert,
+  Flex,
 } from "../components/Common/StyledComponents.js";
+import SectionHero from "../components/Common/SectionHero.jsx";
+import LoadingState from "../components/Common/LoadingState.jsx";
+import EmptyState from "../components/Common/EmptyState.jsx";
 import http from "../api/http.js";
 
 const DetailGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: ${({ theme }) => theme.spacing["2xl"]};
-  padding: ${({ theme }) => theme.spacing["3xl"]} 0;
+  gap: ${({ theme }) => theme.spacing[12]};
+  align-items: start;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     grid-template-columns: 1fr;
+    gap: ${({ theme }) => theme.spacing[8]};
   }
 `;
 
 const ImageWrapper = styled.div`
+  position: sticky;
+  top: ${({ theme }) => theme.spacing[4]};
+  
   img {
     width: 100%;
     border-radius: ${({ theme }) => theme.borderRadius.lg};
+    box-shadow: ${({ theme }) => theme.shadows.lg};
     object-fit: cover;
+    aspect-ratio: 1;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    position: relative;
+    top: 0;
   }
 `;
 
-const DetailContent = styled.div`
-  h1 {
-    margin-bottom: ${({ theme }) => theme.spacing.sm};
+const DetailContent = styled.div``;
+
+const CatHeader = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing[8]};
+`;
+
+const CatTitle = styled.h1`
+  font-size: ${({ theme }) => theme.fontSizes['4xl']};
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const CatMeta = styled.p`
+  font-size: ${({ theme }) => theme.fontSizes.lg};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
+  line-height: ${({ theme }) => theme.lineHeights.relaxed};
+`;
+
+const BadgeGroup = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing[2]};
+  flex-wrap: wrap;
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
+`;
+
+const InfoSection = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  padding: ${({ theme }) => theme.spacing[6]};
+  background: ${({ theme }) => theme.colors.light};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  border-left: 4px solid ${({ theme }) => theme.colors.primary};
+`;
+
+const InfoTitle = styled.h3`
+  font-size: ${({ theme }) => theme.fontSizes.xl};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const InfoText = styled.p`
+  line-height: ${({ theme }) => theme.lineHeights.relaxed};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const InfoList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+`;
+
+const InfoListItem = styled.li`
+  padding: ${({ theme }) => theme.spacing[2]} 0;
+  color: ${({ theme }) => theme.colors.text.primary};
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.borderLight};
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  strong {
+    font-weight: ${({ theme }) => theme.fontWeights.semibold};
+    min-width: 100px;
   }
 `;
 
-const TextMuted = styled.p`
-  color: ${({ theme }) => theme.colors.gray};
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-`;
+const ActionButtons = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing[4]};
+  margin-top: ${({ theme }) => theme.spacing[8]};
+  padding-top: ${({ theme }) => theme.spacing[8]};
+  border-top: 2px solid ${({ theme }) => theme.colors.border};
 
-const Section = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-
-  h5 {
-    font-size: ${({ theme }) => theme.fontSizes.lg};
-    margin-bottom: ${({ theme }) => theme.spacing.sm};
-    color: ${({ theme }) => theme.colors.secondary};
-  }
-
-  ul {
-    list-style: none;
-    padding: 0;
-  }
-
-  li {
-    padding: ${({ theme }) => theme.spacing.xs} 0;
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    flex-direction: column;
   }
 `;
 
@@ -64,14 +132,17 @@ export default function CatDetailPage() {
   const { id } = useParams();
   const [cat, setCat] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     http
       .get(`/cats/${id}`)
       .then((res) => setCat(res.data))
       .catch((err) => {
         console.error("Failed to load cat", err);
+        setError("Unable to load cat details. Please try again.");
         setCat(null);
       })
       .finally(() => setLoading(false));
@@ -79,81 +150,211 @@ export default function CatDetailPage() {
 
   if (loading) {
     return (
-      <Container
-        aria-busy="true"
-        aria-live="polite"
-        style={{ padding: "3rem 0" }}
-      >
-        <DetailGrid>
-          <ImageWrapper>
-            <Skeleton style={{ width: "100%", height: 320 }} />
-          </ImageWrapper>
-          <DetailContent>
-            <Skeleton style={{ height: 28, width: "40%", marginBottom: 12 }} />
-            <Skeleton style={{ height: 16, width: "60%", marginBottom: 24 }} />
-            <Skeleton style={{ height: 16, width: "80%", marginBottom: 12 }} />
-            <Skeleton style={{ height: 16, width: "70%", marginBottom: 12 }} />
-            <Skeleton style={{ height: 40, width: 180, marginTop: 16 }} />
-          </DetailContent>
-        </DetailGrid>
-      </Container>
+      <>
+        <SectionHero
+          variant="gradient"
+          size="sm"
+          title="Loading..."
+        />
+        <Section $padding="lg">
+          <Container>
+            <DetailGrid>
+              <ImageWrapper>
+                <LoadingState variant="skeleton" skeletonCount={1} skeletonHeight="400px" />
+              </ImageWrapper>
+              <DetailContent>
+                <LoadingState variant="skeleton" skeletonCount={8} />
+              </DetailContent>
+            </DetailGrid>
+          </Container>
+        </Section>
+      </>
     );
   }
 
-  if (!cat) {
+  if (error || !cat) {
     return (
-      <Container style={{ padding: "3rem 0" }}>
-        <p>Cat not found.</p>
-      </Container>
+      <>
+        <SectionHero
+          variant="gradient"
+          size="sm"
+          title="Cat Not Found"
+        />
+        <Section $padding="lg">
+          <Container>
+            {error && (
+              <Alert $variant="danger" style={{ marginBottom: '2rem' }}>
+                {error}
+              </Alert>
+            )}
+            <EmptyState
+              icon="🐱"
+              iconSize="lg"
+              title="Cat not found"
+              description="This cat may have been adopted or is no longer available. Check out our other wonderful cats looking for homes!"
+              actions={
+                <>
+                  <ButtonLink to="/cats" $variant="primary">
+                    View All Cats
+                  </ButtonLink>
+                  <ButtonLink to="/alumni" $variant="outline">
+                    View Alumni
+                  </ButtonLink>
+                </>
+              }
+            />
+          </Container>
+        </Section>
+      </>
     );
   }
+
+  const isAvailable = cat.status === 'available';
+  const isAdopted = cat.status === 'adopted';
 
   return (
-    <Container>
-      <DetailGrid>
-        <ImageWrapper>
-          {cat.main_image_url && (
-            <img src={cat.main_image_url} alt={cat.name} />
-          )}
-        </ImageWrapper>
+    <>
+      {/* Hero Section */}
+      <SectionHero
+        variant="gradient"
+        size="sm"
+        title={cat.name}
+        subtitle={
+          isAvailable
+            ? "Available for adoption"
+            : isAdopted
+            ? "Successfully adopted!"
+            : cat.status
+        }
+      />
 
-        <DetailContent>
-          <h1>{cat.name}</h1>
-          <TextMuted>
-            {cat.age_years ? `${cat.age_years} years old` : "Age unknown"} ·{" "}
-            {cat.sex} · {cat.breed || "Mixed breed"}
-          </TextMuted>
-
-          {cat.is_special_needs && (
-            <Badge variant="warning">Special Needs</Badge>
-          )}
-
-          <Section>
-            <h5>Temperament</h5>
-            <p>{cat.temperament || "Not specified"}</p>
-          </Section>
-
-          <Section>
-            <h5>Good With</h5>
-            <ul>
-              <li>Kids: {cat.good_with_kids ? "Yes" : "No"}</li>
-              <li>Cats: {cat.good_with_cats ? "Yes" : "No"}</li>
-              <li>Dogs: {cat.good_with_dogs ? "Yes" : "No"}</li>
-            </ul>
-          </Section>
-
-          {cat.medical_notes && (
-            <Section>
-              <h5>Medical Notes</h5>
-              <p>{cat.medical_notes}</p>
-            </Section>
+      {/* Main Content */}
+      <Section $padding="lg">
+        <Container>
+          {/* Status Alert */}
+          {!isAvailable && (
+            <Alert $variant={isAdopted ? "success" : "info"} style={{ marginBottom: '2rem' }}>
+              {isAdopted
+                ? `${cat.name} has found their forever home! Check out our other cats looking for adoption.`
+                : `${cat.name} is currently ${cat.status}.`}
+            </Alert>
           )}
 
-          <Button as={Link} to="/adoption" size="lg">
-            Adoption Information
-          </Button>
-        </DetailContent>
-      </DetailGrid>
-    </Container>
+          <DetailGrid>
+            {/* Image Column */}
+            <ImageWrapper>
+              {cat.main_image_url ? (
+                <img src={cat.main_image_url} alt={cat.name} />
+              ) : (
+                <div style={{
+                  width: '100%',
+                  aspectRatio: '1',
+                  background: '#e5e5e5',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '48px'
+                }}>
+                  🐱
+                </div>
+              )}
+            </ImageWrapper>
+
+            {/* Details Column */}
+            <DetailContent>
+              <CatHeader>
+                <CatTitle>{cat.name}</CatTitle>
+                <CatMeta>
+                  {cat.age_years ? `${cat.age_years} years old` : "Age unknown"} ·{" "}
+                  {cat.sex || "Unknown"} · {cat.breed || "Mixed breed"}
+                </CatMeta>
+
+                <BadgeGroup>
+                  {cat.is_special_needs && (
+                    <Badge $variant="warning">Special Needs</Badge>
+                  )}
+                  {cat.bonded_pair_id && (
+                    <Badge $variant="info">Bonded Pair</Badge>
+                  )}
+                  {cat.age_years >= 10 && (
+                    <Badge $variant="secondary">Senior</Badge>
+                  )}
+                  {cat.featured && (
+                    <Badge $variant="success">Featured</Badge>
+                  )}
+                </BadgeGroup>
+              </CatHeader>
+
+              {/* Temperament */}
+              {cat.temperament && (
+                <InfoSection>
+                  <InfoTitle>Temperament</InfoTitle>
+                  <InfoText>{cat.temperament}</InfoText>
+                </InfoSection>
+              )}
+
+              {/* Good With */}
+              <InfoSection>
+                <InfoTitle>Good With</InfoTitle>
+                <InfoList>
+                  <InfoListItem>
+                    <strong>Kids:</strong>
+                    <span>{cat.good_with_kids ? "✅ Yes" : "❌ No"}</span>
+                  </InfoListItem>
+                  <InfoListItem>
+                    <strong>Cats:</strong>
+                    <span>{cat.good_with_cats ? "✅ Yes" : "❌ No"}</span>
+                  </InfoListItem>
+                  <InfoListItem>
+                    <strong>Dogs:</strong>
+                    <span>{cat.good_with_dogs ? "✅ Yes" : "❌ No"}</span>
+                  </InfoListItem>
+                </InfoList>
+              </InfoSection>
+
+              {/* Medical Notes */}
+              {cat.medical_notes && (
+                <InfoSection>
+                  <InfoTitle>Medical Notes</InfoTitle>
+                  <InfoText>{cat.medical_notes}</InfoText>
+                </InfoSection>
+              )}
+
+              {/* Intake Information */}
+              {cat.intake_date && (
+                <InfoSection>
+                  <InfoTitle>Additional Information</InfoTitle>
+                  <InfoList>
+                    <InfoListItem>
+                      <strong>Intake Date:</strong>
+                      <span>{new Date(cat.intake_date).toLocaleDateString()}</span>
+                    </InfoListItem>
+                    {cat.color && (
+                      <InfoListItem>
+                        <strong>Color:</strong>
+                        <span>{cat.color}</span>
+                      </InfoListItem>
+                    )}
+                  </InfoList>
+                </InfoSection>
+              )}
+
+              {/* Action Buttons */}
+              <ActionButtons>
+                {isAvailable && (
+                  <ButtonLink to="/adoption" $variant="primary" $size="lg">
+                    Adoption Information
+                  </ButtonLink>
+                )}
+                <ButtonLink to="/cats" $variant="outline" $size="lg">
+                  View All Cats
+                </ButtonLink>
+              </ActionButtons>
+            </DetailContent>
+          </DetailGrid>
+        </Container>
+      </Section>
+    </>
   );
 }
