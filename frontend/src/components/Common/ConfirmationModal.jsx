@@ -75,7 +75,7 @@ const ModalBody = styled.div`
   padding: ${({ theme }) => theme.spacing[6]};
   color: ${({ theme }) => theme.colors.text.primary};
   line-height: ${({ theme }) => theme.lineHeights.relaxed};
-  font-size: ${({ theme }) => theme.fontSizes.base};
+  font-size: ${({ theme }) => theme.fontSizes.lg};
 `;
 
 const ModalFooter = styled.div`
