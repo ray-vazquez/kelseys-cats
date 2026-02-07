@@ -341,23 +341,23 @@ export const Badge = styled.span`
         `;
       case 'danger':
         return css`
-          background-color: ${theme.colors.dangerLight};
-          color: ${theme.colors.danger};
+          background-color: ${theme.colors.danger};
+          color: #ffffff;
         `;
       case 'info':
         return css`
-          background-color: ${theme.colors.infoLight};
-          color: ${theme.colors.info};
+          background-color: ${theme.colors.info};
+          color: #ffffff;
         `;
       case 'secondary':
         return css`
-          background-color: ${theme.colors.neutral[200]};
-          color: ${theme.colors.neutral[700]};
+          background-color: ${theme.colors.neutral[600]};
+          color: #ffffff;
         `;
       default:
         return css`
-          background-color: ${theme.colors.primaryLight};
-          color: ${theme.colors.primary};
+          background-color: ${theme.colors.primary};
+          color: #ffffff;
         `;
     }
   }}
