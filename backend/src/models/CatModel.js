@@ -18,7 +18,7 @@ export class CatModel {
    * Filters:
    *  - status: 'available'|'pending'|'hold'|'alumni' or array of statuses
    *  - featured: boolean
-   *  - senior: boolean (age_years >= 10)
+   *  - senior: boolean (uses is_senior column)
    */
   static async findAll(filters = {}) {
     const conditions = ["deleted_at IS NULL"];
@@ -41,8 +41,8 @@ export class CatModel {
       params.push(filters.featured ? 1 : 0);
     }
     if (filters.senior) {
-      conditions.push("age_years >= ?");
-      params.push(10);
+      conditions.push("is_senior = ?");
+      params.push(1);
     }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -83,10 +83,10 @@ export class CatModel {
       params.push(filters.featured ? 1 : 0);
     }
 
-    // Add senior filter support
+    // Add senior filter support - use is_senior column
     if (filters.senior) {
-      conditions.push("age_years >= ?");
-      params.push(10);
+      conditions.push("is_senior = ?");
+      params.push(1);
     }
 
     const whereClause = `WHERE ${conditions.join(" AND ")}`;
@@ -121,10 +121,27 @@ export class CatModel {
   }
 
   /**
+   * Auto-compute is_senior based on age_years.
+   * Returns 1 if age_years >= 10, otherwise 0.
+   */
+  static _computeIsSenior(ageYears) {
+    if (ageYears === null || ageYears === undefined) {
+      return 0;
+    }
+    return ageYears >= 10 ? 1 : 0;
+  }
+
+  /**
    * Create a new cat row.
    * Accepts either snake_case or the existing camelCase keys and maps them.
+   * Auto-sets is_senior based on age_years if not explicitly provided.
    */
   static async create(data) {
+    const ageYears = data.age_years ?? data.ageyears ?? null;
+    const isSenior = data.is_senior !== undefined 
+      ? (data.is_senior ? 1 : 0)
+      : (data.issenior !== undefined ? (data.issenior ? 1 : 0) : this._computeIsSenior(ageYears));
+
     const sql = `
       INSERT INTO cats (
         name,
@@ -150,7 +167,7 @@ export class CatModel {
 
     const params = [
       data.name,
-      data.age_years ?? data.ageyears ?? null,
+      ageYears,
       data.sex ?? "unknown",
       data.breed ?? null,
       data.temperament ?? null,
@@ -159,7 +176,7 @@ export class CatModel {
       data.good_with_dogs ?? (data.goodwithdogs ? 1 : 0),
       data.medical_notes ?? data.medicalnotes ?? null,
       data.is_special_needs ?? (data.isspecialneeds ? 1 : 0),
-      data.is_senior ?? (data.issenior ? 1 : 0),
+      isSenior,
       data.status ?? "available",
       data.main_image_url ?? data.mainimageurl ?? null,
       data.featured ? 1 : 0,
@@ -175,10 +192,23 @@ export class CatModel {
   /**
    * Update an existing cat.
    * Accepts both camelCase and snake_case keys and maps them to DB columns.
+   * Auto-updates is_senior if age_years changes (unless is_senior is explicitly set).
    */
   static async update(id, data) {
     const fields = [];
     const params = [];
+
+    // Determine if we need to auto-update is_senior
+    let autoUpdateIsSenior = false;
+    let computedIsSenior = null;
+    
+    if ((data.age_years !== undefined || data.ageyears !== undefined) && 
+        data.is_senior === undefined && data.issenior === undefined) {
+      // Age is being updated but is_senior is not explicitly provided
+      const ageYears = data.age_years ?? data.ageyears;
+      computedIsSenior = this._computeIsSenior(ageYears);
+      autoUpdateIsSenior = true;
+    }
 
     // Map from input keys to DB column names
     const mapping = {
@@ -246,6 +276,12 @@ export class CatModel {
         }
       }
     });
+
+    // Add auto-computed is_senior if age changed and is_senior wasn't explicit
+    if (autoUpdateIsSenior && !fields.some(f => f.startsWith('is_senior'))) {
+      fields.push('is_senior = ?');
+      params.push(computedIsSenior);
+    }
 
     if (!fields.length) {
       return this.findById(id);
