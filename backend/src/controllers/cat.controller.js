@@ -9,12 +9,19 @@ export async function listCats(req, res, next) {
     const limit = Number.isNaN(rawLimit) || rawLimit < 1 ? 12 : rawLimit;
 
     const filters = {
-      status: req.query.status,
       page,
       limit,
       // Enable featured filter
       featured: req.query.featured === 'true' ? true : req.query.featured === 'false' ? false : undefined,
     };
+
+    // Support comma-separated status values for multi-status filtering
+    if (req.query.status) {
+      const statuses = req.query.status.split(',').map(s => s.trim()).filter(Boolean);
+      if (statuses.length > 0) {
+        filters.status = statuses.length === 1 ? statuses[0] : statuses;
+      }
+    }
 
     const result = await CatService.listCats(filters);
     res.json(result);
