@@ -1,4 +1,5 @@
 // Migrated CatsPage - Using Phase 1+2 enhanced components with is_senior badge
+// Added Voice for the Voiceless Adopt-a-Pet widget integration
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import styled from "styled-components";
@@ -11,10 +12,13 @@ import {
   CardBody,
   CardTitle,
   ButtonLink,
+  Button,
   Badge,
   Checkbox,
   CheckboxLabel,
   TextMuted,
+  Alert,
+  Divider,
 } from "../components/Common/StyledComponents.js";
 import SectionHero from "../components/Common/SectionHero.jsx";
 import LoadingState from "../components/Common/LoadingState.jsx";
@@ -50,6 +54,45 @@ const CardFooter = styled.div`
   gap: ${({ theme }) => theme.spacing[2]};
   margin-top: ${({ theme }) => theme.spacing[4]};
   flex-wrap: wrap;
+`;
+
+const SectionHeader = styled.div`
+  text-align: center;
+  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  
+  h2 {
+    font-size: ${({ theme }) => theme.fontSizes['3xl']};
+    font-weight: ${({ theme }) => theme.fontWeights.bold};
+    color: ${({ theme }) => theme.colors.text.primary};
+    margin-bottom: ${({ theme }) => theme.spacing[3]};
+    
+    .emoji {
+      margin-right: ${({ theme }) => theme.spacing[2]};
+    }
+  }
+`;
+
+const WidgetContainer = styled.div`
+  background: ${({ theme }) => theme.colors.white};
+  padding: ${({ theme }) => theme.spacing[6]};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  box-shadow: ${({ theme }) => theme.shadows.md};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  
+  iframe {
+    border: none;
+    border-radius: ${({ theme }) => theme.borderRadius.base};
+    width: 100%;
+    height: 800px;
+    display: block;
+  }
+`;
+
+const WidgetFooter = styled.div`
+  margin-top: ${({ theme }) => theme.spacing[6]};
+  text-align: center;
+  padding-top: ${({ theme }) => theme.spacing[6]};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
 export default function CatsPage() {
@@ -102,12 +145,12 @@ export default function CatsPage() {
 
   return (
     <>
-      {/* Hero Section - Updated to gradient variant */}
+      {/* Hero Section */}
       <SectionHero
         variant="gradient"
         size="md"
-        title="Current Foster Cats"
-        subtitle="Meet our wonderful cats looking for their forever homes. Each one has a unique personality and story."
+        title="Adoptable Cats"
+        subtitle="Meet our foster cats and other wonderful cats available through Voice for the Voiceless"
         actions={
           <ButtonLink to="/adoption" $variant="outline" $size="lg">
             How to Adopt
@@ -115,9 +158,24 @@ export default function CatsPage() {
         }
       />
 
-      {/* Main Content */}
+      {/* OUR FOSTER CATS SECTION */}
       <Section $padding="lg">
         <Container>
+          <SectionHeader>
+            <h2>
+              <span className="emoji">🏠</span>
+              Our Current Foster Cats
+            </h2>
+            <TextMuted style={{ fontSize: '1.125rem' }}>
+              Cats currently in our loving home, ready for adoption
+            </TextMuted>
+            {!loading && data.total > 0 && (
+              <Badge $variant="info" style={{ marginTop: '1rem', fontSize: '0.875rem' }}>
+                {data.total} Available
+              </Badge>
+            )}
+          </SectionHeader>
+
           {/* Filter Section */}
           <FilterSection>
             <FilterTitle>Filter Options</FilterTitle>
@@ -216,16 +274,70 @@ export default function CatsPage() {
               </Grid>
 
               {/* Pagination */}
-              <div style={{ marginTop: '3rem' }}>
-                <PaginationControls
-                  page={data.page}
-                  limit={data.limit}
-                  total={data.total}
-                  onPageChange={handlePageChange}
-                />
-              </div>
+              {data.total > data.limit && (
+                <div style={{ marginTop: '3rem' }}>
+                  <PaginationControls
+                    page={data.page}
+                    limit={data.limit}
+                    total={data.total}
+                    onPageChange={handlePageChange}
+                  />
+                </div>
+              )}
             </>
           )}
+        </Container>
+      </Section>
+
+      {/* Divider between sections */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
+        <Divider />
+      </div>
+
+      {/* VOICE FOR THE VOICELESS SECTION */}
+      <Section $padding="lg" $bg="light">
+        <Container>
+          <SectionHeader>
+            <h2>
+              <span className="emoji">🐾</span>
+              More Cats from Voice for the Voiceless
+            </h2>
+            <TextMuted style={{ fontSize: '1.125rem' }}>
+              Additional adoptable cats from our shelter partner
+            </TextMuted>
+          </SectionHeader>
+
+          {/* Info Alert */}
+          <Alert $variant="info" style={{ marginBottom: '2rem' }}>
+            <strong>Note:</strong> Some cats shown below may also appear in our foster list above. 
+            We're currently fostering several cats on behalf of Voice for the Voiceless. 
+            All adoptions are processed through Voice for the Voiceless.
+          </Alert>
+
+          {/* Adopt-a-Pet Widget */}
+          <WidgetContainer>
+            <iframe 
+              src="https://searchtools.adoptapet.com/cgi-bin/searchtools.cgi/portable_pet_list?shelter_id=184939&title=&color=green&size=800x600_list&sort_by=pet_name"
+              title="Voice for the Voiceless Adoptable Cats"
+              loading="lazy"
+            />
+            
+            <WidgetFooter>
+              <TextMuted style={{ marginBottom: '1rem' }}>
+                Widget provided by Adopt-a-Pet.com
+              </TextMuted>
+              <Button
+                as="a"
+                href="https://www.adoptapet.com/shelter/184939-voice-for-the-voiceless-schenectady-new-york"
+                target="_blank"
+                rel="noopener noreferrer"
+                $variant="outline"
+                $size="lg"
+              >
+                View Full Shelter Profile on Adopt-a-Pet →
+              </Button>
+            </WidgetFooter>
+          </WidgetContainer>
         </Container>
       </Section>
     </>
