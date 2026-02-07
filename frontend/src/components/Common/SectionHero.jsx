@@ -1,84 +1,101 @@
-// SectionHero Component - Reusable hero/masthead with variants
-// Provides consistent styling for page headers and call-to-action sections
-
+// Reusable Hero/Masthead Component with Variants
 import React from 'react';
-import styled from 'styled-components';
-import { Container } from './StyledComponents';
+import styled, { css } from 'styled-components';
+import { Container, Button, ButtonLink } from './StyledComponents';
 
-const HeroWrapper = styled.div`
+const HeroWrapper = styled.section`
   position: relative;
-  padding: ${({ theme, $size }) => {
-    if ($size === 'sm') return `${theme.spacing[12]} 0`;
-    if ($size === 'md') return `${theme.spacing[16]} 0`;
-    if ($size === 'lg') return `${theme.spacing[24]} 0`;
-    if ($size === 'xl') return `${theme.spacing[32]} 0`;
-    return `${theme.spacing[20]} 0`;
-  }};
-  text-align: ${({ $align }) => $align || 'center'};
+  overflow: hidden;
   
   ${({ theme, $variant }) => {
     switch ($variant) {
-      case 'primary':
-        return `
-          background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryDark} 100%);
-          color: ${theme.colors.white};
+      case 'gradient':
+        return css`
+          background: linear-gradient(
+            135deg,
+            ${theme.colors.primary} 0%,
+            ${theme.colors.primaryDark} 100%
+          );
+        `;
+      case 'image':
+        return css`
+          background-image: url(${({ $bgImage }) => $bgImage});
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          
+          &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: ${theme.colors.overlay};
+            z-index: 1;
+          }
         `;
       case 'secondary':
-        return `
-          background: linear-gradient(135deg, ${theme.colors.secondary} 0%, ${theme.colors.secondaryDark} 100%);
-          color: ${theme.colors.white};
+        return css`
+          background-color: ${theme.colors.secondary};
         `;
       case 'light':
-        return `
+        return css`
           background-color: ${theme.colors.light};
-          color: ${theme.colors.text.primary};
         `;
-      case 'gradient':
-        return `
-          background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.info} 100%);
-          color: ${theme.colors.white};
-        `;
-      default:
-        return `
+      default: // 'primary'
+        return css`
           background-color: ${theme.colors.primary};
-          color: ${theme.colors.white};
         `;
     }
   }}
 
-  ${({ $image }) => $image && `
-    background-image: url(${$image});
-    background-size: cover;
-    background-position: center;
-    background-blend-mode: overlay;
-  `}
-
-  ${({ $overlay }) => $overlay && `
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, ${$overlay === 'light' ? '0.3' : '0.5'});
-      z-index: 0;
+  color: ${({ theme, $variant }) => 
+    ($variant === 'light') ? theme.colors.text.primary : theme.colors.white
+  };
+  
+  padding: ${({ theme, $size }) => {
+    switch ($size) {
+      case 'sm':
+        return `${theme.spacing[12]} 0`;
+      case 'lg':
+        return `${theme.spacing[24]} 0`;
+      case 'xl':
+        return `${theme.spacing[32]} 0`;
+      default: // 'md'
+        return `${theme.spacing[16]} 0`;
     }
-  `}
+  }};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    padding: ${({ theme, $size }) => {
+      switch ($size) {
+        case 'sm':
+          return `${theme.spacing[8]} 0`;
+        case 'lg':
+          return `${theme.spacing[16]} 0`;
+        case 'xl':
+          return `${theme.spacing[20]} 0`;
+        default:
+          return `${theme.spacing[12]} 0`;
+      }
+    }};
+  }
 `;
 
 const HeroContent = styled.div`
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  text-align: ${({ $align }) => $align || 'center'};
   max-width: ${({ $narrow }) => $narrow ? '800px' : '100%'};
   margin: 0 auto;
 `;
 
 const HeroTitle = styled.h1`
-  font-size: ${({ theme }) => theme.fontSizes['5xl']};
+  font-size: ${({ theme }) => theme.fontSizes['6xl']};
   font-weight: ${({ theme }) => theme.fontWeights.extrabold};
   line-height: ${({ theme }) => theme.lineHeights.tight};
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
   letter-spacing: ${({ theme }) => theme.letterSpacings.tight};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
@@ -95,10 +112,11 @@ const HeroSubtitle = styled.p`
   font-weight: ${({ theme }) => theme.fontWeights.light};
   line-height: ${({ theme }) => theme.lineHeights.relaxed};
   margin-bottom: ${({ theme }) => theme.spacing[8]};
-  opacity: 0.9;
+  opacity: 0.95;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     font-size: ${({ theme }) => theme.fontSizes.lg};
+    margin-bottom: ${({ theme }) => theme.spacing[6]};
   }
 `;
 
@@ -114,55 +132,46 @@ const HeroActions = styled.div`
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     flex-direction: column;
-    align-items: stretch;
-
-    > * {
+    
+    ${Button}, ${ButtonLink} {
       width: 100%;
     }
   }
 `;
 
 /**
- * SectionHero - Versatile hero/masthead component
+ * SectionHero - Reusable hero/masthead component
  * 
- * @param {string} title - Main heading text
- * @param {string} subtitle - Optional subtitle/lead text
- * @param {ReactNode} children - Optional content (typically buttons/CTAs)
- * @param {string} variant - Style variant: 'default' | 'primary' | 'secondary' | 'light' | 'gradient'
- * @param {string} size - Vertical padding size: 'sm' | 'md' | 'lg' | 'xl'
- * @param {string} align - Text alignment: 'left' | 'center' | 'right'
- * @param {boolean} narrow - Constrain content width for better readability
- * @param {string} image - Background image URL
- * @param {string} overlay - Add dark overlay on image: 'light' | 'dark'
+ * @param {string} variant - 'primary', 'secondary', 'gradient', 'image', 'light'
+ * @param {string} size - 'sm', 'md', 'lg', 'xl'
+ * @param {string} align - 'left', 'center', 'right'
+ * @param {boolean} narrow - Constrain content width to 800px
+ * @param {string} bgImage - Background image URL (when variant='image')
+ * @param {string} title - Hero title text
+ * @param {string} subtitle - Hero subtitle/description
+ * @param {React.ReactNode} actions - Call-to-action buttons
+ * @param {React.ReactNode} children - Additional custom content
  */
 export default function SectionHero({
-  title,
-  subtitle,
-  children,
-  variant = 'default',
-  size = 'base',
+  variant = 'primary',
+  size = 'md',
   align = 'center',
   narrow = false,
-  image,
-  overlay,
+  bgImage,
+  title,
+  subtitle,
+  actions,
+  children,
+  ...props
 }) {
   return (
-    <HeroWrapper 
-      $variant={variant} 
-      $size={size} 
-      $align={align}
-      $image={image}
-      $overlay={overlay}
-    >
+    <HeroWrapper $variant={variant} $size={size} $bgImage={bgImage} {...props}>
       <Container>
-        <HeroContent $narrow={narrow}>
+        <HeroContent $align={align} $narrow={narrow}>
           {title && <HeroTitle>{title}</HeroTitle>}
           {subtitle && <HeroSubtitle>{subtitle}</HeroSubtitle>}
-          {children && (
-            <HeroActions $align={align}>
-              {children}
-            </HeroActions>
-          )}
+          {actions && <HeroActions $align={align}>{actions}</HeroActions>}
+          {children}
         </HeroContent>
       </Container>
     </HeroWrapper>
