@@ -331,13 +331,13 @@ export const Badge = styled.span`
     switch ($variant) {
       case 'success':
         return css`
-          background-color: ${theme.colors.successLight};
-          color: ${theme.colors.success};
+          background-color: ${theme.colors.success};
+          color: #ffffff;
         `;
       case 'warning':
         return css`
-          background-color: ${theme.colors.warningLight};
-          color: ${theme.colors.warning};
+          background-color: ${theme.colors.warning};
+          color: #ffffff;
         `;
       case 'danger':
         return css`
