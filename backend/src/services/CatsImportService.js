@@ -89,15 +89,21 @@ export class CatsImportService {
 
   /**
    * Apply confirmed rows: create or update by id.
+   * IMPORTANT: Soft-deletes any existing cats NOT present in the CSV.
    * rows: array of { operation, data }
    */
   static async applyImport(rows) {
     const results = {
       created: 0,
       updated: 0,
+      deleted: 0,
       skipped: 0,
     };
 
+    // Track IDs present in CSV
+    const csvIds = new Set();
+
+    // First pass: create/update cats
     for (const row of rows) {
       if (row.errors && row.errors.length) {
         results.skipped += 1;
@@ -105,13 +111,33 @@ export class CatsImportService {
       }
 
       if (row.operation === "update" && row.data.id) {
+        csvIds.add(row.data.id);
         await CatModel.update(row.data.id, row.data);
         results.updated += 1;
       } else if (row.operation === "create") {
-        await CatModel.create(row.data);
+        const created = await CatModel.create(row.data);
+        if (created && created.id) {
+          csvIds.add(created.id);
+        }
         results.created += 1;
       } else {
         results.skipped += 1;
+      }
+    }
+
+    // Second pass: soft-delete cats not in CSV
+    // Get all existing cats from database
+    const allCats = await CatModel.findAll({
+      status: null, // Get all statuses
+      featured: undefined,
+      senior: undefined,
+    });
+
+    // Identify cats to delete (in DB but not in CSV)
+    for (const cat of allCats) {
+      if (!csvIds.has(cat.id)) {
+        await CatModel.softDelete(cat.id);
+        results.deleted += 1;
       }
     }
 
