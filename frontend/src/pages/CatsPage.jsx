@@ -102,9 +102,9 @@ export default function CatsPage() {
 
   return (
     <>
-      {/* Hero Section */}
+      {/* Hero Section - Updated to gradient variant */}
       <SectionHero
-        variant="secondary"
+        variant="gradient"
         size="md"
         title="Current Foster Cats"
         subtitle="Meet our wonderful cats looking for their forever homes. Each one has a unique personality and story."
