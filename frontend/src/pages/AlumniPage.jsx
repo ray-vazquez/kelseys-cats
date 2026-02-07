@@ -1,33 +1,64 @@
-// frontend/src/pages/AlumniPage.jsx
+// Migrated AlumniPage - Using Phase 1+2 enhanced components
 import React, { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import styled from "styled-components";
 import {
   Container,
+  Section,
   Grid,
   Card,
   CardImage,
   CardBody,
   CardTitle,
-  Button,
+  ButtonLink,
   Badge,
+  TextMuted,
+  FormGroup,
+  Label,
+  Select,
+  Alert,
 } from "../components/Common/StyledComponents.js";
+import SectionHero from "../components/Common/SectionHero.jsx";
+import LoadingState from "../components/Common/LoadingState.jsx";
+import EmptyState from "../components/Common/EmptyState.jsx";
 import http from "../api/http.js";
 import PaginationControls from "../components/Common/PaginationControls.jsx";
-import { Spinner, CenteredSpinner } from "../components/Common/StyledComponents.js";
 
-const PageWrapper = styled.div`
-  padding: ${({ theme }) => theme.spacing["3xl"]} 0;
+const FilterSection = styled.div`
+  background: ${({ theme }) => theme.colors.white};
+  padding: ${({ theme }) => theme.spacing[6]};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  max-width: 400px;
 `;
 
-const PageTitle = styled.h1`
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-`;
-
-const TextMuted = styled.p`
-  color: ${({ theme }) => theme.colors.gray};
+const ResultsCount = styled.p`
   font-size: ${({ theme }) => theme.fontSizes.sm};
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  text-align: center;
+`;
+
+const AdoptionDate = styled.p`
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-bottom: ${({ theme }) => theme.spacing[2]};
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[1]};
+  
+  &::before {
+    content: '❤️';
+  }
+`;
+
+const CardFooter = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing[2]};
+  margin-top: ${({ theme }) => theme.spacing[3]};
+  flex-wrap: wrap;
 `;
 
 export default function AlumniPage() {
@@ -71,7 +102,7 @@ export default function AlumniPage() {
       });
     } catch (err) {
       console.error("Failed to load alumni", err);
-      setError("Unable to load alumni.");
+      setError("Unable to load alumni. Please try again later.");
       setData((prev) => ({ ...prev, items: [], total: 0 }));
     } finally {
       setLoading(false);
@@ -92,85 +123,164 @@ export default function AlumniPage() {
       const p = new URLSearchParams(prev);
       if (value) {
         p.set("year", value);
-        p.set("page", "1"); 
+        p.set("page", "1");
       } else {
         p.delete("year");
+        p.set("page", "1");
       }
       return p;
     });
   }
 
   return (
-    <PageWrapper>
-      <Container>
-        <PageTitle>Alumni Cats</PageTitle>
-        <TextMuted>
-          A keepsake gallery of all the cats Kelsey&apos;s Cats has placed in
-          loving homes.
-        </TextMuted>
+    <>
+      {/* Hero Section */}
+      <SectionHero
+        variant="gradient"
+        size="md"
+        title="Alumni Cats"
+        subtitle="A keepsake gallery celebrating all the wonderful cats we've placed in loving forever homes. Each one has found their happy ending."
+        actions={
+          <ButtonLink to="/cats" $variant="outline" $size="lg">
+            Meet Current Cats
+          </ButtonLink>
+        }
+      />
 
-        <div style={{ marginBottom: "1.5rem" }}>
-          <label>
-            Filter by adoption year:{" "}
-            <select value={year} onChange={handleYearChange}>
-              <option value="">All years</option>
-              {/* You can hardcode a small range for now; later this can be dynamic */}
-              <option value="2024">2024</option>
-              <option value="2025">2025</option>
-              <option value="2026">2026</option>
-            </select>
-          </label>
-        </div>
+      {/* Main Content */}
+      <Section $padding="lg" $bg="light">
+        <Container>
+          {/* Filter Section */}
+          <FilterSection>
+            <FormGroup>
+              <Label>Filter by Adoption Year</Label>
+              <Select value={year} onChange={handleYearChange}>
+                <option value="">All years</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+              </Select>
+            </FormGroup>
+          </FilterSection>
 
-        {loading && (
-          <CenteredSpinner>
-            <Spinner aria-label="Loading cats" />
-          </CenteredSpinner>
-        )}
-        {error && <p style={{ color: "red" }}>{error}</p>}
+          {/* Error Alert */}
+          {error && (
+            <Alert $variant="danger" style={{ marginBottom: '2rem' }}>
+              {error}
+            </Alert>
+          )}
 
-        {!loading && !error && (
-          <>
-            {data.items.length === 0 ? (
-              <p>No alumni cats found yet.</p>
-            ) : (
-              <Grid cols={3} mdCols={2}>
+          {/* Results Count */}
+          {!loading && !error && data.items.length > 0 && (
+            <ResultsCount>
+              {data.total} success {data.total !== 1 ? 'stories' : 'story'}
+              {year && ` from ${year}`}
+            </ResultsCount>
+          )}
+
+          {/* Loading State */}
+          {loading ? (
+            <Grid $cols={3} $mdCols={2}>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Card key={i}>
+                  <LoadingState variant="skeleton" skeletonCount={5} />
+                </Card>
+              ))}
+            </Grid>
+          ) : !error && data.items.length === 0 ? (
+            /* Empty State */
+            <EmptyState
+              icon="🎉"
+              iconSize="lg"
+              title={year ? `No adoptions in ${year}` : "No alumni cats yet"}
+              description={
+                year
+                  ? "No cats were adopted in this year. Try selecting a different year or view all alumni."
+                  : "We haven't placed any cats yet, but we're working hard to find forever homes for our current fosters!"
+              }
+              actions={
+                year ? (
+                  <ButtonLink
+                    to="/alumni"
+                    $variant="primary"
+                    onClick={() => setSearchParams({})}
+                  >
+                    View All Alumni
+                  </ButtonLink>
+                ) : (
+                  <ButtonLink to="/cats" $variant="primary">
+                    Meet Our Current Cats
+                  </ButtonLink>
+                )
+              }
+            />
+          ) : !error ? (
+            /* Alumni Grid */
+            <>
+              <Grid $cols={3} $mdCols={2}>
                 {data.items.map((cat) => (
-                  <Card key={cat.id}>
+                  <Card key={cat.id} $hover>
                     {cat.main_image_url && (
-                      <CardImage src={cat.main_image_url} alt={cat.name} />
+                      <CardImage
+                        src={cat.main_image_url}
+                        alt={cat.name}
+                        $height="250px"
+                      />
                     )}
                     <CardBody>
                       <CardTitle>{cat.name}</CardTitle>
-                      <TextMuted>
+                      
+                      <AdoptionDate>
                         Adopted{" "}
                         {cat.adoption_date
-                          ? new Date(cat.adoption_date).toLocaleDateString()
+                          ? new Date(cat.adoption_date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })
                           : "date unknown"}
-                      </TextMuted>
-                      {cat.is_special_needs && (
-                        <Badge variant="warning">Special Needs</Badge>
+                      </AdoptionDate>
+                      
+                      {cat.age_years && (
+                        <TextMuted>
+                          {cat.age_years} years old · {cat.breed || "Mixed breed"}
+                        </TextMuted>
                       )}
+                      
+                      <CardFooter>
+                        {cat.is_special_needs && (
+                          <Badge $variant="warning">Special Needs</Badge>
+                        )}
+                        {cat.bonded_pair_id && (
+                          <Badge $variant="info">Bonded Pair</Badge>
+                        )}
+                      </CardFooter>
+                      
                       <div style={{ marginTop: "1rem" }}>
-                        <Button as={Link} to={`/alumni/${cat.id}`}>
+                        <ButtonLink to={`/alumni/${cat.id}`} $variant="primary" $fullWidth>
                           View Story
-                        </Button>
+                        </ButtonLink>
                       </div>
                     </CardBody>
                   </Card>
                 ))}
               </Grid>
-            )}
 
-            <PaginationControls
-              page={data.page}
-              limit={data.limit}
-              total={data.total}
-              onPageChange={handlePageChange}
-            />
-          </>
-        )}
-      </Container>
-    </PageWrapper>
+              {/* Pagination */}
+              {data.total > data.limit && (
+                <div style={{ marginTop: '3rem' }}>
+                  <PaginationControls
+                    page={data.page}
+                    limit={data.limit}
+                    total={data.total}
+                    onPageChange={handlePageChange}
+                  />
+                </div>
+              )}
+            </>
+          ) : null}
+        </Container>
+      </Section>
+    </>
   );
 }
