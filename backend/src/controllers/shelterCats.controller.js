@@ -1,7 +1,8 @@
 // backend/src/controllers/shelterCats.controller.js
 // Controller for fetching all available cats (foster + shelter)
+// Uses Puppeteer scraper instead of defunct Petfinder API
 
-import { getVoiceShelterCats, clearCache, getCacheInfo } from '../services/petfinderService.js';
+import { scrapeVoiceCats, clearCache, getCacheInfo } from '../services/petfinderScraper.js';
 import { query } from '../lib/db.js';
 
 /**
@@ -18,8 +19,8 @@ export async function getAllAvailableCats(req, res) {
       `SELECT * FROM cats WHERE status = 'available' ORDER BY name ASC`
     );
     
-    // 2. Get Voice shelter cats from Petfinder
-    const shelterCats = await getVoiceShelterCats({ 
+    // 2. Get Voice shelter cats from Petfinder (scraped)
+    const shelterCats = await scrapeVoiceCats({ 
       forceRefresh: forceRefresh === 'true' 
     });
     
@@ -64,7 +65,7 @@ export async function getShelterCatsOnly(req, res) {
   try {
     const { forceRefresh } = req.query;
     
-    const shelterCats = await getVoiceShelterCats({ 
+    const shelterCats = await scrapeVoiceCats({ 
       forceRefresh: forceRefresh === 'true' 
     });
     
@@ -72,7 +73,7 @@ export async function getShelterCatsOnly(req, res) {
       items: shelterCats,
       total: shelterCats.length,
       organization: 'Voice for the Voiceless',
-      source: 'petfinder'
+      source: 'petfinder_scraped'
     });
     
   } catch (error) {
@@ -93,7 +94,7 @@ export async function refreshCache(req, res) {
     clearCache();
     
     // Fetch fresh data
-    const shelterCats = await getVoiceShelterCats({ forceRefresh: true });
+    const shelterCats = await scrapeVoiceCats({ forceRefresh: true });
     
     res.json({
       success: true,
