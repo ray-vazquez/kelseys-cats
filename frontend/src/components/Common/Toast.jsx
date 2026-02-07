@@ -1,4 +1,4 @@
-// Toast notification component - Simplified design
+// Toast notification component - Prominent colors
 import React, { useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 
@@ -41,25 +41,24 @@ const ToastContainer = styled.div`
 `;
 
 const ToastItem = styled.div`
-  background: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.text.primary};
-  padding: ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[4]};
-  border-radius: ${({ theme }) => theme.borderRadius.base};
-  box-shadow: ${({ theme }) => theme.shadows.lg};
-  border-left: 4px solid ${({ theme, $variant }) => {
+  background: ${({ theme, $variant }) => {
     switch ($variant) {
       case 'success':
-        return theme.colors.success;
+        return '#10b981'; // Green-500
       case 'error':
       case 'danger':
-        return theme.colors.danger;
+        return '#ef4444'; // Red-500
       case 'warning':
-        return theme.colors.warning;
+        return '#f59e0b'; // Amber-500
       case 'info':
       default:
-        return theme.colors.info;
+        return '#3b82f6'; // Blue-500
     }
   }};
+  color: #ffffff;
+  padding: ${({ theme }) => theme.spacing[4]};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   min-width: 300px;
   max-width: 450px;
   display: flex;
@@ -79,37 +78,45 @@ const ToastContent = styled.div`
   flex: 1;
 `;
 
+const ToastTitle = styled.div`
+  font-size: ${({ theme }) => theme.fontSizes.base};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  color: #ffffff;
+  margin-bottom: ${({ theme }) => theme.spacing[1]};
+`;
+
 const ToastMessage = styled.div`
   font-size: ${({ theme }) => theme.fontSizes.sm};
   line-height: ${({ theme }) => theme.lineHeights.relaxed};
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: rgba(255, 255, 255, 0.95);
 `;
 
 const CloseButton = styled.button`
   background: transparent;
   border: none;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: #ffffff;
   cursor: pointer;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   transition: all 0.15s;
-  opacity: 0.5;
+  opacity: 0.9;
   flex-shrink: 0;
-  font-size: 18px;
+  font-size: 20px;
+  font-weight: bold;
   line-height: 1;
 
   &:hover {
     opacity: 1;
-    background: ${({ theme }) => theme.colors.light};
+    background: rgba(255, 255, 255, 0.2);
   }
 
   &:focus {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline: 2px solid #ffffff;
     outline-offset: 2px;
   }
 `;
@@ -131,13 +138,12 @@ export function Toast({
     }
   }, [duration, onClose]);
 
-  // Combine title and message into single text
-  const displayText = title && message ? `${title}: ${message}` : title || message;
-
   return (
     <ToastItem $variant={variant} $isClosing={isClosing} role="alert" aria-live="polite">
       <ToastContent>
-        <ToastMessage>{displayText}</ToastMessage>
+        {title && <ToastTitle>{title}</ToastTitle>}
+        {message && <ToastMessage>{message}</ToastMessage>}
+        {!title && !message && <ToastMessage>Notification</ToastMessage>}
       </ToastContent>
       {onClose && (
         <CloseButton onClick={onClose} aria-label="Close notification">
