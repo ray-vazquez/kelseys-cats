@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 const Nav = styled.nav`
   background-color: ${({ theme }) => theme.colors.secondary};
-  padding: ${({ theme }) => theme.spacing.lg} 0;
+  padding: ${({ theme }) => theme.spacing[4]} 0;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -14,14 +14,14 @@ const Nav = styled.nav`
 const NavContainer = styled.div`
   max-width: 1140px;
   margin: 0 auto;
-  padding: 0 ${({ theme }) => theme.spacing.lg};
+  padding: 0 ${({ theme }) => theme.spacing[6]};
   display: flex;
   justify-content: space-between;
   align-items: center;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     flex-direction: column;
-    gap: ${({ theme }) => theme.spacing.md};
+    gap: ${({ theme }) => theme.spacing[4]};
   }
 `;
 
@@ -37,17 +37,17 @@ const Brand = styled(Link)`
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.secondaryHover};
-    color: ${({ theme }) => theme.colors.white};
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
 const NavLinks = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme.spacing.xl};
+  gap: ${({ theme }) => theme.spacing[6]};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     flex-direction: column;
-    gap: ${({ theme }) => theme.spacing.md};
+    gap: ${({ theme }) => theme.spacing[3]};
     text-align: center;
   }
 `;
@@ -66,7 +66,7 @@ const NavLink = styled(Link)`
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.secondaryHover};
-    color: ${({ theme }) => theme.colors.white};
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
