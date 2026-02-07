@@ -6,13 +6,13 @@ import { useAuth } from '../context/AuthContext.jsx';
 import http from '../api/http.js';
 
 const PageWrapper = styled.div`
-  padding: ${({ theme }) => theme.spacing['6xl']} 0;
+  padding: ${({ theme }) => theme.spacing[16]} 0;
   min-height: calc(100vh - 200px);
   display: flex;
   align-items: center;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: ${({ theme }) => theme.spacing['4xl']} 0;
+    padding: ${({ theme }) => theme.spacing[12]} 0;
   }
 `;
 
