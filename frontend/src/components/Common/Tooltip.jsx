@@ -1,7 +1,6 @@
 // Tooltip component
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
-import PropTypes from 'prop-types';
 
 const TooltipWrapper = styled.div`
   position: relative;
@@ -163,12 +162,3 @@ export default function Tooltip({
     </TooltipWrapper>
   );
 }
-
-Tooltip.propTypes = {
-  children: PropTypes.node.isRequired,
-  content: PropTypes.node,
-  placement: PropTypes.oneOf(['top', 'bottom', 'left', 'right']),
-  delay: PropTypes.number,
-  offset: PropTypes.number,
-  disabled: PropTypes.bool,
-};
