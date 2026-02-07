@@ -1,57 +1,44 @@
-// frontend/src/pages/HomePage.jsx
+// Migrated HomePage - Using Phase 1+2 enhanced components
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import styled from "styled-components";
 import {
   Container,
+  Section,
   Grid,
   Card,
   CardImage,
   CardBody,
   CardTitle,
-  Button,
+  ButtonLink,
   Badge,
-  Skeleton
+  TextMuted,
 } from "../components/Common/StyledComponents.js";
+import SectionHero from "../components/Common/SectionHero.jsx";
+import LoadingState from "../components/Common/LoadingState.jsx";
+import { NoCatsFound } from "../components/Common/EmptyState.jsx";
 import http from "../api/http.js";
-
-const Masthead = styled.div`
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: ${({ theme }) => theme.colors.white};
-  padding: ${({ theme }) => theme.spacing["4xl"]} 0;
-  text-align: center;
-`;
-
-const MastheadTitle = styled.h1`
-  font-size: ${({ theme }) => theme.fontSizes["5xl"]};
-  font-weight: ${({ theme }) => theme.fontWeights.bold};
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    font-size: ${({ theme }) => theme.fontSizes["4xl"]};
-  }
-`;
-
-const MastheadLead = styled.p`
-  font-size: ${({ theme }) => theme.fontSizes.xl};
-  font-weight: ${({ theme }) => theme.fontWeights.light};
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-`;
-
-const Section = styled.section`
-  padding: ${({ theme }) => theme.spacing["3xl"]} 0;
-`;
 
 const SectionTitle = styled.h2`
   text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing["2xl"]};
-  color: ${({ theme }) => theme.colors.secondary};
+  margin-bottom: ${({ theme }) => theme.spacing[12]};
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: ${({ theme }) => theme.fontSizes["4xl"]};
 `;
 
-const TextMuted = styled.p`
-  color: ${({ theme }) => theme.colors.gray};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
+const CardFooter = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing[2]};
+  margin-top: ${({ theme }) => theme.spacing[4]};
+  flex-wrap: wrap;
+`;
+
+const MissionText = styled.p`
+  text-align: center;
+  font-size: ${({ theme }) => theme.fontSizes.lg};
+  line-height: ${({ theme }) => theme.lineHeights.relaxed};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  max-width: 700px;
+  margin: 0 auto ${({ theme }) => theme.spacing[8]};
 `;
 
 export default function HomePage() {
@@ -63,7 +50,6 @@ export default function HomePage() {
     params.set("status", "available");
     params.set("page", "1");
     params.set("limit", "6");
-    // we’ll filter featured client-side for now
 
     setLoading(true);
     http
@@ -71,7 +57,7 @@ export default function HomePage() {
       .then((res) => {
         const body = res.data;
         const items = Array.isArray(body) ? body : body.items || [];
-        // filter to featured
+        // Filter to featured cats
         const featuredOnly = items.filter((cat) => cat.featured);
         setFeaturedCats(featuredOnly);
       })
@@ -84,47 +70,56 @@ export default function HomePage() {
 
   return (
     <>
-      <Masthead>
-        <Container>
-          <MastheadTitle>Welcome to Kelsey&apos;s Cats</MastheadTitle>
-          <MastheadLead>Finding loving homes for cats in need</MastheadLead>
-          <Button as={Link} to="/cats" variant="outline" size="lg">
-            Meet Our Cats
-          </Button>
-        </Container>
-      </Masthead>
+      {/* Hero Section - Using new SectionHero component */}
+      <SectionHero
+        variant="gradient"
+        size="lg"
+        title="Welcome to Kelsey's Cats"
+        subtitle="Finding loving homes for cats in need. Every cat deserves a second chance at happiness."
+        actions={
+          <>
+            <ButtonLink to="/cats" $variant="outline" $size="lg">
+              Meet Our Cats
+            </ButtonLink>
+            <ButtonLink to="/adoption" $variant="secondary" $size="lg">
+              Adoption Info
+            </ButtonLink>
+          </>
+        }
+      />
 
-      <Section aria-busy={loading} aria-live="polite">
+      {/* Featured Cats Section */}
+      <Section $padding="lg" $bg="light">
         <Container>
           <SectionTitle>Featured Cats</SectionTitle>
 
           {loading ? (
-            <Grid cols={3} mdCols={2}>
+            <Grid $cols={3} $mdCols={2}>
               {Array.from({ length: 3 }).map((_, i) => (
                 <Card key={i}>
-                  <Skeleton style={{ height: 200 }} />
-                  <CardBody>
-                    <Skeleton
-                      style={{ height: 20, width: "60%", marginBottom: 8 }}
-                    />
-                    <Skeleton
-                      style={{ height: 14, width: "80%", marginBottom: 4 }}
-                    />
-                    <Skeleton style={{ height: 14, width: "40%" }} />
-                  </CardBody>
+                  <LoadingState variant="skeleton" skeletonCount={5} />
                 </Card>
               ))}
             </Grid>
           ) : featuredCats.length === 0 ? (
-            <TextMuted>
-              No featured cats at the moment. Check back soon!
-            </TextMuted>
+            <NoCatsFound
+              description="No featured cats available right now. Check back soon or browse all our cats!"
+              actions={
+                <ButtonLink to="/cats" $variant="primary">
+                  View All Cats
+                </ButtonLink>
+              }
+            />
           ) : (
-            <Grid cols={3} mdCols={2}>
+            <Grid $cols={3} $mdCols={2}>
               {featuredCats.map((cat) => (
-                <Card key={cat.id}>
+                <Card key={cat.id} $hover>
                   {cat.main_image_url && (
-                    <CardImage src={cat.main_image_url} alt={cat.name} />
+                    <CardImage
+                      src={cat.main_image_url}
+                      alt={cat.name}
+                      $height="250px"
+                    />
                   )}
                   <CardBody>
                     <CardTitle>{cat.name}</CardTitle>
@@ -134,19 +129,52 @@ export default function HomePage() {
                         : "Age unknown"}{" "}
                       · {cat.breed || "Mixed breed"}
                     </TextMuted>
-                    {cat.is_special_needs && (
-                      <Badge variant="warning">Special Needs</Badge>
+                    {cat.temperament && (
+                      <p style={{ marginBottom: '1rem', lineHeight: 1.5 }}>
+                        {cat.temperament.length > 100
+                          ? `${cat.temperament.substring(0, 100)}...`
+                          : cat.temperament}
+                      </p>
                     )}
+                    <CardFooter>
+                      {cat.is_special_needs && (
+                        <Badge $variant="warning">Special Needs</Badge>
+                      )}
+                      {cat.bonded_pair_id && (
+                        <Badge $variant="info">Bonded Pair</Badge>
+                      )}
+                    </CardFooter>
                     <div style={{ marginTop: "1rem" }}>
-                      <Button as={Link} to={`/cats/${cat.id}`}>
+                      <ButtonLink to={`/cats/${cat.id}`} $variant="primary">
                         Learn More
-                      </Button>
+                      </ButtonLink>
                     </div>
                   </CardBody>
                 </Card>
               ))}
             </Grid>
           )}
+        </Container>
+      </Section>
+
+      {/* Mission Section */}
+      <Section $padding="lg">
+        <Container $size="md">
+          <SectionTitle>Our Mission</SectionTitle>
+          <MissionText>
+            We're dedicated to rescuing and rehoming cats in need. Every cat in
+            our care receives medical attention, love, and the chance to find
+            their forever family. Thank you for considering adoption and helping
+            us make a difference in these cats' lives.
+          </MissionText>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <ButtonLink to="/adoption" $variant="primary" $size="lg">
+              How to Adopt
+            </ButtonLink>
+            <ButtonLink to="/alumni" $variant="outline" $size="lg">
+              Success Stories
+            </ButtonLink>
+          </div>
         </Container>
       </Section>
     </>
