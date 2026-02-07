@@ -1,4 +1,4 @@
-// Migrated CatDetailPage - Using Phase 1+2 enhanced components with compact title
+// Migrated CatDetailPage - Using Phase 1+2 enhanced components with compact title, senior badge, and bio
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
@@ -277,17 +277,25 @@ export default function CatDetailPage() {
                   {cat.is_special_needs && (
                     <Badge $variant="warning">Special Needs</Badge>
                   )}
+                  {cat.is_senior && (
+                    <Badge $variant="secondary">Senior</Badge>
+                  )}
                   {cat.bonded_pair_id && (
                     <Badge $variant="info">Bonded Pair</Badge>
-                  )}
-                  {cat.age_years >= 10 && (
-                    <Badge $variant="secondary">Senior</Badge>
                   )}
                   {cat.featured && (
                     <Badge $variant="success">Featured</Badge>
                   )}
                 </BadgeGroup>
               </CatHeader>
+
+              {/* Bio Section */}
+              {cat.bio && (
+                <InfoSection>
+                  <InfoTitle>About {cat.name}</InfoTitle>
+                  <InfoText>{cat.bio}</InfoText>
+                </InfoSection>
+              )}
 
               {/* Temperament */}
               {cat.temperament && (
