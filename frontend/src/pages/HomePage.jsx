@@ -48,8 +48,9 @@ export default function HomePage() {
   useEffect(() => {
     const params = new URLSearchParams();
     params.set("status", "available");
+    params.set("featured", "true");  // Request only featured cats from API
     params.set("page", "1");
-    params.set("limit", "6");
+    params.set("limit", "12");  // Increased limit to show more featured cats
 
     setLoading(true);
     http
@@ -57,9 +58,8 @@ export default function HomePage() {
       .then((res) => {
         const body = res.data;
         const items = Array.isArray(body) ? body : body.items || [];
-        // Filter to featured cats
-        const featuredOnly = items.filter((cat) => cat.featured);
-        setFeaturedCats(featuredOnly);
+        // No need to filter anymore - API returns only featured cats
+        setFeaturedCats(items);
       })
       .catch((err) => {
         console.error("Failed to load featured cats", err);
