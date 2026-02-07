@@ -137,6 +137,7 @@ export class CatModel {
         good_with_dogs,
         medical_notes,
         is_special_needs,
+        is_senior,
         status,
         main_image_url,
         featured,
@@ -144,7 +145,7 @@ export class CatModel {
         adoption_date,
         adoption_story
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
@@ -158,6 +159,7 @@ export class CatModel {
       data.good_with_dogs ?? (data.goodwithdogs ? 1 : 0),
       data.medical_notes ?? data.medicalnotes ?? null,
       data.is_special_needs ?? (data.isspecialneeds ? 1 : 0),
+      data.is_senior ?? (data.issenior ? 1 : 0),
       data.status ?? "available",
       data.main_image_url ?? data.mainimageurl ?? null,
       data.featured ? 1 : 0,
@@ -196,6 +198,8 @@ export class CatModel {
       medicalnotes: "medical_notes",
       is_special_needs: "is_special_needs",
       isspecialneeds: "is_special_needs",
+      is_senior: "is_senior",
+      issenior: "is_senior",
       status: "status",
       main_image_url: "main_image_url",
       mainimageurl: "main_image_url",
@@ -230,6 +234,8 @@ export class CatModel {
             "goodwithdogs",
             "is_special_needs",
             "isspecialneeds",
+            "is_senior",
+            "issenior",
             "featured",
           ].includes(inputKey)
         ) {
