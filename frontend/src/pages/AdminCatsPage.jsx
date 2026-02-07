@@ -129,7 +129,7 @@ const ActionsCell = styled.td`
   white-space: nowrap;
 
   & > *:not(:last-child) {
-    margin-right: ${({ theme }) => theme.spacing.sm};
+    margin-right: ${({ theme }) => theme.spacing[3]};
   }
 `;
 
