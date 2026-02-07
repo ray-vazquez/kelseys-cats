@@ -182,6 +182,13 @@ export class CatModel {
 
     Object.entries(mapping).forEach(([inputKey, column]) => {
       if (Object.prototype.hasOwnProperty.call(data, inputKey)) {
+        const value = data[inputKey];
+        
+        // Skip undefined values - they should not be in the query
+        if (value === undefined) {
+          return;
+        }
+
         fields.push(`${column} = ?`);
 
         // Boolean / tinyint flags
@@ -198,9 +205,10 @@ export class CatModel {
             "featured",
           ].includes(inputKey)
         ) {
-          params.push(data[inputKey] ? 1 : 0);
+          params.push(value ? 1 : 0);
         } else {
-          params.push(data[inputKey]);
+          // Convert undefined to null just in case
+          params.push(value === undefined ? null : value);
         }
       }
     });
@@ -216,7 +224,13 @@ export class CatModel {
     `;
     params.push(id);
 
-    await query(sql, params);
+    // Final safety check - ensure no undefined values in params
+    const cleanParams = params.map(p => p === undefined ? null : p);
+
+    console.log('UPDATE SQL:', sql);
+    console.log('UPDATE PARAMS:', cleanParams);
+
+    await query(sql, cleanParams);
     return this.findById(id);
   }
 
