@@ -35,6 +35,13 @@ const ToastContainer = styled.div`
   }
 `;
 
+const StatusHint = styled.small`
+  display: block;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.fontSizes.xs};
+  margin-top: ${({ theme }) => theme.spacing[1]};
+`;
+
 export default function AdminCatEditPage({ mode }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -347,7 +354,11 @@ export default function AdminCatEditPage({ mode }) {
                     <option value="pending">Pending</option>
                     <option value="hold">Hold</option>
                     <option value="adopted">Adopted</option>
+                    <option value="alumni">Alumni</option>
                   </Select>
+                  <StatusHint>
+                    Available: Ready for adoption | Pending: Application in review | Hold: Reserved | Adopted/Alumni: Successfully adopted
+                  </StatusHint>
                 </FormGroup>
 
                 <FormGroup>
