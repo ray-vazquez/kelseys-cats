@@ -1,4 +1,4 @@
-// Migrated CatDetailPage - Using Phase 1+2 enhanced components
+// Migrated CatDetailPage - Using Phase 1+2 enhanced components with compact title
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
@@ -155,6 +155,7 @@ export default function CatDetailPage() {
           variant="gradient"
           size="sm"
           title="Loading..."
+          compactTitle
         />
         <Section $padding="lg">
           <Container>
@@ -179,6 +180,7 @@ export default function CatDetailPage() {
           variant="gradient"
           size="sm"
           title="Cat Not Found"
+          compactTitle
         />
         <Section $padding="lg">
           <Container>
@@ -214,7 +216,7 @@ export default function CatDetailPage() {
 
   return (
     <>
-      {/* Hero Section */}
+      {/* Hero Section - Compact title for cat names */}
       <SectionHero
         variant="gradient"
         size="sm"
@@ -226,6 +228,7 @@ export default function CatDetailPage() {
             ? "Successfully adopted!"
             : cat.status
         }
+        compactTitle
       />
 
       {/* Main Content */}
