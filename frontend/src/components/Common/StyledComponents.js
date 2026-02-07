@@ -155,6 +155,7 @@ const getButtonStyles = ({ theme, $variant, $size }) => {
       &:hover:not(:disabled) {
         background-color: ${theme.colors.primaryHover};
         border-color: ${theme.colors.primaryHover};
+        color: ${theme.colors.white};
         transform: translateY(-1px);
       }
 
@@ -170,6 +171,7 @@ const getButtonStyles = ({ theme, $variant, $size }) => {
       &:hover:not(:disabled) {
         background-color: ${theme.colors.secondaryHover};
         border-color: ${theme.colors.secondaryHover};
+        color: ${theme.colors.white};
         transform: translateY(-1px);
       }
 
@@ -185,6 +187,7 @@ const getButtonStyles = ({ theme, $variant, $size }) => {
       &:hover:not(:disabled) {
         background-color: ${theme.colors.primary};
         color: ${theme.colors.white};
+        border-color: ${theme.colors.primary};
         transform: translateY(-1px);
       }
 
@@ -200,6 +203,7 @@ const getButtonStyles = ({ theme, $variant, $size }) => {
       &:hover:not(:disabled) {
         background-color: ${theme.colors.light};
         border-color: ${theme.colors.borderLight};
+        color: ${theme.colors.primary};
       }
     `,
     link: css`
@@ -221,6 +225,7 @@ const getButtonStyles = ({ theme, $variant, $size }) => {
       &:hover:not(:disabled) {
         background-color: ${theme.colors.dangerHover};
         border-color: ${theme.colors.dangerHover};
+        color: ${theme.colors.white};
         transform: translateY(-1px);
       }
 
@@ -465,6 +470,10 @@ export const CheckboxLabel = styled.label`
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
+  }
+
+  &:last-child {
+    margin-bottom: 0;
   }
 `;
 
