@@ -356,7 +356,7 @@ export const Badge = styled.span`
         `;
       case 'secondary':
         return css`
-          background-color: ${theme.colors.neutral[600]};
+          background-color: #7c3aed;
           color: #ffffff;
         `;
       default:
