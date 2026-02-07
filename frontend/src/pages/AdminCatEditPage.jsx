@@ -10,15 +10,11 @@ const PageWrapper = styled.div`
   padding: ${({ theme }) => theme.spacing['3xl']} 0;
 `;
 
-const PageHeader = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
-`;
-
 const PageTitle = styled.h2`
-  font-size: ${({ theme }) => theme.fontSizes['4xl']};
+  font-size: ${({ theme }) => theme.fontSizes['3xl']};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0;
+  margin: 0 0 ${({ theme }) => theme.spacing[6]} 0;
 `;
 
 const FormCard = styled(Card)`
@@ -328,12 +324,10 @@ export default function AdminCatEditPage({ mode }) {
     <>
       <PageWrapper>
         <Container>
-          <PageHeader>
-            <PageTitle>{mode === 'create' ? 'Add New Cat' : 'Edit Cat'}</PageTitle>
-          </PageHeader>
-
           <FormCard>
             <CardBody>
+              <PageTitle>{mode === 'create' ? 'Add New Cat' : 'Edit Cat'}</PageTitle>
+
               {error && (
                 <Alert $variant="danger" style={{ marginBottom: '1.5rem' }}>
                   <strong>Error:</strong> {error}
