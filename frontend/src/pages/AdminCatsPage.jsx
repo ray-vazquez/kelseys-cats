@@ -1,4 +1,4 @@
-// AdminCatsPage - Enhanced with Toast notifications
+// AdminCatsPage - Enhanced with status filters
 import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
@@ -8,6 +8,8 @@ import {
   Spinner,
   CenteredSpinner,
   Alert,
+  CheckboxLabel,
+  Checkbox,
 } from "../components/Common/StyledComponents.js";
 import { Toast } from "../components/Common/Toast.jsx";
 import http from "../api/http.js";
@@ -41,6 +43,27 @@ const ButtonGroup = styled.div`
   }
 `;
 
+const FilterSection = styled.div`
+  background: ${({ theme }) => theme.colors.light};
+  padding: ${({ theme }) => theme.spacing[4]};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
+`;
+
+const FilterLabel = styled.label`
+  display: block;
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+`;
+
+const FilterGroup = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing[4]};
+  flex-wrap: wrap;
+`;
+
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
@@ -71,8 +94,32 @@ const StatusBadge = styled.span`
   font-size: ${({ theme }) => theme.fontSizes.xs};
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  background-color: ${({ theme }) => theme.colors.light};
-  color: ${({ theme }) => theme.colors.secondary};
+  background-color: ${({ $status, theme }) => {
+    switch ($status) {
+      case 'available':
+        return theme.colors.success;
+      case 'adopted':
+      case 'alumni':
+        return theme.colors.info;
+      case 'pending':
+        return theme.colors.warning;
+      case 'hold':
+        return theme.colors.secondary;
+      default:
+        return theme.colors.light;
+    }
+  }};
+  color: ${({ $status, theme }) => {
+    switch ($status) {
+      case 'available':
+      case 'adopted':
+      case 'alumni':
+      case 'pending':
+        return theme.colors.white;
+      default:
+        return theme.colors.text.primary;
+    }
+  }};
 `;
 
 const ActionsCell = styled.td`
@@ -110,13 +157,19 @@ export default function AdminCatsPage() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [error, setError] = useState(null);
   const [toasts, setToasts] = useState([]);
+  
+  // Status filters
+  const [showAvailable, setShowAvailable] = useState(true);
+  const [showPending, setShowPending] = useState(true);
+  const [showHold, setShowHold] = useState(true);
+  const [showAlumni, setShowAlumni] = useState(false);
 
   const page = Number(searchParams.get("page") || "1");
 
   useEffect(() => {
     loadCats(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, showAvailable, showPending, showHold, showAlumni]);
 
   const addToast = (toast) => {
     const id = Date.now().toString();
@@ -134,6 +187,19 @@ export default function AdminCatsPage() {
       const params = new URLSearchParams();
       params.set("page", String(currentPage));
       params.set("limit", String(data.limit));
+      
+      // Build status filter - only add if at least one is selected
+      const statuses = [];
+      if (showAvailable) statuses.push('available');
+      if (showPending) statuses.push('pending');
+      if (showHold) statuses.push('hold');
+      if (showAlumni) statuses.push('alumni');
+      
+      // If specific statuses selected, add to query; otherwise fetch all
+      if (statuses.length > 0 && statuses.length < 4) {
+        params.set("status", statuses.join(','));
+      }
+      
       const res = await http.get(`/cats?${params.toString()}`);
       setData(res.data);
     } catch (err) {
@@ -279,6 +345,41 @@ export default function AdminCatsPage() {
             />
           )}
 
+          {/* Status Filters */}
+          <FilterSection>
+            <FilterLabel>Filter by Status:</FilterLabel>
+            <FilterGroup>
+              <CheckboxLabel>
+                <Checkbox
+                  checked={showAvailable}
+                  onChange={(e) => setShowAvailable(e.target.checked)}
+                />
+                Show Available
+              </CheckboxLabel>
+              <CheckboxLabel>
+                <Checkbox
+                  checked={showPending}
+                  onChange={(e) => setShowPending(e.target.checked)}
+                />
+                Show Pending
+              </CheckboxLabel>
+              <CheckboxLabel>
+                <Checkbox
+                  checked={showHold}
+                  onChange={(e) => setShowHold(e.target.checked)}
+                />
+                Show Hold
+              </CheckboxLabel>
+              <CheckboxLabel>
+                <Checkbox
+                  checked={showAlumni}
+                  onChange={(e) => setShowAlumni(e.target.checked)}
+                />
+                Show Alumni
+              </CheckboxLabel>
+            </FilterGroup>
+          </FilterSection>
+
           {error && (
             <Alert $variant="danger" style={{ marginBottom: '1.5rem' }}>
               {error}
@@ -295,7 +396,7 @@ export default function AdminCatsPage() {
             <>
               {data.items.length === 0 ? (
                 <Alert $variant="info">
-                  No cats found. Click "Add New Cat" to get started.
+                  No cats found with the selected filters. Try adjusting your filter settings.
                 </Alert>
               ) : (
                 <>
@@ -319,7 +420,7 @@ export default function AdminCatsPage() {
                           <td>{cat.id}</td>
                           <td>{cat.name}</td>
                           <td>
-                            <StatusBadge>{cat.status}</StatusBadge>
+                            <StatusBadge $status={cat.status}>{cat.status}</StatusBadge>
                           </td>
                           <td>{cat.featured ? "Yes" : "No"}</td>
                           <td>
