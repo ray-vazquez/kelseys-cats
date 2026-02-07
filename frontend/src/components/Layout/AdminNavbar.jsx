@@ -45,31 +45,31 @@ const NavLink = styled(Link)`
   text-transform: uppercase;
   color: ${({ theme }) => theme.colors.white};
   text-decoration: none;
-  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
-  border-radius: ${({ theme }) => theme.borderRadius.base};
   transition: all ${({ theme }) => theme.transitions.fast};
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.secondaryHover};
     color: ${({ theme }) => theme.colors.primary};
+    text-decoration: underline;
   }
 `;
 
 const LogoutButton = styled(Button)`
-  /* Override for dark navbar background */
+  /* Readable white text on dark background */
   background-color: transparent;
   color: ${({ theme }) => theme.colors.white};
-  border: 2px solid ${({ theme }) => theme.colors.white};
+  border: 2px solid transparent;
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
 
   &:hover:not(:disabled) {
-    background-color: ${({ theme }) => theme.colors.primary};
-    border-color: ${({ theme }) => theme.colors.primary};
-    color: ${({ theme }) => theme.colors.white};
-    transform: translateY(-1px);
+    background-color: transparent;
+    border-color: transparent;
+    color: ${({ theme }) => theme.colors.primary};
+    text-decoration: underline;
+    transform: none;
   }
 
   &:active:not(:disabled) {
-    transform: translateY(0);
+    transform: none;
   }
 `;
 
