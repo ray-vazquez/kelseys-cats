@@ -213,6 +213,8 @@ export default function CatDetailPage() {
 
   const isAvailable = cat.status === 'available';
   const isAdopted = cat.status === 'adopted';
+  // Check for senior status: prioritize is_senior column, fallback to age >= 10
+  const isSenior = cat.is_senior || (cat.age_years && cat.age_years >= 10);
 
   return (
     <>
@@ -277,7 +279,7 @@ export default function CatDetailPage() {
                   {cat.is_special_needs && (
                     <Badge $variant="warning">Special Needs</Badge>
                   )}
-                  {cat.is_senior && (
+                  {isSenior && (
                     <Badge $variant="secondary">Senior</Badge>
                   )}
                   {cat.bonded_pair_id && (
