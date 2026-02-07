@@ -17,7 +17,7 @@ import PaginationControls from "../components/Common/PaginationControls.jsx";
 import CsvImportModal from "../components/Admin/CsvImportModal.jsx";
 
 const PageWrapper = styled.div`
-  padding: ${({ theme }) => theme.spacing["3xl"]} 0;
+  padding: ${({ theme }) => theme.spacing['3xl']} 0;
 `;
 
 const Header = styled.div`
@@ -50,8 +50,7 @@ const FilterSection = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing[6]};
 `;
 
-const FilterLabel = styled.label`
-  display: block;
+const FilterLabel = styled.div`
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: ${({ theme }) => theme.spacing[3]};
