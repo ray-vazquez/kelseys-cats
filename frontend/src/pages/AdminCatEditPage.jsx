@@ -1,4 +1,4 @@
-// Fixed AdminCatEditPage - Now with status validation and improved spacing
+// Fixed AdminCatEditPage - With improved layout and senior tag
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -22,8 +22,23 @@ const FormCard = styled(Card)`
   margin: 0 auto;
 `;
 
+const TagsSection = styled.div`
+  border: 2px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  padding: ${({ theme }) => theme.spacing[5]};
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
+`;
+
+const TagsTitle = styled.h4`
+  font-size: ${({ theme }) => theme.fontSizes.base};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0 0 ${({ theme }) => theme.spacing[4]} 0;
+`;
+
 const ButtonGroup = styled.div`
   display: flex;
+  justify-content: flex-end;
   gap: ${({ theme }) => theme.spacing[3]};
   padding-top: ${({ theme }) => theme.spacing[6]};
   border-top: 1px solid ${({ theme }) => theme.colors.border};
@@ -89,6 +104,7 @@ export default function AdminCatEditPage({ mode }) {
     good_with_dogs: false,
     medical_notes: '',
     is_special_needs: false,
+    is_senior: false,
     status: 'available',
     main_image_url: '',
     featured: false
@@ -118,6 +134,7 @@ export default function AdminCatEditPage({ mode }) {
             good_with_dogs: cat.good_with_dogs || false,
             medical_notes: cat.medical_notes || '',
             is_special_needs: cat.is_special_needs || false,
+            is_senior: cat.is_senior || false,
             status: cat.status || 'available',
             main_image_url: cat.main_image_url || '',
             featured: cat.featured || false
@@ -436,7 +453,9 @@ export default function AdminCatEditPage({ mode }) {
                   )}
                 </FormGroup>
 
-                <FormGroup>
+                <TagsSection>
+                  <TagsTitle>Tags</TagsTitle>
+                  
                   <CheckboxLabel>
                     <Checkbox
                       name="good_with_kids"
@@ -479,6 +498,16 @@ export default function AdminCatEditPage({ mode }) {
 
                   <CheckboxLabel>
                     <Checkbox
+                      name="is_senior"
+                      checked={formData.is_senior}
+                      onChange={handleChange}
+                      disabled={loading}
+                    />
+                    Senior
+                  </CheckboxLabel>
+
+                  <CheckboxLabel>
+                    <Checkbox
                       name="featured"
                       checked={formData.featured}
                       onChange={handleChange}
@@ -492,20 +521,20 @@ export default function AdminCatEditPage({ mode }) {
                       </StatusHint>
                     )}
                   </CheckboxLabel>
-                </FormGroup>
+                </TagsSection>
 
                 <ButtonGroup>
-                  <Button type="submit" disabled={loading}>
-                    {loading ? 'Saving...' : (mode === 'create' ? 'Create Cat' : 'Save Changes')}
-                  </Button>
-                  <Button type="button" $variant="outline" onClick={() => navigate('/admin/cats')} disabled={loading}>
-                    Cancel
-                  </Button>
                   {mode === 'edit' && (
-                    <Button type="button" $variant="danger" onClick={handleDelete} disabled={loading}>
+                    <Button type="button" $variant="danger" onClick={handleDelete} disabled={loading} style={{ marginRight: 'auto' }}>
                       {loading ? 'Deleting...' : 'Delete'}
                     </Button>
                   )}
+                  <Button type="button" $variant="outline" onClick={() => navigate('/admin/cats')} disabled={loading}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? 'Saving...' : (mode === 'create' ? 'Create Cat' : 'Save Changes')}
+                  </Button>
                 </ButtonGroup>
               </form>
             </CardBody>
