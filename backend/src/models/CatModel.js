@@ -16,7 +16,7 @@ export class CatModel {
   /**
    * Non-paginated list (kept for any internal uses).
    * Filters:
-   *  - status: 'available'|'pending'|'hold'|'alumni'
+   *  - status: 'available'|'pending'|'hold'|'alumni' or array of statuses
    *  - featured: boolean
    *  - senior: boolean (age_years >= 10)
    */
@@ -25,8 +25,16 @@ export class CatModel {
     const params = [];
 
     if (filters.status) {
-      conditions.push("status = ?");
-      params.push(filters.status);
+      if (Array.isArray(filters.status)) {
+        // Multiple statuses - use IN clause
+        const placeholders = filters.status.map(() => '?').join(',');
+        conditions.push(`status IN (${placeholders})`);
+        params.push(...filters.status);
+      } else {
+        // Single status
+        conditions.push("status = ?");
+        params.push(filters.status);
+      }
     }
     if (filters.featured !== undefined) {
       conditions.push("featured = ?");
@@ -57,8 +65,16 @@ export class CatModel {
     const params = [];
 
     if (filters.status) {
-      conditions.push("status = ?");
-      params.push(filters.status);
+      if (Array.isArray(filters.status)) {
+        // Multiple statuses - use IN clause
+        const placeholders = filters.status.map(() => '?').join(',');
+        conditions.push(`status IN (${placeholders})`);
+        params.push(...filters.status);
+      } else {
+        // Single status
+        conditions.push("status = ?");
+        params.push(filters.status);
+      }
     }
 
     // Add featured filter support
