@@ -1,4 +1,4 @@
-// frontend/src/pages/AdminCatsPage.jsx
+// AdminCatsPage - Enhanced with Toast notifications
 import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
@@ -7,11 +7,12 @@ import {
   Button,
   Spinner,
   CenteredSpinner,
+  Alert,
 } from "../components/Common/StyledComponents.js";
+import { Toast } from "../components/Common/Toast.jsx";
 import http from "../api/http.js";
 import PaginationControls from "../components/Common/PaginationControls.jsx";
 import CsvImportModal from "../components/Admin/CsvImportModal.jsx";
-
 
 const PageWrapper = styled.div`
   padding: ${({ theme }) => theme.spacing["3xl"]} 0;
@@ -22,6 +23,22 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: ${({ theme }) => theme.spacing.xl};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: ${({ theme }) => theme.spacing[4]};
+  }
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing[2]};
+  flex-wrap: wrap;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    flex-direction: column;
+  }
 `;
 
 const Table = styled.table`
@@ -66,6 +83,21 @@ const ActionsCell = styled.td`
   }
 `;
 
+const ToastContainer = styled.div`
+  position: fixed;
+  top: ${({ theme }) => theme.spacing[4]};
+  right: ${({ theme }) => theme.spacing[4]};
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[2]};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    left: ${({ theme }) => theme.spacing[4]};
+    right: ${({ theme }) => theme.spacing[4]};
+  }
+`;
+
 export default function AdminCatsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState({
@@ -76,8 +108,8 @@ export default function AdminCatsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [showImportModal, setShowImportModal] = useState(false);
-
   const [error, setError] = useState(null);
+  const [toasts, setToasts] = useState([]);
 
   const page = Number(searchParams.get("page") || "1");
 
@@ -86,6 +118,15 @@ export default function AdminCatsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
+  const addToast = (toast) => {
+    const id = Date.now().toString();
+    setToasts(prev => [...prev, {
+      id,
+      ...toast,
+      onClose: () => setToasts(prev => prev.filter(t => t.id !== id))
+    }]);
+  };
+
   async function loadCats(currentPage) {
     setLoading(true);
     setError(null);
@@ -93,14 +134,20 @@ export default function AdminCatsPage() {
       const params = new URLSearchParams();
       params.set("page", String(currentPage));
       params.set("limit", String(data.limit));
-      // admin view: no status filter, show all non-deleted
       const res = await http.get(`/cats?${params.toString()}`);
-      // res.data is { items, total, page, limit }
       setData(res.data);
     } catch (err) {
       console.error("Failed to load cats", err);
-      setError("Unable to load cats.");
+      const errorMessage = err.response?.data?.message || "Unable to load cats.";
+      setError(errorMessage);
       setData((prev) => ({ ...prev, items: [], total: 0 }));
+      
+      addToast({
+        title: 'Error Loading Cats',
+        message: errorMessage,
+        variant: 'error',
+        duration: 0
+      });
     } finally {
       setLoading(false);
     }
@@ -114,21 +161,44 @@ export default function AdminCatsPage() {
     });
   }
 
-  async function handleDelete(id) {
-    if (!window.confirm("Delete this cat? This will soft-delete the record.")) {
+  async function handleDelete(cat) {
+    if (!window.confirm(`Delete ${cat.name}? This action cannot be undone.`)) {
       return;
     }
+    
     try {
-      await http.delete(`/cats/${id}`);
+      await http.delete(`/cats/${cat.id}`);
+      
+      addToast({
+        title: 'Cat Deleted',
+        message: `${cat.name} has been removed successfully`,
+        variant: 'info',
+        duration: 5000
+      });
+      
       loadCats(page);
     } catch (err) {
       console.error("Delete failed", err);
-      window.alert("Delete failed.");
+      const errorMessage = err.response?.data?.message || "Failed to delete cat";
+      
+      addToast({
+        title: 'Delete Failed',
+        message: errorMessage,
+        variant: 'error',
+        duration: 0
+      });
     }
   }
 
   async function handleDownloadCsv() {
     try {
+      addToast({
+        title: 'Downloading...',
+        message: 'Preparing CSV export',
+        variant: 'info',
+        duration: 3000
+      });
+
       const res = await http.get("/cats/export/csv", {
         responseType: "blob",
       });
@@ -137,125 +207,169 @@ export default function AdminCatsPage() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "kelseys-cats-export.csv");
+      link.setAttribute("download", `kelseys-cats-export-${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+
+      addToast({
+        title: 'Success!',
+        message: 'CSV file downloaded successfully',
+        variant: 'success',
+        duration: 5000
+      });
     } catch (err) {
       console.error("CSV export failed", err);
-      window.alert("Failed to download CSV.");
+      const errorMessage = err.response?.data?.message || "Failed to download CSV";
+      
+      addToast({
+        title: 'Export Failed',
+        message: errorMessage,
+        variant: 'error',
+        duration: 0
+      });
     }
   }
 
+  function handleImportSuccess() {
+    addToast({
+      title: 'Import Successful!',
+      message: 'Cats have been imported from CSV',
+      variant: 'success',
+      duration: 5000
+    });
+    loadCats(page);
+  }
 
   return (
-    <PageWrapper>
-      <Container>
-        <Header>
-          <h1>Manage Cats</h1>
-          <div>
-            <Button
-              as={Link}
-              to="/admin/cats/new"
-              style={{ marginRight: "0.5rem" }}
-              data-tour="add-cat-button"
-            >
-              Add New Cat
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => setShowImportModal(true)}
-              style={{ marginRight: "0.5rem" }}
-            >
-              Import from CSV
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={handleDownloadCsv}
-              data-tour="csv-buttons"
-            >
-              Download CSV
-            </Button>
-          </div>
-        </Header>
+    <>
+      <PageWrapper>
+        <Container>
+          <Header>
+            <h1>Manage Cats</h1>
+            <ButtonGroup>
+              <Button
+                as={Link}
+                to="/admin/cats/new"
+                data-tour="add-cat-button"
+              >
+                Add New Cat
+              </Button>
+              <Button
+                $variant="outline"
+                onClick={() => setShowImportModal(true)}
+              >
+                Import CSV
+              </Button>
+              <Button
+                $variant="outline"
+                onClick={handleDownloadCsv}
+                data-tour="csv-buttons"
+              >
+                Download CSV
+              </Button>
+            </ButtonGroup>
+          </Header>
 
-        {showImportModal && (
-          <CsvImportModal
-            onClose={() => setShowImportModal(false)}
-            onImported={() => loadCats(page)}
-          />
-        )}
-
-        {loading && (
-          <CenteredSpinner>
-            <Spinner aria-label="Loading cats" />
-          </CenteredSpinner>
-        )}
-        {error && <p style={{ color: "red" }}>{error}</p>}
-
-        {!loading && !error && (
-          <>
-            {data.items.length === 0 ? (
-              <p>No cats found.</p>
-            ) : (
-              <Table data-tour="cats-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Status</th>
-                    <th>Featured</th>
-                    <th>Updated</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.items.map((cat) => (
-                    <tr key={cat.id}>
-                      <td>{cat.id}</td>
-                      <td>{cat.name}</td>
-                      <td>
-                        <StatusBadge>{cat.status}</StatusBadge>
-                      </td>
-                      <td>{cat.featured ? "Yes" : "No"}</td>
-                      <td>
-                        {cat.updated_at
-                          ? new Date(cat.updated_at).toLocaleDateString()
-                          : ""}
-                      </td>
-                      <ActionsCell>
-                        <Button
-                          as={Link}
-                          variant="secondary"
-                          size="sm"
-                          to={`/admin/cats/${cat.id}/edit`}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDelete(cat.id)}
-                        >
-                          Delete
-                        </Button>
-                      </ActionsCell>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            )}
-
-            <PaginationControls
-              page={data.page}
-              limit={data.limit}
-              total={data.total}
-              onPageChange={handlePageChange}
+          {showImportModal && (
+            <CsvImportModal
+              onClose={() => setShowImportModal(false)}
+              onImported={handleImportSuccess}
             />
-          </>
-        )}
-      </Container>
-    </PageWrapper>
+          )}
+
+          {error && (
+            <Alert $variant="danger" style={{ marginBottom: '1.5rem' }}>
+              {error}
+            </Alert>
+          )}
+
+          {loading && (
+            <CenteredSpinner>
+              <Spinner aria-label="Loading cats" />
+            </CenteredSpinner>
+          )}
+
+          {!loading && !error && (
+            <>
+              {data.items.length === 0 ? (
+                <Alert $variant="info">
+                  No cats found. Click "Add New Cat" to get started.
+                </Alert>
+              ) : (
+                <>
+                  <p style={{ marginBottom: '1rem', color: '#666' }}>
+                    Showing {data.items.length} of {data.total} cats
+                  </p>
+                  <Table data-tour="cats-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Featured</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.items.map((cat) => (
+                        <tr key={cat.id}>
+                          <td>{cat.id}</td>
+                          <td>{cat.name}</td>
+                          <td>
+                            <StatusBadge>{cat.status}</StatusBadge>
+                          </td>
+                          <td>{cat.featured ? "Yes" : "No"}</td>
+                          <td>
+                            {cat.updated_at
+                              ? new Date(cat.updated_at).toLocaleDateString()
+                              : ""}
+                          </td>
+                          <ActionsCell>
+                            <Button
+                              as={Link}
+                              $variant="outline"
+                              $size="sm"
+                              to={`/admin/cats/${cat.id}/edit`}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              $variant="danger"
+                              $size="sm"
+                              onClick={() => handleDelete(cat)}
+                            >
+                              Delete
+                            </Button>
+                          </ActionsCell>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </>
+              )}
+
+              {data.total > data.limit && (
+                <PaginationControls
+                  page={data.page}
+                  limit={data.limit}
+                  total={data.total}
+                  onPageChange={handlePageChange}
+                />
+              )}
+            </>
+          )}
+        </Container>
+      </PageWrapper>
+
+      {/* Toast Notifications */}
+      <ToastContainer>
+        {toasts.map((toast) => (
+          <Toast key={toast.id} {...toast} />
+        ))}
+      </ToastContainer>
+    </>
   );
 }
