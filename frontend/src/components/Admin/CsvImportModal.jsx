@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { Button, Spinner, CenteredSpinner } from "../Common/StyledComponents.js";
+import { Button, Spinner } from "../Common/StyledComponents.js";
 import http from "../../api/http.js";
 
 const Backdrop = styled.div`
@@ -16,8 +16,8 @@ const Backdrop = styled.div`
 
 const Modal = styled.div`
   background: ${({ theme }) => theme.colors.white};
-  border-radius: ${({ theme }) => theme.borderRadius.base};
-  box-shadow: ${({ theme }) => theme.shadows.lg};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  box-shadow: ${({ theme }) => theme.shadows.xl};
   max-width: 900px;
   width: 100%;
   max-height: 90vh;
@@ -29,17 +29,19 @@ const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: ${({ theme }) => theme.spacing.lg};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.light};
+  padding: ${({ theme }) => `${theme.spacing[6]} ${theme.spacing[8]}`};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
 const ModalTitle = styled.h2`
   margin: 0;
-  font-size: ${({ theme }) => theme.fontSizes.xl};
+  font-size: ${({ theme }) => theme.fontSizes['2xl']};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const ModalBody = styled.div`
-  padding: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => `${theme.spacing[8]} ${theme.spacing[8]}`};
   overflow-y: auto;
   flex: 1;
 `;
@@ -48,10 +50,11 @@ const ModalFooter = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: ${({ theme }) => theme.spacing.lg};
-  border-top: 1px solid ${({ theme }) => theme.colors.light};
+  padding: ${({ theme }) => `${theme.spacing[6]} ${theme.spacing[8]}`};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
   gap: ${({ theme }) => theme.spacing[3]};
   flex-wrap: wrap;
+  background: ${({ theme }) => theme.colors.light};
 `;
 
 const FooterLeft = styled.div`
@@ -64,31 +67,44 @@ const FooterLeft = styled.div`
 const FooterRight = styled.div`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
+  gap: ${({ theme }) => theme.spacing[3]};
 `;
 
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  margin-top: ${({ theme }) => theme.spacing.md};
+  margin-top: ${({ theme }) => theme.spacing[6]};
   font-size: ${({ theme }) => theme.fontSizes.sm};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  overflow: hidden;
 
   th,
   td {
-    padding: ${({ theme }) => theme.spacing.xs};
-    border-bottom: 1px solid ${({ theme }) => theme.colors.light};
+    padding: ${({ theme }) => `${theme.spacing[3]} ${theme.spacing[4]}`};
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
     text-align: left;
   }
 
   th {
     font-weight: ${({ theme }) => theme.fontWeights.semibold};
-    background: ${({ theme }) => theme.colors.light};
+    background: ${({ theme }) => theme.colors.neutral[100]};
+    color: ${({ theme }) => theme.colors.text.primary};
     position: sticky;
     top: 0;
+    border-bottom: 2px solid ${({ theme }) => theme.colors.border};
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
   }
 
   tbody tr.error {
-    background-color: #fff5f5;
+    background-color: ${({ theme }) => theme.colors.dangerLight};
+  }
+
+  tbody tr:hover:not(.error) {
+    background-color: ${({ theme }) => theme.colors.light};
   }
 `;
 
@@ -96,23 +112,80 @@ const ErrorText = styled.div`
   color: ${({ theme }) => theme.colors.danger};
   font-size: ${({ theme }) => theme.fontSizes.sm};
   margin-top: ${({ theme }) => theme.spacing[2]};
+  font-weight: ${({ theme }) => theme.fontWeights.medium};
 `;
 
 const InfoText = styled.div`
   color: ${({ theme }) => theme.colors.text.secondary};
   font-size: ${({ theme }) => theme.fontSizes.sm};
+  line-height: ${({ theme }) => theme.lineHeights.relaxed};
+`;
+
+const IntroText = styled.p`
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: ${({ theme }) => theme.fontSizes.base};
+  line-height: ${({ theme }) => theme.lineHeights.relaxed};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
 `;
 
 const CodeBlock = styled.code`
   display: block;
-  background: ${({ theme }) => theme.colors.light};
-  padding: ${({ theme }) => theme.spacing[3]};
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
-  font-size: ${({ theme }) => theme.fontSizes.xs};
+  background: ${({ theme }) => theme.colors.neutral[100]};
+  padding: ${({ theme }) => theme.spacing[4]};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-family: 'Courier New', monospace;
   overflow-x: auto;
-  margin: ${({ theme }) => theme.spacing[3]} 0;
+  margin: ${({ theme }) => `${theme.spacing[4]} 0 ${theme.spacing[6]}`};
   white-space: pre-wrap;
   word-break: break-word;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const FileInputWrapper = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
+
+  input[type="file"] {
+    padding: ${({ theme }) => theme.spacing[3]};
+    border: 2px dashed ${({ theme }) => theme.colors.border};
+    border-radius: ${({ theme }) => theme.borderRadius.base};
+    width: 100%;
+    cursor: pointer;
+    font-size: ${({ theme }) => theme.fontSizes.base};
+    transition: all ${({ theme }) => theme.transitions.fast};
+
+    &:hover {
+      border-color: ${({ theme }) => theme.colors.primary};
+      background-color: ${({ theme }) => theme.colors.light};
+    }
+
+    &:focus {
+      outline: none;
+      border-color: ${({ theme }) => theme.colors.primary};
+      box-shadow: ${({ theme }) => theme.shadows.focus};
+    }
+  }
+`;
+
+const SummaryList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: ${({ theme }) => `${theme.spacing[4]} 0`};
+
+  li {
+    padding: ${({ theme }) => theme.spacing[3]};
+    margin-bottom: ${({ theme }) => theme.spacing[2]};
+    background: ${({ theme }) => theme.colors.light};
+    border-radius: ${({ theme }) => theme.borderRadius.base};
+    border-left: 4px solid ${({ theme }) => theme.colors.primary};
+    font-size: ${({ theme }) => theme.fontSizes.base};
+    
+    strong {
+      font-weight: ${({ theme }) => theme.fontWeights.semibold};
+      color: ${({ theme }) => theme.colors.text.primary};
+    }
+  }
 `;
 
 export default function CsvImportModal({ onClose, onImported }) {
@@ -231,7 +304,7 @@ export default function CsvImportModal({ onClose, onImported }) {
       >
         <ModalHeader>
           <ModalTitle id="csv-import-title">Import Cats from CSV</ModalTitle>
-          <Button $variant="outline" $size="sm" onClick={handleClose}>
+          <Button $variant="ghost" $size="sm" onClick={handleClose}>
             Close
           </Button>
         </ModalHeader>
@@ -239,28 +312,29 @@ export default function CsvImportModal({ onClose, onImported }) {
         <ModalBody>
           {step === "upload" && (
             <>
-              <p>
+              <IntroText>
                 Choose a CSV file with the following headers:
-              </p>
+              </IntroText>
               <CodeBlock>
                 id, name, age_years, sex, breed, temperament, good_with_kids,
                 good_with_cats, good_with_dogs, medical_notes,
                 is_special_needs, status, main_image_url, featured,
                 bonded_pair_id
               </CodeBlock>
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                onChange={handleFileChange}
-                style={{ marginBottom: '1rem' }}
-              />
+              <FileInputWrapper>
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={handleFileChange}
+                />
+              </FileInputWrapper>
               {error && <ErrorText>{error}</ErrorText>}
             </>
           )}
 
           {step === "preview" && (
             <>
-              <InfoText style={{ marginBottom: '1rem' }}>
+              <InfoText style={{ marginBottom: '1.5rem' }}>
                 Preview the rows below. Rows with errors are highlighted and
                 won't be imported unless fixed in the CSV.
               </InfoText>
@@ -268,7 +342,7 @@ export default function CsvImportModal({ onClose, onImported }) {
               <Table>
                 <thead>
                   <tr>
-                    <th>
+                    <th style={{ width: '40px' }}>
                       <input
                         type="checkbox"
                         aria-label="Select all"
@@ -333,12 +407,12 @@ export default function CsvImportModal({ onClose, onImported }) {
 
           {step === "summary" && summary && (
             <>
-              <p>Import complete. Here's what happened:</p>
-              <ul>
-                <li><strong>Created:</strong> {summary.created}</li>
-                <li><strong>Updated:</strong> {summary.updated}</li>
-                <li><strong>Skipped:</strong> {summary.skipped}</li>
-              </ul>
+              <IntroText>Import complete. Here's what happened:</IntroText>
+              <SummaryList>
+                <li><strong>Created:</strong> {summary.created} cats</li>
+                <li><strong>Updated:</strong> {summary.updated} cats</li>
+                <li><strong>Skipped:</strong> {summary.skipped} rows</li>
+              </SummaryList>
               {error && <ErrorText>{error}</ErrorText>}
             </>
           )}
@@ -350,7 +424,7 @@ export default function CsvImportModal({ onClose, onImported }) {
               <FooterLeft>
                 {loading && (
                   <>
-                    <Spinner size="sm" />
+                    <Spinner $size="20px" />
                     <InfoText>Processing CSV...</InfoText>
                   </>
                 )}
@@ -374,7 +448,7 @@ export default function CsvImportModal({ onClose, onImported }) {
               <FooterRight>
                 {loading && (
                   <>
-                    <Spinner size="sm" />
+                    <Spinner $size="20px" />
                     <InfoText>Importing...</InfoText>
                   </>
                 )}
@@ -390,7 +464,7 @@ export default function CsvImportModal({ onClose, onImported }) {
                   Start Over
                 </Button>
                 <Button onClick={handleConfirm} disabled={loading}>
-                  {loading ? 'Importing...' : 'Confirm Import'}
+                  {loading ? 'Importing...' : 'Import selected'}
                 </Button>
               </FooterRight>
             </>
