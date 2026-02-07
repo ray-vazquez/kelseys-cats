@@ -1,4 +1,4 @@
-// Fixed AdminCatEditPage - Now with status validation
+// Fixed AdminCatEditPage - Now with status validation and improved spacing
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -10,6 +10,17 @@ const PageWrapper = styled.div`
   padding: ${({ theme }) => theme.spacing['3xl']} 0;
 `;
 
+const PageHeader = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing[8]};
+`;
+
+const PageTitle = styled.h2`
+  font-size: ${({ theme }) => theme.fontSizes['4xl']};
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0;
+`;
+
 const FormCard = styled(Card)`
   max-width: 800px;
   margin: 0 auto;
@@ -17,7 +28,14 @@ const FormCard = styled(Card)`
 
 const ButtonGroup = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing[3]};
+  padding-top: ${({ theme }) => theme.spacing[6]};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  margin-top: ${({ theme }) => theme.spacing[6]};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    flex-direction: column;
+  }
 `;
 
 const ToastContainer = styled.div`
@@ -310,10 +328,12 @@ export default function AdminCatEditPage({ mode }) {
     <>
       <PageWrapper>
         <Container>
+          <PageHeader>
+            <PageTitle>{mode === 'create' ? 'Add New Cat' : 'Edit Cat'}</PageTitle>
+          </PageHeader>
+
           <FormCard>
             <CardBody>
-              <h2 style={{ marginBottom: '2rem' }}>{mode === 'create' ? 'Add New Cat' : 'Edit Cat'}</h2>
-              
               {error && (
                 <Alert $variant="danger" style={{ marginBottom: '1.5rem' }}>
                   <strong>Error:</strong> {error}
