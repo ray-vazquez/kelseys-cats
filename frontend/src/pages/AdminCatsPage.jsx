@@ -1,4 +1,4 @@
-// AdminCatsPage - Enhanced with status filters and delete confirmation modal
+// AdminCatsPage - Enhanced with status filters and delete confirmation modal - FIXED SPACING
 import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
@@ -17,7 +17,7 @@ import PaginationControls from "../components/Common/PaginationControls.jsx";
 import CsvImportModal from "../components/Admin/CsvImportModal.jsx";
 
 const PageWrapper = styled.div`
-  padding: ${({ theme }) => theme.spacing['3xl']} 0;
+  padding: ${({ theme }) => theme.spacing[12]} 0;
 `;
 
 const Header = styled.div`
