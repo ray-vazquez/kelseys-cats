@@ -64,7 +64,23 @@ export default function AdminCatEditPage({ mode }) {
       setLoadingData(true);
       http.get(`/cats/${id}`)
         .then((res) => {
-          setFormData(res.data);
+          // Convert null values to empty strings for form display
+          const cat = res.data;
+          setFormData({
+            name: cat.name || '',
+            age_years: cat.age_years ?? '',
+            sex: cat.sex || 'unknown',
+            breed: cat.breed || '',
+            temperament: cat.temperament || '',
+            good_with_kids: cat.good_with_kids || false,
+            good_with_cats: cat.good_with_cats || false,
+            good_with_dogs: cat.good_with_dogs || false,
+            medical_notes: cat.medical_notes || '',
+            is_special_needs: cat.is_special_needs || false,
+            status: cat.status || 'available',
+            main_image_url: cat.main_image_url || '',
+            featured: cat.featured || false
+          });
           setLoadingData(false);
         })
         .catch((err) => {
@@ -100,14 +116,42 @@ export default function AdminCatEditPage({ mode }) {
     if (error) setError(null);
   }
 
+  // Clean form data for submission - convert empty strings to null for backend
+  function prepareFormData(data) {
+    const cleaned = {};
+    for (const [key, value] of Object.entries(data)) {
+      // Convert empty strings to null
+      if (value === '') {
+        cleaned[key] = null;
+      }
+      // Keep booleans as-is
+      else if (typeof value === 'boolean') {
+        cleaned[key] = value;
+      }
+      // Keep numbers as-is (including 0)
+      else if (typeof value === 'number') {
+        cleaned[key] = value;
+      }
+      // Keep non-empty strings as-is
+      else {
+        cleaned[key] = value;
+      }
+    }
+    return cleaned;
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
+      // Clean the data before sending
+      const cleanedData = prepareFormData(formData);
+      console.log('Submitting cleaned data:', cleanedData);
+
       if (mode === 'create') {
-        await http.post('/cats', formData);
+        await http.post('/cats', cleanedData);
         addToast({
           title: 'Success!',
           message: `${formData.name} has been added successfully`,
@@ -115,7 +159,7 @@ export default function AdminCatEditPage({ mode }) {
           duration: 5000
         });
       } else {
-        await http.put(`/cats/${id}`, formData);
+        await http.put(`/cats/${id}`, cleanedData);
         addToast({
           title: 'Success!',
           message: `${formData.name} has been updated successfully`,
@@ -235,6 +279,7 @@ export default function AdminCatEditPage({ mode }) {
                     value={formData.age_years}
                     onChange={handleChange}
                     disabled={loading}
+                    placeholder="Leave empty if unknown"
                   />
                 </FormGroup>
 
@@ -255,6 +300,7 @@ export default function AdminCatEditPage({ mode }) {
                     value={formData.breed}
                     onChange={handleChange}
                     disabled={loading}
+                    placeholder="e.g., Domestic Shorthair"
                   />
                 </FormGroup>
 
@@ -266,6 +312,7 @@ export default function AdminCatEditPage({ mode }) {
                     value={formData.temperament}
                     onChange={handleChange}
                     disabled={loading}
+                    placeholder="Describe the cat's personality..."
                   />
                 </FormGroup>
 
@@ -277,6 +324,7 @@ export default function AdminCatEditPage({ mode }) {
                     value={formData.medical_notes}
                     onChange={handleChange}
                     disabled={loading}
+                    placeholder="Any medical conditions or special needs..."
                   />
                 </FormGroup>
 
@@ -288,6 +336,7 @@ export default function AdminCatEditPage({ mode }) {
                     value={formData.main_image_url}
                     onChange={handleChange}
                     disabled={loading}
+                    placeholder="https://..."
                   />
                 </FormGroup>
 
