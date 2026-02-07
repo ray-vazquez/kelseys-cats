@@ -13,6 +13,8 @@ export async function listCats(req, res, next) {
       limit,
       // Enable featured filter
       featured: req.query.featured === 'true' ? true : req.query.featured === 'false' ? false : undefined,
+      // Enable senior filter (age_years >= 10)
+      senior: req.query.senior === 'true' ? true : undefined,
     };
 
     // Support comma-separated status values for multi-status filtering
