@@ -1,4 +1,4 @@
-// Fixed AdminCatEditPage - With improved layout, senior tag, and bio field
+// Fixed AdminCatEditPage - With improved layout, senior tag, bio field, and CORRECT spacing
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -7,10 +7,10 @@ import { Toast } from '../components/Common/Toast.jsx';
 import http from '../api/http.js';
 
 const PageWrapper = styled.div`
-  padding: ${({ theme }) => theme.spacing['3xl']} 0;
+  padding: ${({ theme }) => theme.spacing[12]} 0;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: ${({ theme }) => theme.spacing['2xl']} 0;
+    padding: ${({ theme }) => theme.spacing[8]} 0;
   }
 `;
 
