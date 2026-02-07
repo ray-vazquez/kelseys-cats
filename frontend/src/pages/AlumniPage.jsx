@@ -218,52 +218,60 @@ export default function AlumniPage() {
             /* Alumni Grid */
             <>
               <Grid $cols={3} $mdCols={2}>
-                {data.items.map((cat) => (
-                  <Card key={cat.id} $hover>
-                    {cat.main_image_url && (
-                      <CardImage
-                        src={cat.main_image_url}
-                        alt={cat.name}
-                        $height="250px"
-                      />
-                    )}
-                    <CardBody>
-                      <CardTitle>{cat.name}</CardTitle>
-                      
-                      <AdoptionDate>
-                        Adopted{" "}
-                        {cat.adoption_date
-                          ? new Date(cat.adoption_date).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })
-                          : "date unknown"}
-                      </AdoptionDate>
-                      
-                      {cat.age_years && (
-                        <TextMuted>
-                          {cat.age_years} years old · {cat.breed || "Mixed breed"}
-                        </TextMuted>
+                {data.items.map((cat) => {
+                  // Check for senior status
+                  const isSenior = cat.is_senior || (cat.age_years && cat.age_years >= 10);
+                  
+                  return (
+                    <Card key={cat.id} $hover>
+                      {cat.main_image_url && (
+                        <CardImage
+                          src={cat.main_image_url}
+                          alt={cat.name}
+                          $height="250px"
+                        />
                       )}
-                      
-                      <CardFooter>
-                        {cat.is_special_needs && (
-                          <Badge $variant="warning">Special Needs</Badge>
+                      <CardBody>
+                        <CardTitle>{cat.name}</CardTitle>
+                        
+                        <AdoptionDate>
+                          Adopted{" "}
+                          {cat.adoption_date
+                            ? new Date(cat.adoption_date).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })
+                            : "date unknown"}
+                        </AdoptionDate>
+                        
+                        {cat.age_years && (
+                          <TextMuted>
+                            {cat.age_years} years old · {cat.breed || "Mixed breed"}
+                          </TextMuted>
                         )}
-                        {cat.bonded_pair_id && (
-                          <Badge $variant="info">Bonded Pair</Badge>
-                        )}
-                      </CardFooter>
-                      
-                      <div style={{ marginTop: "1rem" }}>
-                        <ButtonLink to={`/alumni/${cat.id}`} $variant="primary" $fullWidth>
-                          View Story
-                        </ButtonLink>
-                      </div>
-                    </CardBody>
-                  </Card>
-                ))}
+                        
+                        <CardFooter>
+                          {cat.is_special_needs && (
+                            <Badge $variant="warning">Special Needs</Badge>
+                          )}
+                          {isSenior && (
+                            <Badge $variant="secondary">Senior</Badge>
+                          )}
+                          {cat.bonded_pair_id && (
+                            <Badge $variant="info">Bonded Pair</Badge>
+                          )}
+                        </CardFooter>
+                        
+                        <div style={{ marginTop: "1rem" }}>
+                          <ButtonLink to={`/alumni/${cat.id}`} $variant="primary" $fullWidth>
+                            View Story
+                          </ButtonLink>
+                        </div>
+                      </CardBody>
+                    </Card>
+                  );
+                })}
               </Grid>
 
               {/* Pagination */}
