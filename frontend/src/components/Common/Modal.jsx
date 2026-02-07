@@ -1,7 +1,6 @@
 // Modal dialog component
 import React, { useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
-import PropTypes from 'prop-types';
 import { Button } from './StyledComponents';
 
 const fadeIn = keyframes`
@@ -230,18 +229,6 @@ export default function Modal({
   );
 }
 
-Modal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  title: PropTypes.string,
-  children: PropTypes.node.isRequired,
-  footer: PropTypes.node,
-  size: PropTypes.oneOf(['sm', 'md', 'lg', 'xl', 'full']),
-  showCloseButton: PropTypes.bool,
-  closeOnOverlayClick: PropTypes.bool,
-  closeOnEscape: PropTypes.bool,
-};
-
 // Confirmation Modal variant
 export function ConfirmModal({
   isOpen,
@@ -275,15 +262,3 @@ export function ConfirmModal({
     </Modal>
   );
 }
-
-ConfirmModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  onConfirm: PropTypes.func.isRequired,
-  title: PropTypes.string,
-  message: PropTypes.string.isRequired,
-  confirmText: PropTypes.string,
-  cancelText: PropTypes.string,
-  variant: PropTypes.string,
-  isLoading: PropTypes.bool,
-};
