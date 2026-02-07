@@ -61,13 +61,10 @@ const FilterLabel = styled.div`
 `;
 
 const FilterGroup = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: ${({ theme }) => theme.spacing[3]};
-  
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    grid-template-columns: 1fr 1fr;
-  }
+  display: flex;
+  flex-direction: row;
+  gap: ${({ theme }) => theme.spacing[4]};
+  flex-wrap: wrap;
 `;
 
 const Table = styled.table`
