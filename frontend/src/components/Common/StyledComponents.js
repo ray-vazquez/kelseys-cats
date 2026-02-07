@@ -463,17 +463,12 @@ export const Checkbox = styled.input.attrs({ type: "checkbox" })`
 export const CheckboxLabel = styled.label`
   display: flex;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing[3]};
   font-size: ${({ theme }) => theme.fontSizes.base};
   cursor: pointer;
   user-select: none;
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
-  }
-
-  &:last-child {
-    margin-bottom: 0;
   }
 `;
 
