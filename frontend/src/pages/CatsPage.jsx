@@ -1,4 +1,4 @@
-// Migrated CatsPage - Using Phase 1+2 enhanced components
+// Migrated CatsPage - Using Phase 1+2 enhanced components with is_senior badge
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import styled from "styled-components";
@@ -126,7 +126,7 @@ export default function CatsPage() {
                 checked={seniorOnly}
                 onChange={(e) => setSeniorOnly(e.target.checked)}
               />
-              Show senior cats only (10+ years)
+              Show senior cats only
             </CheckboxLabel>
           </FilterSection>
 
@@ -197,11 +197,11 @@ export default function CatsPage() {
                         {cat.is_special_needs && (
                           <Badge $variant="warning">Special Needs</Badge>
                         )}
+                        {cat.is_senior && (
+                          <Badge $variant="secondary">Senior</Badge>
+                        )}
                         {cat.bonded_pair_id && (
                           <Badge $variant="info">Bonded Pair</Badge>
-                        )}
-                        {cat.age_years >= 10 && (
-                          <Badge $variant="secondary">Senior</Badge>
                         )}
                       </CardFooter>
                       
