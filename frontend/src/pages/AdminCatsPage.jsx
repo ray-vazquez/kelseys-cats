@@ -94,6 +94,7 @@ const StatusBadge = styled.span`
   font-size: ${({ theme }) => theme.fontSizes.xs};
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
   background-color: ${({ $status, theme }) => {
     switch ($status) {
       case 'available':
@@ -104,20 +105,22 @@ const StatusBadge = styled.span`
       case 'pending':
         return theme.colors.warning;
       case 'hold':
-        return theme.colors.secondary;
+        return '#f59e0b'; // Amber-500 for better contrast
       default:
         return theme.colors.light;
     }
   }};
-  color: ${({ $status, theme }) => {
+  color: ${({ $status }) => {
+    // All status badges use white text for consistency and readability
     switch ($status) {
       case 'available':
       case 'adopted':
       case 'alumni':
       case 'pending':
-        return theme.colors.white;
+      case 'hold':
+        return '#ffffff';
       default:
-        return theme.colors.text.primary;
+        return '#374151'; // Gray-700 for default
     }
   }};
 `;
