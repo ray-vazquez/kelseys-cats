@@ -45,9 +45,10 @@ const ButtonGroup = styled.div`
 
 const FilterSection = styled.div`
   background: ${({ theme }) => theme.colors.light};
-  padding: ${({ theme }) => theme.spacing[4]};
+  padding: ${({ theme }) => theme.spacing[6]};
   border-radius: ${({ theme }) => theme.borderRadius.base};
   margin-bottom: ${({ theme }) => theme.spacing[6]};
+  border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
 const FilterLabel = styled.div`
@@ -55,12 +56,18 @@ const FilterLabel = styled.div`
   color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: ${({ theme }) => theme.spacing[3]};
   font-size: ${({ theme }) => theme.fontSizes.sm};
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 `;
 
 const FilterGroup = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing[4]};
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: ${({ theme }) => theme.spacing[3]};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    grid-template-columns: 1fr 1fr;
+  }
 `;
 
 const Table = styled.table`
@@ -385,35 +392,35 @@ export default function AdminCatsPage() {
 
           {/* Status Filters */}
           <FilterSection>
-            <FilterLabel>Filter by Status:</FilterLabel>
+            <FilterLabel>Filter by Status</FilterLabel>
             <FilterGroup>
               <CheckboxLabel>
                 <Checkbox
                   checked={showAvailable}
                   onChange={(e) => setShowAvailable(e.target.checked)}
                 />
-                Show Available
+                Available
               </CheckboxLabel>
               <CheckboxLabel>
                 <Checkbox
                   checked={showPending}
                   onChange={(e) => setShowPending(e.target.checked)}
                 />
-                Show Pending
+                Pending
               </CheckboxLabel>
               <CheckboxLabel>
                 <Checkbox
                   checked={showHold}
                   onChange={(e) => setShowHold(e.target.checked)}
                 />
-                Show Hold
+                Hold
               </CheckboxLabel>
               <CheckboxLabel>
                 <Checkbox
                   checked={showAlumni}
                   onChange={(e) => setShowAlumni(e.target.checked)}
                 />
-                Show Alumni
+                Alumni
               </CheckboxLabel>
             </FilterGroup>
           </FilterSection>
