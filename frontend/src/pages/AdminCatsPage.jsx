@@ -1,4 +1,4 @@
-// AdminCatsPage - Enhanced with status filters
+// AdminCatsPage - Enhanced with status filters and delete confirmation modal
 import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
@@ -7,11 +7,11 @@ import {
   Button,
   Spinner,
   CenteredSpinner,
-  Alert,
   CheckboxLabel,
   Checkbox,
 } from "../components/Common/StyledComponents.js";
 import { Toast } from "../components/Common/Toast.jsx";
+import ConfirmationModal from "../components/Common/ConfirmationModal.jsx";
 import http from "../api/http.js";
 import PaginationControls from "../components/Common/PaginationControls.jsx";
 import CsvImportModal from "../components/Admin/CsvImportModal.jsx";
@@ -105,7 +105,7 @@ const StatusBadge = styled.span`
       case 'pending':
         return theme.colors.warning;
       case 'hold':
-        return '#f59e0b'; // Amber-500 for better contrast
+        return '#000000'; // Black background for hold
       default:
         return theme.colors.light;
     }
@@ -148,6 +148,17 @@ const ToastContainer = styled.div`
   }
 `;
 
+const EmptyState = styled.div`
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing[12]} ${({ theme }) => theme.spacing[6]};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  
+  p {
+    font-size: ${({ theme }) => theme.fontSizes.lg};
+    margin-bottom: ${({ theme }) => theme.spacing[4]};
+  }
+`;
+
 export default function AdminCatsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState({
@@ -158,8 +169,14 @@ export default function AdminCatsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [error, setError] = useState(null);
   const [toasts, setToasts] = useState([]);
+  
+  // Delete confirmation state
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    cat: null,
+    loading: false
+  });
   
   // Status filters
   const [showAvailable, setShowAvailable] = useState(true);
@@ -185,7 +202,6 @@ export default function AdminCatsPage() {
 
   async function loadCats(currentPage) {
     setLoading(true);
-    setError(null);
     try {
       const params = new URLSearchParams();
       params.set("page", String(currentPage));
@@ -208,7 +224,6 @@ export default function AdminCatsPage() {
     } catch (err) {
       console.error("Failed to load cats", err);
       const errorMessage = err.response?.data?.message || "Unable to load cats.";
-      setError(errorMessage);
       setData((prev) => ({ ...prev, items: [], total: 0 }));
       
       addToast({
@@ -230,25 +245,46 @@ export default function AdminCatsPage() {
     });
   }
 
-  async function handleDelete(cat) {
-    if (!window.confirm(`Delete ${cat.name}? This action cannot be undone.`)) {
-      return;
+  function openDeleteModal(cat) {
+    setDeleteModal({
+      isOpen: true,
+      cat,
+      loading: false
+    });
+  }
+
+  function closeDeleteModal() {
+    if (!deleteModal.loading) {
+      setDeleteModal({
+        isOpen: false,
+        cat: null,
+        loading: false
+      });
     }
+  }
+
+  async function confirmDelete() {
+    if (!deleteModal.cat) return;
+    
+    setDeleteModal(prev => ({ ...prev, loading: true }));
     
     try {
-      await http.delete(`/cats/${cat.id}`);
+      await http.delete(`/cats/${deleteModal.cat.id}`);
       
       addToast({
         title: 'Cat Deleted',
-        message: `${cat.name} has been removed successfully`,
+        message: `${deleteModal.cat.name} has been removed successfully`,
         variant: 'info',
         duration: 5000
       });
       
+      closeDeleteModal();
       loadCats(page);
     } catch (err) {
       console.error("Delete failed", err);
       const errorMessage = err.response?.data?.message || "Failed to delete cat";
+      
+      setDeleteModal(prev => ({ ...prev, loading: false }));
       
       addToast({
         title: 'Delete Failed',
@@ -383,24 +419,20 @@ export default function AdminCatsPage() {
             </FilterGroup>
           </FilterSection>
 
-          {error && (
-            <Alert $variant="danger" style={{ marginBottom: '1.5rem' }}>
-              {error}
-            </Alert>
-          )}
-
           {loading && (
             <CenteredSpinner>
               <Spinner aria-label="Loading cats" />
             </CenteredSpinner>
           )}
 
-          {!loading && !error && (
+          {!loading && (
             <>
               {data.items.length === 0 ? (
-                <Alert $variant="info">
-                  No cats found with the selected filters. Try adjusting your filter settings.
-                </Alert>
+                <EmptyState>
+                  <p>🐱</p>
+                  <p>No cats found with the selected filters.</p>
+                  <p style={{ fontSize: '0.875rem' }}>Try adjusting your filter settings.</p>
+                </EmptyState>
               ) : (
                 <>
                   <p style={{ marginBottom: '1rem', color: '#666' }}>
@@ -443,7 +475,7 @@ export default function AdminCatsPage() {
                             <Button
                               $variant="danger"
                               $size="sm"
-                              onClick={() => handleDelete(cat)}
+                              onClick={() => openDeleteModal(cat)}
                             >
                               Delete
                             </Button>
@@ -467,6 +499,20 @@ export default function AdminCatsPage() {
           )}
         </Container>
       </PageWrapper>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={closeDeleteModal}
+        onConfirm={confirmDelete}
+        title="Delete Cat"
+        message={deleteModal.cat ? `Are you sure you want to delete ${deleteModal.cat.name}? This action cannot be undone.` : ''}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        icon="🗑️"
+        loading={deleteModal.loading}
+      />
 
       {/* Toast Notifications */}
       <ToastContainer>
