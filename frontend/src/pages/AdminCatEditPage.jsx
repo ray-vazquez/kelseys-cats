@@ -7,11 +7,10 @@ import { Toast } from '../components/Common/Toast.jsx';
 import http from '../api/http.js';
 
 const PageWrapper = styled.div`
-  padding: ${({ theme }) => theme.spacing['6xl']} 0;
-  min-height: calc(100vh - 200px);
+  padding: ${({ theme }) => theme.spacing['3xl']} 0;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: ${({ theme }) => theme.spacing['4xl']} 0;
+    padding: ${({ theme }) => theme.spacing['2xl']} 0;
   }
 `;
 
@@ -376,6 +375,7 @@ export default function AdminCatEditPage({ mode }) {
                   <Input
                     type="number"
                     step="0.1"
+                    min="0.1"
                     name="age_years"
                     value={formData.age_years}
                     onChange={handleChange}
