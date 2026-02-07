@@ -1,7 +1,6 @@
 // Toast notification component
 import React, { useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
-import PropTypes from 'prop-types';
 
 const slideIn = keyframes`
   from {
@@ -204,16 +203,6 @@ export function Toast({
   );
 }
 
-Toast.propTypes = {
-  title: PropTypes.string,
-  message: PropTypes.string,
-  variant: PropTypes.oneOf(['success', 'error', 'danger', 'warning', 'info']),
-  duration: PropTypes.number,
-  onClose: PropTypes.func,
-  showProgress: PropTypes.bool,
-  isClosing: PropTypes.bool,
-};
-
 export default function ToastProvider({ children, toasts = [] }) {
   return (
     <>
@@ -226,17 +215,3 @@ export default function ToastProvider({ children, toasts = [] }) {
     </>
   );
 }
-
-ToastProvider.propTypes = {
-  children: PropTypes.node.isRequired,
-  toasts: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      title: PropTypes.string,
-      message: PropTypes.string,
-      variant: PropTypes.string,
-      duration: PropTypes.number,
-      onClose: PropTypes.func,
-    })
-  ),
-};
