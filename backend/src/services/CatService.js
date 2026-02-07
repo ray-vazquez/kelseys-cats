@@ -9,7 +9,7 @@ export class CatService {
    * filters:
    *  - status: 'available'|'pending'|'hold'|'alumni'
    *  - featured: boolean
-   *  - senior: boolean (age_years >= 10)
+   *  - senior: boolean (uses is_senior column)
    *  - tags: string[]
    *  - page: number
    *  - limit: number
@@ -62,7 +62,7 @@ export class CatService {
    * Create a cat and set tags (if provided).
    * Accepts payload with camelCase keys from controllers:
    *  - ageyears, goodwithkids, goodwithcats, goodwithdogs,
-   *    medicalnotes, isspecialneeds, mainimageurl, bondedpairid, etc.
+   *    medicalnotes, isspecialneeds, issenior, mainimageurl, bondedpairid, etc.
    */
   static async createCat(payload) {
     const catData = this._mapPayloadToModel(payload);
@@ -128,6 +128,9 @@ export class CatService {
       medical_notes: payload.medical_notes ?? payload.medicalnotes,
       is_special_needs:
         payload.is_special_needs ?? (payload.isspecialneeds ? 1 : 0),
+      is_senior:
+        payload.is_senior !== undefined ? (payload.is_senior ? 1 : 0) : 
+        (payload.issenior !== undefined ? (payload.issenior ? 1 : 0) : undefined),
       status: payload.status,
       main_image_url: payload.main_image_url ?? payload.mainimageurl,
       featured:
@@ -164,6 +167,7 @@ export class CatService {
         good_with_dogs: cat.good_with_dogs ? 1 : 0,
         medical_notes: cat.medical_notes,
         is_special_needs: cat.is_special_needs ? 1 : 0,
+        is_senior: cat.is_senior ? 1 : 0,
         status: cat.status,
         main_image_url: cat.main_image_url,
         featured: cat.featured ? 1 : 0,
@@ -188,6 +192,7 @@ export class CatService {
         "good_with_dogs",
         "medical_notes",
         "is_special_needs",
+        "is_senior",
         "status",
         "main_image_url",
         "featured",
