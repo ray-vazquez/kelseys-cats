@@ -135,7 +135,7 @@ const ActionsCell = styled.td`
 
 const ToastContainer = styled.div`
   position: fixed;
-  top: ${({ theme }) => theme.spacing[4]};
+  bottom: ${({ theme }) => theme.spacing[4]};
   right: ${({ theme }) => theme.spacing[4]};
   z-index: 9999;
   display: flex;
