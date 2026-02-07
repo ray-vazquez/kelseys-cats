@@ -1,38 +1,55 @@
-// frontend/src/pages/CatsPage.jsx
+// Migrated CatsPage - Using Phase 1+2 enhanced components
 import React, { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import styled from "styled-components";
 import {
   Container,
+  Section,
   Grid,
   Card,
   CardImage,
   CardBody,
   CardTitle,
-  Button,
+  ButtonLink,
   Badge,
   Checkbox,
   CheckboxLabel,
+  TextMuted,
 } from "../components/Common/StyledComponents.js";
+import SectionHero from "../components/Common/SectionHero.jsx";
+import LoadingState from "../components/Common/LoadingState.jsx";
+import { NoCatsFound } from "../components/Common/EmptyState.jsx";
 import http from "../api/http.js";
 import PaginationControls from "../components/Common/PaginationControls.jsx";
-import {
-  Spinner,
-  CenteredSpinner,
-} from "../components/Common/StyledComponents.js";
-
-const PageTitle = styled.h1`
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-`;
 
 const FilterSection = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  background: ${({ theme }) => theme.colors.white};
+  padding: ${({ theme }) => theme.spacing[6]};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
-const TextMuted = styled.p`
-  color: ${({ theme }) => theme.colors.gray};
+const FilterTitle = styled.h3`
+  font-size: ${({ theme }) => theme.fontSizes.lg};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const ResultsCount = styled.p`
   font-size: ${({ theme }) => theme.fontSizes.sm};
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  text-align: center;
+`;
+
+const CardFooter = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing[2]};
+  margin-top: ${({ theme }) => theme.spacing[4]};
+  flex-wrap: wrap;
 `;
 
 export default function CatsPage() {
@@ -84,62 +101,133 @@ export default function CatsPage() {
   }
 
   return (
-    <Container style={{ paddingTop: "3rem", paddingBottom: "3rem" }}>
-      <PageTitle>Current Foster Cats</PageTitle>
+    <>
+      {/* Hero Section */}
+      <SectionHero
+        variant="secondary"
+        size="md"
+        title="Current Foster Cats"
+        subtitle="Meet our wonderful cats looking for their forever homes. Each one has a unique personality and story."
+        actions={
+          <ButtonLink to="/adoption" $variant="outline" $size="lg">
+            How to Adopt
+          </ButtonLink>
+        }
+      />
 
-      <FilterSection>
-        <CheckboxLabel>
-          <Checkbox
-            checked={seniorOnly}
-            onChange={(e) => setSeniorOnly(e.target.checked)}
-          />
-          Show senior cats only (10+ years)
-        </CheckboxLabel>
-      </FilterSection>
+      {/* Main Content */}
+      <Section $padding="lg">
+        <Container>
+          {/* Filter Section */}
+          <FilterSection>
+            <FilterTitle>Filter Options</FilterTitle>
+            <CheckboxLabel>
+              <Checkbox
+                checked={seniorOnly}
+                onChange={(e) => setSeniorOnly(e.target.checked)}
+              />
+              Show senior cats only (10+ years)
+            </CheckboxLabel>
+          </FilterSection>
 
-      {loading ? (
-        <CenteredSpinner>
-          <Spinner aria-label="Loading cats" />
-        </CenteredSpinner>
-      ) : data.items.length === 0 ? (
-        <p>No cats found.</p>
-      ) : (
-        <>
-          <Grid cols={3} mdCols={2}>
-            {data.items.map((cat) => (
-              <Card key={cat.id}>
-                {cat.main_image_url && (
-                  <CardImage src={cat.main_image_url} alt={cat.name} />
-                )}
-                <CardBody>
-                  <CardTitle>{cat.name}</CardTitle>
-                  <TextMuted>
-                    {cat.age_years
-                      ? `${cat.age_years} years old`
-                      : "Age unknown"}{" "}
-                    · {cat.breed || "Mixed breed"}
-                  </TextMuted>
-                  {cat.is_special_needs && (
-                    <Badge variant="warning">Special Needs</Badge>
-                  )}
-                  <div style={{ marginTop: "1rem" }}>
-                    <Button as={Link} to={`/cats/${cat.id}`}>
-                      View Details
-                    </Button>
-                  </div>
-                </CardBody>
-              </Card>
-            ))}
-          </Grid>
+          {/* Results Count */}
+          {!loading && data.items.length > 0 && (
+            <ResultsCount>
+              Showing {data.items.length} of {data.total} cat{data.total !== 1 ? 's' : ''}
+              {seniorOnly && ' (senior cats only)'}
+            </ResultsCount>
+          )}
 
-          <PaginationControls
-            page={data.page}
-            limit={data.limit}
-            total={data.total}
-            onPageChange={handlePageChange}
-          />
-        </>
-      )}
-    </Container>
+          {/* Loading State */}
+          {loading ? (
+            <Grid $cols={3} $mdCols={2}>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Card key={i}>
+                  <LoadingState variant="skeleton" skeletonCount={5} />
+                </Card>
+              ))}
+            </Grid>
+          ) : data.items.length === 0 ? (
+            /* Empty State */
+            <NoCatsFound
+              description={
+                seniorOnly
+                  ? "No senior cats are currently available. Try clearing the filter to see all cats."
+                  : "No cats are currently available. Check back soon for new arrivals!"
+              }
+              actions={
+                seniorOnly ? (
+                  <ButtonLink
+                    to="/cats"
+                    $variant="primary"
+                    onClick={() => setSeniorOnly(false)}
+                  >
+                    Show All Cats
+                  </ButtonLink>
+                ) : (
+                  <ButtonLink to="/adoption" $variant="primary">
+                    Learn About Adoption
+                  </ButtonLink>
+                )
+              }
+            />
+          ) : (
+            /* Cats Grid */
+            <>
+              <Grid $cols={3} $mdCols={2}>
+                {data.items.map((cat) => (
+                  <Card key={cat.id} $hover>
+                    {cat.main_image_url && (
+                      <CardImage
+                        src={cat.main_image_url}
+                        alt={cat.name}
+                        $height="250px"
+                      />
+                    )}
+                    <CardBody>
+                      <CardTitle>{cat.name}</CardTitle>
+                      <TextMuted>
+                        {cat.age_years
+                          ? `${cat.age_years} years old`
+                          : "Age unknown"}{" "}
+                        · {cat.breed || "Mixed breed"}
+                      </TextMuted>
+                      
+                      <CardFooter>
+                        {cat.is_special_needs && (
+                          <Badge $variant="warning">Special Needs</Badge>
+                        )}
+                        {cat.bonded_pair_id && (
+                          <Badge $variant="info">Bonded Pair</Badge>
+                        )}
+                        {cat.age_years >= 10 && (
+                          <Badge $variant="secondary">Senior</Badge>
+                        )}
+                      </CardFooter>
+                      
+                      <div style={{ marginTop: "1rem" }}>
+                        <ButtonLink to={`/cats/${cat.id}`} $variant="primary" $fullWidth>
+                          View Details
+                        </ButtonLink>
+                      </div>
+                    </CardBody>
+                  </Card>
+                ))}
+              </Grid>
+
+              {/* Pagination */}
+              <div style={{ marginTop: '3rem' }}>
+                <PaginationControls
+                  page={data.page}
+                  limit={data.limit}
+                  total={data.total}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            </>
+          )}
+        </Container>
+      </Section>
+    </>
   );
 }
