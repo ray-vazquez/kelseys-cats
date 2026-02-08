@@ -2,10 +2,11 @@
 // Scrapes Voice for the Voiceless cats from Adopt-a-Pet
 // Saves to vfv_cats database table for fast access
 
-import puppeteer from 'puppeteer';
-import { query } from '../lib/db.js';
+import puppeteer from "puppeteer";
+import { query } from "../lib/db.js";
 
-const VFV_ADOPTAPET_URL = 'https://www.adoptapet.com/shelter/184939-voice-for-the-voiceless-schenectady-new-york';
+const VFV_ADOPTAPET_URL =
+  "https://www.adoptapet.com/shelter/184939-voice-for-the-voiceless-schenectady-new-york";
 
 /**
  * Extract Adopt-a-Pet ID from URL
@@ -18,8 +19,22 @@ function extractAdoptaPetId(url) {
 }
 
 /**
+ * Helper: map Adopt-a-Pet age text → numeric years
+ */
+function mapAgeToYears(ageText) {
+  if (!ageText) return null;
+  const t = ageText.toLowerCase();
+
+  if (t.includes("baby") || t.includes("kitten")) return 0.5;
+  if (t.includes("young")) return 2;
+  if (t.includes("adult")) return 5;
+  if (t.includes("senior")) return 10;
+
+  return null;
+}
+
+/**
  * Get VFV partner foster cats from database
- * @returns {Promise<Array>} Array of cat objects
  */
 export async function getPartnerFosterCats() {
   try {
@@ -40,193 +55,221 @@ export async function getPartnerFosterCats() {
         'partner_foster' as source,
         'vfv_cats' as from_table
       FROM vfv_cats 
-      ORDER BY name ASC`
+      ORDER BY name ASC`,
     );
-    
     return cats;
   } catch (error) {
-    console.error('Error fetching partner foster cats from database:', error);
+    console.error("Error fetching partner foster cats from database:", error);
     return [];
   }
 }
 
 /**
- * Scrape Voice for the Voiceless cats from Adopt-a-Pet and save to database
- * This should be run manually via admin endpoint or scheduled cron job
- * @returns {Promise<Object>} Result with counts
+ * Scrape all pages of VFV cats from Adopt-a-Pet and return an array of cat objects
  */
-export async function scrapeAndSavePartnerFosterCats() {
-  let browser;
-  
-  try {
-    console.log('🤖 Scraping Voice for the Voiceless cats from Adopt-a-Pet...');
-    console.log(`📍 URL: ${VFV_ADOPTAPET_URL}`);
-    
-    // Launch headless browser
-    browser = await puppeteer.launch({
-      headless: 'new',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--disable-gpu'
-      ]
-    });
-    
-    const page = await browser.newPage();
-    
-    // Set viewport and user agent
-    await page.setViewport({ width: 1920, height: 1080 });
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+async function scrapeAllPages(browser) {
+  const page = await browser.newPage();
+
+  await page.setViewport({ width: 1920, height: 1080 });
+  await page.setUserAgent(
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  );
+
+  console.log("⏳ Loading shelter page...");
+  await page.goto(VFV_ADOPTAPET_URL, {
+    waitUntil: "networkidle0",
+    timeout: 45000,
+  });
+
+  const allCats = [];
+  let pageIndex = 1;
+
+  // Loop over pagination until no Next button
+  // We rely on data-testid="pagination-container" + a Next button
+  while (true) {
+    console.log(`🔍 Scraping page ${pageIndex}...`);
+
+    // Ensure cards are loaded
+    await page.waitForSelector(
+      '[data-testid="pet-card"], .pet-card, [class*="PetCard"]',
+      { timeout: 20000 },
     );
-    
-    // Navigate to Adopt-a-Pet shelter page
-    console.log('⏳ Loading Adopt-a-Pet page...');
-    await page.goto(VFV_ADOPTAPET_URL, {
-      waitUntil: 'networkidle0',
-      timeout: 30000
-    });
-    
-    // Wait for pet cards to load
-    console.log('⏳ Waiting for pet cards...');
-    await page.waitForSelector('.pet-card, [class*="PetCard"], .shelter-pet, [data-pet-id]', {
-      timeout: 15000
-    });
-    
-    // Scroll to load lazy-loaded images
+
+    // Scroll to load lazy images
     await page.evaluate(() => {
       window.scrollTo(0, document.body.scrollHeight);
     });
-    await page.waitForTimeout(2000);
-    
-    // Extract cat data from page
-    console.log('🔍 Extracting cat data...');
-    const cats = await page.evaluate(() => {
+    await page.waitForTimeout(1500);
+
+    const catsOnPage = await page.evaluate(() => {
       const results = [];
-      
-      // Try multiple selectors for Adopt-a-Pet
-      let cards = document.querySelectorAll('.pet-card');
+
+      let cards = document.querySelectorAll('[data-testid="pet-card"]');
+      if (cards.length === 0) {
+        cards = document.querySelectorAll(".pet-card");
+      }
       if (cards.length === 0) {
         cards = document.querySelectorAll('[class*="PetCard"]');
       }
-      if (cards.length === 0) {
-        cards = document.querySelectorAll('.shelter-pet');
-      }
-      if (cards.length === 0) {
-        cards = document.querySelectorAll('[data-pet-id]');
-      }
-      
-      console.log(`Found ${cards.length} pet cards`);
-      
-      cards.forEach(card => {
+
+      cards.forEach((card) => {
         try {
-          // Extract pet link first (most reliable)
+          // Link and URL
           const linkEl = card.querySelector('a[href*="/pet/"]');
           const url = linkEl?.href;
-          
-          if (!url) return; // Skip if no URL found
-          
-          // Extract pet name
-          const nameEl = card.querySelector(
-            '.pet-name, [class*="PetName"], h3, h2, .name'
-          );
+          if (!url) return;
+
+          // Name
+          const nameEl =
+            card.querySelector('[data-testid="pet-card-name"]') ||
+            card.querySelector(".pet-name, h2, h3, .name");
           const name = nameEl?.textContent?.trim();
-          
-          if (!name) return; // Skip if no name found
-          
-          // Extract image
-          const imgEl = card.querySelector('img');
-          const image = imgEl?.src || imgEl?.dataset?.src || imgEl?.dataset?.lazySrc;
-          
-          // Extract breed/age/gender info
-          const infoEl = card.querySelector(
-            '.pet-info, [class*="PetInfo"], .breed-age, .details'
-          );
-          const infoText = infoEl?.textContent?.trim() || '';
-          
-          // Extract description if available
-          const descEl = card.querySelector('.description, .pet-description');
-          const description = descEl?.textContent?.trim() || '';
-          
-          // Parse age
+          if (!name) return;
+
+          // Image
+          const imgEl = card.querySelector("img");
+          const image =
+            imgEl?.src ||
+            imgEl?.getAttribute("data-src") ||
+            imgEl?.getAttribute("data-lazy-src");
+
+          // Details text (age / sex / breed often live together)
+          const detailsEl =
+            card.querySelector('[data-testid="pet-card-details"]') ||
+            card.querySelector(".pet-info, .details, .breed-age");
+          const detailsText = detailsEl?.textContent?.trim() || "";
+
+          // Age text (keep raw label; map to years server-side)
           let ageText = null;
-          if (infoText.includes('Baby') || infoText.includes('Kitten')) ageText = 'Kitten';
-          else if (infoText.includes('Young')) ageText = 'Young';
-          else if (infoText.includes('Adult')) ageText = 'Adult';
-          else if (infoText.includes('Senior')) ageText = 'Senior';
-          
-          // Parse breed
-          let breed = 'Domestic Shorthair';
-          const breedMatch = infoText.match(/(\w+\s*\w*)\s*Cat/i);
-          if (breedMatch) {
-            breed = breedMatch[1].trim();
+          const ageCandidates = ["Kitten", "Baby", "Young", "Adult", "Senior"];
+          for (const label of ageCandidates) {
+            if (detailsText.toLowerCase().includes(label.toLowerCase())) {
+              ageText = label;
+              break;
+            }
           }
-          
-          // Parse gender (use 'sex' terminology)
-          let sex = 'unknown';
-          if (infoText.includes('Male')) sex = 'male';
-          else if (infoText.includes('Female')) sex = 'female';
-          
-          // Extract Adopt-a-Pet ID from URL
+
+          // Sex
+          let sex = "unknown";
+          if (detailsText.toLowerCase().includes("female")) sex = "female";
+          else if (detailsText.toLowerCase().includes("male")) sex = "male";
+
+          // Breed – often appears as first part before comma or linebreak
+          let breed = "Domestic Shorthair";
+          const breedMatch = detailsText.split(",")[0]?.trim();
+          if (breedMatch && breedMatch.length > 0) {
+            breed = breedMatch;
+          }
+
+          // Description (short snippet if available)
+          const descEl =
+            card.querySelector('[data-testid="pet-card-description"]') ||
+            card.querySelector(".description, .pet-description");
+          const description =
+            descEl?.textContent?.trim() ||
+            `${name} is a ${ageText || ""} ${sex !== "unknown" ? sex : ""} cat looking for a loving home!`.trim();
+
+          // Adopt-a-Pet ID
           const idMatch = url.match(/\/pet\/(\d+)-/);
           const adoptapet_id = idMatch ? idMatch[1] : null;
-          
-          if (!adoptapet_id) return; // Skip if no ID
-          
-          // Helper function to map age to years
-          function parseAgeToYears(ageText) {
-            const ageMap = {
-              'Kitten': 0.5,
-              'Baby': 0.5,
-              'Young': 2,
-              'Adult': 5,
-              'Senior': 10
-            };
-            return ageMap[ageText] || null;
-          }
-          
+          if (!adoptapet_id) return;
+
           results.push({
             adoptapet_id,
             name,
             age_text: ageText,
-            age_years: parseAgeToYears(ageText),
             breed,
             sex,
             main_image_url: image,
             adoptapet_url: url,
-            description: description || `${name} is a ${ageText || 'cat'} looking for a loving home!`
+            description,
           });
-          
         } catch (err) {
-          console.error('Error parsing pet card:', err);
+          console.error("Error parsing pet card:", err);
         }
       });
-      
+
       return results;
     });
-    
-    await browser.close();
-    
-    console.log(`✅ Scraped ${cats.length} cats from Adopt-a-Pet`);
-    
-    // Save to database
+
+    console.log(`   ➕ Found ${catsOnPage.length} cats on page ${pageIndex}`);
+    allCats.push(...catsOnPage);
+
+    // Try to click "Next" in pagination
+    const wentToNext = await page.evaluate(() => {
+      const container = document.querySelector(
+        '[data-testid="pagination-container"]',
+      );
+      if (!container) return false;
+
+      // Next button might be button or anchor
+      const nextBtn =
+        container.querySelector('button[aria-label="Next"]') ||
+        container.querySelector('a[aria-label="Next"]');
+
+      if (!nextBtn) return false;
+      const disabled =
+        nextBtn.getAttribute("disabled") !== null ||
+        nextBtn.getAttribute("aria-disabled") === "true";
+      if (disabled) return false;
+
+      nextBtn.click();
+      return true;
+    });
+
+    if (!wentToNext) {
+      console.log("⏹ No more pages detected, stopping pagination loop");
+      break;
+    }
+
+    pageIndex += 1;
+    await page.waitForTimeout(2000);
+  }
+
+  console.log(`📦 Total cats scraped across all pages: ${allCats.length}`);
+  await page.close();
+  return allCats;
+}
+
+/**
+ * Scrape VFV cats and save to vfv_cats
+ */
+export async function scrapeAndSavePartnerFosterCats() {
+  let browser;
+
+  try {
+    console.log("🤖 Scraping Voice for the Voiceless cats from Adopt-a-Pet...");
+    console.log(`📍 URL: ${VFV_ADOPTAPET_URL}`);
+
+    browser = await puppeteer.launch({
+      headless: "new",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--disable-gpu",
+      ],
+    });
+
+    const scrapedCats = await scrapeAllPages(browser);
+
     let added = 0;
     let updated = 0;
     let skipped = 0;
     let errors = 0;
-    
-    for (const cat of cats) {
+
+    for (const cat of scrapedCats) {
       try {
-        // Check if cat already exists (by adoptapet_id)
+        const age_years = mapAgeToYears(cat.age_text);
+
+        // Check if cat already exists by adoptapet_id
         const existing = await query(
-          'SELECT id FROM vfv_cats WHERE adoptapet_id = ?',
-          [cat.adoptapet_id]
+          "SELECT id FROM vfv_cats WHERE adoptapet_id = ?",
+          [cat.adoptapet_id],
         );
-        
+
         if (existing.length > 0) {
-          // Update existing cat
           await query(
             `UPDATE vfv_cats SET 
               name = ?,
@@ -238,39 +281,37 @@ export async function scrapeAndSavePartnerFosterCats() {
               adoptapet_url = ?,
               description = ?,
               updated_at = NOW()
-            WHERE id = ?`,
+             WHERE id = ?`,
             [
               cat.name,
               cat.age_text,
-              cat.age_years,
+              age_years,
               cat.breed,
               cat.sex,
               cat.main_image_url,
               cat.adoptapet_url,
               cat.description,
-              existing[0].id
-            ]
+              existing[0].id,
+            ],
           );
           updated++;
-          console.log(`  ✏️  Updated: ${cat.name}`);
+          console.log(`✏️  Updated: ${cat.name}`);
         } else {
-          // Check if this cat is already in Kelsey's foster care (cats table)
-          // Don't add to vfv_cats if already being fostered at Kelsey's
+          // Skip if already in Kelsey's care
           const inKelseysCare = await query(
             `SELECT id FROM cats 
              WHERE status = 'available' 
-             AND deleted_at IS NULL
-             AND adoptapet_url LIKE ?`,
-            [`%${cat.adoptapet_id}%`]
+               AND deleted_at IS NULL
+               AND adoptapet_url LIKE ?`,
+            [`%${cat.adoptapet_id}%`],
           );
-          
+
           if (inKelseysCare.length > 0) {
-            console.log(`  ⏭️  Skipped: ${cat.name} (already in Kelsey's care)`);
+            console.log(`⏭️  Skipped (already in Kelsey's care): ${cat.name}`);
             skipped++;
             continue;
           }
-          
-          // Insert new cat
+
           await query(
             `INSERT INTO vfv_cats (
               adoptapet_id,
@@ -287,76 +328,70 @@ export async function scrapeAndSavePartnerFosterCats() {
               cat.adoptapet_id,
               cat.name,
               cat.age_text,
-              cat.age_years,
+              age_years,
               cat.breed,
               cat.sex,
               cat.main_image_url,
               cat.adoptapet_url,
-              cat.description
-            ]
+              cat.description,
+            ],
           );
           added++;
-          console.log(`  ➕ Added: ${cat.name}`);
+          console.log(`➕ Added: ${cat.name}`);
         }
       } catch (err) {
-        console.error(`  ❌ Error saving cat ${cat.name}:`, err.message);
+        console.error(`❌ Error saving cat ${cat.name}:`, err);
         errors++;
       }
     }
-    
-    console.log('\n📊 Scraping Summary:');
-    console.log(`   ➕ Added: ${added}`);
+
+    console.log("\n📊 Scraping Summary:");
+    console.log(`   ➕ Added:   ${added}`);
     console.log(`   ✏️  Updated: ${updated}`);
     console.log(`   ⏭️  Skipped: ${skipped}`);
-    console.log(`   ❌ Errors: ${errors}`);
-    console.log(`   📦 Total scraped: ${cats.length}`);
-    
+    console.log(`   ❌ Errors:  ${errors}`);
+    console.log(`   📦 Total scraped: ${scrapedCats.length}`);
+
     return {
       success: true,
       added,
       updated,
       skipped,
       errors,
-      total: cats.length,
-      timestamp: new Date().toISOString()
+      total: scrapedCats.length,
+      timestamp: new Date().toISOString(),
     };
-    
   } catch (error) {
-    console.error('❌ Error scraping Adopt-a-Pet:', error);
-    
+    console.error("❌ Error scraping Adopt-a-Pet:", error);
     if (browser) {
       await browser.close();
     }
-    
     throw error;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 }
 
 /**
  * Delete cats that are no longer on Adopt-a-Pet
- * (Call this after scrapeAndSavePartnerFosterCats to clean up adopted cats)
- * @param {number} daysOld - Delete cats not updated in X days (default 7)
  */
 export async function cleanupOldPartnerFosterCats(daysOld = 7) {
   try {
-    console.log(`🧹 Cleaning up partner foster cats not updated in ${daysOld} days...`);
-    
-    // Delete cats older than X days (likely adopted)
-    const result = await query(
-      'DELETE FROM vfv_cats WHERE updated_at < DATE_SUB(NOW(), INTERVAL ? DAY)',
-      [daysOld]
+    console.log(
+      `🧹 Cleaning up partner foster cats not updated in ${daysOld} days...`,
     );
-    
+    const result = await query(
+      "DELETE FROM vfv_cats WHERE updated_at < DATE_SUB(NOW(), INTERVAL ? DAY)",
+      [daysOld],
+    );
     const deleted = result.affectedRows || 0;
     console.log(`   🗑️  Deleted ${deleted} old cats`);
-    
-    return {
-      success: true,
-      deleted,
-      daysOld
-    };
+
+    return { success: true, deleted, daysOld };
   } catch (error) {
-    console.error('❌ Error cleaning up old cats:', error);
+    console.error("❌ Error cleaning up old cats:", error);
     throw error;
   }
 }
@@ -366,24 +401,19 @@ export async function cleanupOldPartnerFosterCats(daysOld = 7) {
  */
 export async function runFullScrape() {
   try {
-    console.log('🚀 Starting full scrape cycle...\n');
-    
-    // Step 1: Scrape and save
+    console.log("🚀 Starting full scrape cycle...\n");
     const scrapeResult = await scrapeAndSavePartnerFosterCats();
-    
-    // Step 2: Cleanup old cats
     const cleanupResult = await cleanupOldPartnerFosterCats(7);
-    
-    console.log('\n✅ Full scrape completed successfully!');
-    
+
+    console.log("\n✅ Full scrape completed successfully!");
     return {
       success: true,
       scrape: scrapeResult,
       cleanup: cleanupResult,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
-    console.error('❌ Full scrape failed:', error);
+    console.error("❌ Full scrape failed:", error);
     throw error;
   }
 }
