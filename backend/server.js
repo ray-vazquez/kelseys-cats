@@ -7,6 +7,7 @@ import authRouter from './src/routes/auth.routes.js';
 import scraperRouter from './src/routes/scraper.routes.js';
 import { errorHandler } from './src/middleware/error.middleware.js';
 import { loginRateLimiter } from './src/middleware/rateLimit.middleware.js';
+import { initCronJobs } from './src/services/cronService.js';
 
 const app = express();
 
@@ -29,4 +30,7 @@ const port = process.env.PORT || 4000;
 app.listen(port, () => {
   console.log(`🚀 API listening on port ${port}`);
   console.log(`🐈 Cats API ready!`);
+  
+  // Initialize cron jobs for automated scraping
+  initCronJobs();
 });
