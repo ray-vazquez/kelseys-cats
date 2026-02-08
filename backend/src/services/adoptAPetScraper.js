@@ -82,21 +82,71 @@ async function scrapeAllPages(browser) {
   });
 
   // Wait for page to render
-  await new Promise(resolve => setTimeout(resolve, 5000));
+  console.log("⏳ Waiting for page to render...");
+  await new Promise(resolve => setTimeout(resolve, 8000));
+
+  // DEBUG: Take screenshot
+  await page.screenshot({ path: 'debug-adoptapet.png', fullPage: true });
+  console.log("📸 Screenshot saved to debug-adoptapet.png");
+
+  // DEBUG: Log what's actually on the page
+  const debugInfo = await page.evaluate(() => {
+    const html = document.body.innerHTML.substring(0, 5000);
+    const testIds = Array.from(document.querySelectorAll('[data-testid]')).map(el => el.getAttribute('data-testid'));
+    const classes = Array.from(document.querySelectorAll('[class*="card"], [class*="Card"], [class*="pet"], [class*="Pet"]')).map(el => el.className).slice(0, 20);
+    
+    return {
+      title: document.title,
+      hasDataTestId: testIds.length > 0,
+      testIds: testIds.slice(0, 10),
+      cardClasses: classes,
+      firstDivs: Array.from(document.querySelectorAll('div')).slice(0, 5).map(d => d.className)
+    };
+  });
+
+  console.log("🔍 DEBUG INFO:");
+  console.log("   Title:", debugInfo.title);
+  console.log("   Has data-testid:", debugInfo.hasDataTestId);
+  console.log("   Sample testIds:", debugInfo.testIds);
+  console.log("   Card-like classes:", debugInfo.cardClasses.slice(0, 5));
+  console.log("   First div classes:", debugInfo.firstDivs);
 
   const allCats = [];
   let pageIndex = 1;
 
   // Loop over pagination until no Next button
-  // We rely on data-testid="pagination-container" + a Next button
   while (true) {
     console.log(`🔍 Scraping page ${pageIndex}...`);
 
-    // Ensure cards are loaded
-    await page.waitForSelector(
-      '[data-testid="pet-card"], .pet-card, [class*="PetCard"]',
-      { timeout: 20000 },
-    );
+    // Try multiple selector strategies
+    let cards = [];
+    
+    // Strategy 1: data-testid
+    cards = await page.$$('[data-testid="pet-card"]');
+    console.log(`   Selector [data-testid="pet-card"]: ${cards.length} cards`);
+    
+    if (cards.length === 0) {
+      // Strategy 2: class="pet-card"
+      cards = await page.$$('.pet-card');
+      console.log(`   Selector .pet-card: ${cards.length} cards`);
+    }
+    
+    if (cards.length === 0) {
+      // Strategy 3: any div with 'card' in class
+      cards = await page.$$('div[class*="Card"]');
+      console.log(`   Selector div[class*="Card"]: ${cards.length} cards`);
+    }
+
+    if (cards.length === 0) {
+      // Strategy 4: links to /pet/
+      const petLinks = await page.$$('a[href*="/pet/"]');
+      console.log(`   Found ${petLinks.length} pet links`);
+      
+      if (petLinks.length === 0) {
+        console.log("❌ No pet cards or links found. Check debug-adoptapet.png");
+        break;
+      }
+    }
 
     // Scroll to load lazy images
     await page.evaluate(() => {
@@ -107,75 +157,67 @@ async function scrapeAllPages(browser) {
     const catsOnPage = await page.evaluate(() => {
       const results = [];
 
-      let cards = document.querySelectorAll('[data-testid="pet-card"]');
-      if (cards.length === 0) {
-        cards = document.querySelectorAll(".pet-card");
-      }
-      if (cards.length === 0) {
-        cards = document.querySelectorAll('[class*="PetCard"]');
-      }
-
-      cards.forEach((card) => {
+      // Find all links to pet pages
+      const petLinks = document.querySelectorAll('a[href*="/pet/"]');
+      
+      petLinks.forEach((link) => {
         try {
-          // Link and URL
-          const linkEl = card.querySelector('a[href*="/pet/"]');
-          const url = linkEl?.href;
+          const url = link.href;
           if (!url) return;
 
-          // Name
-          const nameEl =
-            card.querySelector('[data-testid="pet-card-name"]') ||
-            card.querySelector(".pet-name, h2, h3, .name");
+          // Try to find parent card container
+          let card = link.closest('[data-testid="pet-card"]') || 
+                     link.closest('.pet-card') ||
+                     link.closest('div[class*="Card"]') ||
+                     link.closest('article') ||
+                     link.parentElement;
+
+          // Name - try multiple approaches
+          const nameEl = card.querySelector('[data-testid="pet-card-name"]') ||
+                        card.querySelector('h2, h3, .name, [class*="name"]') ||
+                        link.querySelector('h2, h3, [class*="name"]');
           const name = nameEl?.textContent?.trim();
           if (!name) return;
 
           // Image
-          const imgEl = card.querySelector("img");
-          const image =
-            imgEl?.src ||
-            imgEl?.getAttribute("data-src") ||
-            imgEl?.getAttribute("data-lazy-src");
+          const imgEl = card.querySelector('img') || link.querySelector('img');
+          const image = imgEl?.src || imgEl?.getAttribute('data-src') || imgEl?.getAttribute('data-lazy-src');
 
-          // Details text (age / sex / breed often live together)
-          const detailsEl =
-            card.querySelector('[data-testid="pet-card-details"]') ||
-            card.querySelector(".pet-info, .details, .breed-age");
-          const detailsText = detailsEl?.textContent?.trim() || "";
+          // Get all text from card
+          const cardText = card?.textContent?.trim() || '';
 
-          // Age text (keep raw label; map to years server-side)
+          // Age
           let ageText = null;
-          const ageCandidates = ["Kitten", "Baby", "Young", "Adult", "Senior"];
+          const ageCandidates = ['Kitten', 'Baby', 'Young', 'Adult', 'Senior'];
           for (const label of ageCandidates) {
-            if (detailsText.toLowerCase().includes(label.toLowerCase())) {
+            if (cardText.toLowerCase().includes(label.toLowerCase())) {
               ageText = label;
               break;
             }
           }
 
           // Sex
-          let sex = "unknown";
-          if (detailsText.toLowerCase().includes("female")) sex = "female";
-          else if (detailsText.toLowerCase().includes("male")) sex = "male";
+          let sex = 'unknown';
+          if (cardText.toLowerCase().includes('female')) sex = 'female';
+          else if (cardText.toLowerCase().includes('male')) sex = 'male';
 
-          // Breed – often appears as first part before comma or linebreak
-          let breed = "Domestic Shorthair";
-          const breedMatch = detailsText.split(",")[0]?.trim();
-          if (breedMatch && breedMatch.length > 0) {
+          // Breed
+          let breed = 'Domestic Shorthair';
+          const breedMatch = cardText.split(',')[0]?.trim();
+          if (breedMatch && breedMatch.length > 0 && breedMatch.length < 50) {
             breed = breedMatch;
           }
 
-          // Description (short snippet if available)
-          const descEl =
-            card.querySelector('[data-testid="pet-card-description"]') ||
-            card.querySelector(".description, .pet-description");
-          const description =
-            descEl?.textContent?.trim() ||
-            `${name} is a ${ageText || ""} ${sex !== "unknown" ? sex : ""} cat looking for a loving home!`.trim();
+          // Description
+          const description = `${name} is a ${ageText || ''} ${sex !== 'unknown' ? sex : ''} cat looking for a loving home!`.trim();
 
-          // Adopt-a-Pet ID
+          // ID
           const idMatch = url.match(/\/pet\/(\d+)-/);
           const adoptapet_id = idMatch ? idMatch[1] : null;
           if (!adoptapet_id) return;
+
+          // Avoid duplicates
+          if (results.some(r => r.adoptapet_id === adoptapet_id)) return;
 
           results.push({
             adoptapet_id,
@@ -188,7 +230,7 @@ async function scrapeAllPages(browser) {
             description,
           });
         } catch (err) {
-          console.error("Error parsing pet card:", err);
+          console.error('Error parsing pet card:', err);
         }
       });
 
@@ -200,20 +242,19 @@ async function scrapeAllPages(browser) {
 
     // Try to click "Next" in pagination
     const wentToNext = await page.evaluate(() => {
-      const container = document.querySelector(
-        '[data-testid="pagination-container"]',
-      );
+      const container = document.querySelector('[data-testid="pagination-container"]') ||
+                       document.querySelector('[class*="pagination"]') ||
+                       document.querySelector('.pagination');
       if (!container) return false;
 
-      // Next button might be button or anchor
-      const nextBtn =
-        container.querySelector('button[aria-label="Next"]') ||
-        container.querySelector('a[aria-label="Next"]');
+      const nextBtn = container.querySelector('button[aria-label="Next"]') ||
+                     container.querySelector('a[aria-label="Next"]') ||
+                     container.querySelector('button:last-child') ||
+                     container.querySelector('a:last-child');
 
       if (!nextBtn) return false;
-      const disabled =
-        nextBtn.getAttribute("disabled") !== null ||
-        nextBtn.getAttribute("aria-disabled") === "true";
+      const disabled = nextBtn.getAttribute('disabled') !== null ||
+                      nextBtn.getAttribute('aria-disabled') === 'true';
       if (disabled) return false;
 
       nextBtn.click();
@@ -227,6 +268,12 @@ async function scrapeAllPages(browser) {
 
     pageIndex += 1;
     await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Safety: max 10 pages
+    if (pageIndex > 10) {
+      console.log("⚠️  Reached page limit (10), stopping");
+      break;
+    }
   }
 
   console.log(`📦 Total cats scraped across all pages: ${allCats.length}`);
@@ -245,7 +292,7 @@ export async function scrapeAndSavePartnerFosterCats() {
     console.log(`📍 URL: ${VFV_ADOPTAPET_URL}`);
 
     browser = await puppeteer.launch({
-      headless: "new",
+      headless: false, // DEBUG: Run with visible browser
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -266,7 +313,6 @@ export async function scrapeAndSavePartnerFosterCats() {
       try {
         const age_years = mapAgeToYears(cat.age_text);
 
-        // Check if cat already exists by adoptapet_id
         const existing = await query(
           "SELECT id FROM vfv_cats WHERE adoptapet_id = ?",
           [cat.adoptapet_id],
@@ -300,7 +346,6 @@ export async function scrapeAndSavePartnerFosterCats() {
           updated++;
           console.log(`✏️  Updated: ${cat.name}`);
         } else {
-          // Skip if already in Kelsey's care
           const inKelseysCare = await query(
             `SELECT id FROM cats 
              WHERE status = 'available' 
