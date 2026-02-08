@@ -183,7 +183,7 @@ export default function CatsPage() {
       {/* Main Content */}
       <Section $padding="lg">
         <Container>
-          {/* Stats Bar - NOW UPDATES DYNAMICALLY */}
+          {/* Stats Bar */}
           {!loading && filteredStats.total > 0 && (
             <StatsBar>
               <StatItem>
@@ -224,7 +224,7 @@ export default function CatsPage() {
             </div>
           </FilterSection>
 
-          {/* Results Count - FIXED */}
+          {/* Results Count */}
           {!loading && filteredCats.length > 0 && (
             <ResultsCount>
               Showing {startIdx + 1}-{endIdx} of {filteredCats.length} cat{filteredCats.length !== 1 ? 's' : ''}
@@ -298,17 +298,20 @@ export default function CatsPage() {
                         · {cat.breed || "Mixed breed"}
                       </TextMuted>
                       
-                      <CardFooter>
-                        {cat.is_special_needs && (
-                          <Badge $variant="warning">Special Needs</Badge>
-                        )}
-                        {cat.is_senior && (
-                          <Badge $variant="secondary">Senior</Badge>
-                        )}
-                        {cat.bonded_pair_id && (
-                          <Badge $variant="info">Bonded Pair</Badge>
-                        )}
-                      </CardFooter>
+                      {/* FIXED: Only render CardFooter if there are badges to show */}
+                      {(cat.is_special_needs === 1 || cat.is_senior === 1 || cat.bonded_pair_id) && (
+                        <CardFooter>
+                          {cat.is_special_needs === 1 && (
+                            <Badge $variant="warning">Special Needs</Badge>
+                          )}
+                          {cat.is_senior === 1 && (
+                            <Badge $variant="secondary">Senior</Badge>
+                          )}
+                          {cat.bonded_pair_id && (
+                            <Badge $variant="info">Bonded Pair</Badge>
+                          )}
+                        </CardFooter>
+                      )}
                       
                       <div style={{ marginTop: "1rem" }}>
                         {cat.source === 'featured_foster' ? (
