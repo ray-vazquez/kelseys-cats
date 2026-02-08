@@ -1,33 +1,33 @@
-// AboutPage - Explains the foster program and badge distinction
 import React from "react";
 import styled from "styled-components";
 import {
   Container,
   Section,
-  Badge,
+  ButtonLink,
+  Card,
+  CardBody,
+  CardTitle,
 } from "../components/Common/StyledComponents.js";
 import SectionHero from "../components/Common/SectionHero.jsx";
 
-const ContentCard = styled.div`
-  background: ${({ theme }) => theme.colors.white};
-  padding: ${({ theme }) => theme.spacing[8]};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  box-shadow: ${({ theme }) => theme.shadows.md};
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
+const ContentSection = styled.div`
+  max-width: 800px;
+  margin: 0 auto;
   
   h2 {
     font-size: ${({ theme }) => theme.fontSizes['2xl']};
     font-weight: ${({ theme }) => theme.fontWeights.bold};
     color: ${({ theme }) => theme.colors.text.primary};
-    margin-bottom: ${({ theme }) => theme.spacing[4]};
+    margin-top: ${({ theme }) => theme.spacing[12]};
+    margin-bottom: ${({ theme }) => theme.spacing[6]};
   }
   
   h3 {
     font-size: ${({ theme }) => theme.fontSizes.xl};
     font-weight: ${({ theme }) => theme.fontWeights.semibold};
     color: ${({ theme }) => theme.colors.text.primary};
-    margin-top: ${({ theme }) => theme.spacing[6]};
-    margin-bottom: ${({ theme }) => theme.spacing[3]};
+    margin-top: ${({ theme }) => theme.spacing[8]};
+    margin-bottom: ${({ theme }) => theme.spacing[4]};
   }
   
   p {
@@ -38,212 +38,326 @@ const ContentCard = styled.div`
   }
   
   ul {
-    list-style: disc;
-    margin-left: ${({ theme }) => theme.spacing[6]};
-    margin-bottom: ${({ theme }) => theme.spacing[4]};
+    list-style: none;
+    padding: 0;
+    margin-bottom: ${({ theme }) => theme.spacing[6]};
+  }
+  
+  li {
+    font-size: ${({ theme }) => theme.fontSizes.base};
+    line-height: 1.7;
+    color: ${({ theme }) => theme.colors.text.secondary};
+    margin-bottom: ${({ theme }) => theme.spacing[3]};
+    padding-left: ${({ theme }) => theme.spacing[6]};
+    position: relative;
     
-    li {
-      font-size: ${({ theme }) => theme.fontSizes.base};
-      line-height: 1.7;
-      color: ${({ theme }) => theme.colors.text.secondary};
-      margin-bottom: ${({ theme }) => theme.spacing[2]};
+    &:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: ${({ theme }) => theme.colors.primary.main};
+      font-weight: bold;
     }
   }
 `;
 
-const BadgeExamples = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing[4]};
+const HighlightBox = styled.div`
+  background: ${({ theme }) => theme.colors.background.secondary};
+  border-left: 4px solid ${({ theme }) => theme.colors.primary.main};
+  padding: ${({ theme }) => theme.spacing[6]};
+  margin: ${({ theme }) => theme.spacing[8]} 0;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  
+  p {
+    margin-bottom: 0;
+    font-style: italic;
+  }
+`;
+
+const BadgeExampleGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: ${({ theme }) => theme.spacing[6]};
   margin: ${({ theme }) => theme.spacing[6]} 0;
-  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const BadgeExample = styled.div`
-  flex: 1;
-  min-width: 250px;
   padding: ${({ theme }) => theme.spacing[5]};
   border: 2px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  text-align: center;
   
-  .badge-wrapper {
+  .badge {
+    display: inline-block;
+    padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[4]};
+    border-radius: ${({ theme }) => theme.borderRadius.full};
+    font-size: ${({ theme }) => theme.fontSizes.sm};
+    font-weight: ${({ theme }) => theme.fontWeights.semibold};
     margin-bottom: ${({ theme }) => theme.spacing[3]};
+    
+    &.featured {
+      background: ${({ theme }) => theme.colors.success?.light || '#d1fae5'};
+      color: ${({ theme }) => theme.colors.success?.dark || '#065f46'};
+    }
+    
+    &.partner {
+      background: ${({ theme }) => theme.colors.info?.light || '#dbeafe'};
+      color: ${({ theme }) => theme.colors.info?.dark || '#1e40af'};
+    }
   }
   
-  h4 {
-    font-size: ${({ theme }) => theme.fontSizes.lg};
+  .title {
     font-weight: ${({ theme }) => theme.fontWeights.semibold};
     margin-bottom: ${({ theme }) => theme.spacing[2]};
+    color: ${({ theme }) => theme.colors.text.primary};
   }
   
-  p {
+  .description {
     font-size: ${({ theme }) => theme.fontSizes.sm};
-    margin: 0;
+    color: ${({ theme }) => theme.colors.text.secondary};
+    margin-bottom: 0;
   }
 `;
 
-const Highlight = styled.span`
-  background: ${({ theme }) => theme.colors.primary.light};
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: ${({ theme }) => theme.fontWeights.medium};
+const CTASection = styled.div`
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing[12]} 0;
+  
+  h2 {
+    margin-bottom: ${({ theme }) => theme.spacing[6]};
+  }
+  
+  .buttons {
+    display: flex;
+    gap: ${({ theme }) => theme.spacing[4]};
+    justify-content: center;
+    flex-wrap: wrap;
+  }
 `;
 
 export default function AboutPage() {
   return (
     <>
+      {/* Hero Section */}
       <SectionHero
         variant="gradient"
         size="md"
         title="About Our Foster Program"
-        subtitle="Learn about how we help cats find their forever homes through Voice for the Voiceless"
+        subtitle="Building trust, one foster cat at a time"
       />
 
+      {/* Main Content */}
       <Section $padding="lg">
         <Container>
-          <ContentCard>
-            <h2>Our Mission</h2>
+          <ContentSection>
+            {/* Introduction */}
             <p>
-              All cats listed on this site are part of <strong>Voice for the Voiceless</strong>, 
-              a 501(c)(3) rescue organization dedicated to finding loving homes for cats in need. 
-              We work with a network of dedicated foster volunteers throughout the Capital Region 
-              to provide temporary care until each cat finds their perfect match.
-            </p>
-          </ContentCard>
-
-          <ContentCard>
-            <h2>Understanding Our Foster Badges</h2>
-            <p>
-              You'll notice two types of badges on our cat listings. Here's what they mean:
+              Welcome! We're Kelsey's foster home, a trusted foster partner with{" "}
+              <strong>Voice for the Voiceless</strong>, a 501(c)(3) nonprofit cat rescue
+              organization dedicated to saving cats in need across Central New York.
             </p>
 
-            <BadgeExamples>
+            <HighlightBox>
+              <p>
+                <strong>All cats listed on this site belong to Voice for the Voiceless.</strong>{" "}
+                We provide loving temporary homes for cats while they await their forever families.
+              </p>
+            </HighlightBox>
+
+            {/* Our Role */}
+            <h2>🏠 Our Role as Foster Parents</h2>
+            <p>
+              As an active foster home within the Voice for the Voiceless network, we:
+            </p>
+            <ul>
+              <li>Provide a safe, comfortable home environment for cats in transition</li>
+              <li>Get to know each cat's unique personality, quirks, and preferences</li>
+              <li>Monitor health, behavior, and socialization progress</li>
+              <li>Facilitate meet-and-greets with potential adopters at our home</li>
+              <li>Support the adoption process with detailed insights about each cat</li>
+              <li>Help cats adjust from shelter life to a home environment</li>
+            </ul>
+
+            {/* Understanding the Badges */}
+            <h2>🏷️ Understanding Cat Listings</h2>
+            <p>
+              When browsing available cats, you'll see two types of listings to help you
+              understand where each cat is currently located:
+            </p>
+
+            <BadgeExampleGrid>
               <BadgeExample>
-                <div className="badge-wrapper">
-                  <Badge $variant="success" style={{ fontSize: '1rem', padding: '8px 16px' }}>
-                    ⭐ Featured Foster
-                  </Badge>
-                </div>
-                <h4>Cats in Our Care</h4>
-                <p>
-                  These cats are physically located at <Highlight>Kelsey's home</Highlight>. 
-                  We know these cats personally and can provide detailed insights into their 
-                  personalities, habits, and quirks.
+                <div className="badge featured">🏠 Featured Foster</div>
+                <div className="title">Cats in Our Care</div>
+                <p className="description">
+                  These cats are physically located at Kelsey's home. We know them personally
+                  and can answer detailed questions about their personalities, habits, and needs.
+                  Meet-and-greets can be arranged by appointment at our home.
                 </p>
-                <ul style={{ marginTop: '1rem', marginLeft: '1.5rem' }}>
-                  <li>Meet by appointment at our home</li>
-                  <li>Detailed personality insights</li>
-                  <li>Direct communication with foster</li>
-                  <li>Quick response to inquiries</li>
-                </ul>
               </BadgeExample>
 
               <BadgeExample>
-                <div className="badge-wrapper">
-                  <Badge $variant="info" style={{ fontSize: '1rem', padding: '8px 16px' }}>
-                    🏘️ Partner Foster
-                  </Badge>
-                </div>
-                <h4>VFV Partner Fosters</h4>
-                <p>
-                  These cats are being fostered at <Highlight>other volunteer homes</Highlight> within 
-                  Voice for the Voiceless. They're equally loved and well-cared for by our 
-                  partner foster families.
+                <div className="badge partner">🏘️ At Partner Home</div>
+                <div className="title">Other VFV Foster Homes</div>
+                <p className="description">
+                  These cats are in other trusted foster homes within the Voice for the Voiceless
+                  network. While we can't arrange visits for these cats, VFV will connect you
+                  with their foster families for more information.
                 </p>
-                <ul style={{ marginTop: '1rem', marginLeft: '1.5rem' }}>
-                  <li>Foster contact provided upon inquiry</li>
-                  <li>Meet-and-greets arranged through VFV</li>
-                  <li>Same adoption process and standards</li>
-                  <li>Part of the VFV foster network</li>
-                </ul>
               </BadgeExample>
-            </BadgeExamples>
-          </ContentCard>
+            </BadgeExampleGrid>
 
-          <ContentCard>
-            <h2>Benefits of Featured Fosters</h2>
+            {/* Why Featured Fosters */}
+            <h3>Why Choose a Featured Foster Cat?</h3>
             <p>
-              While all our cats receive excellent care, cats fostered at Kelsey's home offer 
-              some unique advantages:
+              Cats in our direct care come with some unique advantages:
             </p>
             <ul>
               <li>
-                <strong>Personal Knowledge:</strong> We interact with these cats daily and can 
-                answer detailed questions about their behavior, preferences, and personality.
+                <strong>Personal Knowledge:</strong> We can share detailed insights about their
+                daily routines, favorite toys, food preferences, and social behaviors
               </li>
               <li>
-                <strong>Home Visits:</strong> Interested adopters can schedule appointments to 
-                meet cats in a home environment (by appointment only).
+                <strong>Meet at Our Home:</strong> Schedule a comfortable, low-pressure visit to
+                meet the cat in a home environment (by appointment only)
               </li>
               <li>
-                <strong>Quick Communication:</strong> Direct access to the foster parent means 
-                faster responses to questions and concerns.
+                <strong>Quick Communication:</strong> Direct access to us for questions, updates,
+                and support throughout the adoption process
               </li>
               <li>
-                <strong>Transition Support:</strong> We can provide ongoing support after adoption 
-                since we've developed a deep relationship with each cat.
+                <strong>Smooth Transition:</strong> We can provide continuity and support as your
+                new cat adjusts to their forever home
               </li>
             </ul>
-          </ContentCard>
 
-          <ContentCard>
-            <h2>Our Commitment</h2>
+            {/* Voice for the Voiceless */}
+            <h2>🐾 About Voice for the Voiceless</h2>
             <p>
-              Whether a cat is in our direct care or with a partner foster, all cats listed 
-              receive:
+              Voice for the Voiceless is a volunteer-driven 501(c)(3) nonprofit organization
+              committed to rescuing, rehabilitating, and rehoming cats across Central New York.
+              Through a network of dedicated foster homes like ours, they:
             </p>
             <ul>
-              <li>Comprehensive veterinary care including vaccines and spay/neuter</li>
-              <li>A safe, loving foster home environment</li>
-              <li>Socialization and behavioral assessment</li>
-              <li>Support through the adoption process and beyond</li>
+              <li>Rescue cats from high-kill shelters and dangerous situations</li>
+              <li>Provide necessary medical care, including spay/neuter and vaccinations</li>
+              <li>Place cats in loving foster homes for socialization and care</li>
+              <li>Screen and support adopters to ensure successful placements</li>
+              <li>Offer post-adoption support and resources</li>
             </ul>
-          </ContentCard>
 
-          <ContentCard>
-            <h2>About Voice for the Voiceless</h2>
             <p>
-              Voice for the Voiceless is a 501(c)(3) non-profit organization dedicated to 
-              rescuing and rehoming cats in the Capital Region. As a foster-based rescue, 
-              we rely on a network of dedicated volunteers who open their homes to cats 
-              in need.
-            </p>
-            <p>
-              <strong>All cats remain the property of Voice for the Voiceless</strong> until 
-              adoption is finalized. Foster parents like Kelsey provide temporary care and 
-              help match cats with their perfect forever families.
-            </p>
-          </ContentCard>
-
-          <ContentCard>
-            <h2>Interested in Meeting a Cat?</h2>
-            <h3>⭐ Featured Fosters (In Our Care)</h3>
-            <p>
-              For cats in our direct care, you can schedule a meet-and-greet at our home 
-              by appointment. Contact us through the adoption inquiry form on the cat's 
-              detail page.
+              All adoption fees go directly to Voice for the Voiceless to cover veterinary care,
+              food, litter, and ongoing rescue operations. As foster parents, we volunteer our
+              time and homes to support their life-saving mission.
             </p>
 
-            <h3>🏘️ Partner Fosters</h3>
+            {/* How Fostering Works */}
+            <h2>💡 How Our Foster Program Works</h2>
+            
+            <h3>When a Cat Arrives</h3>
             <p>
-              For cats in partner foster homes, submit an adoption application through 
-              the Adopt-a-Pet listing. Voice for the Voiceless will coordinate with 
-              the appropriate foster home to arrange a meeting.
+              When we receive a new foster cat from Voice for the Voiceless, they may initially
+              appear in the "At Partner Home" listings on Adopt-a-Pet. Once we add them to our
+              database with their detailed information, they automatically switch to "Featured
+              Foster" status on this website, indicating they're now in our direct care.
             </p>
-          </ContentCard>
 
-          <ContentCard>
-            <h2>Building Relationships, Finding Forever Homes</h2>
+            <h3>During Their Stay</h3>
             <p>
-              Kelsey's name and brand represent more than just a foster home—it represents 
-              a commitment to building relationships with potential adopters and ensuring 
-              the best possible match for each cat. When you adopt from us, you're not 
-              just getting a cat; you're gaining a trusted resource who knows your new 
-              companion inside and out.
+              We create a welcoming, stress-free environment where cats can decompress from
+              shelter life, show their true personalities, and prepare for adoption. This
+              typically includes:
+            </p>
+            <ul>
+              <li>Quiet space to adjust and feel safe</li>
+              <li>Gradual socialization with humans and other pets (if applicable)</li>
+              <li>Playtime, enrichment, and positive interactions</li>
+              <li>Monitoring for any health or behavioral concerns</li>
+              <li>Detailed notes on preferences, quirks, and compatibility</li>
+            </ul>
+
+            {/* Adoption Process */}
+            <h2>📋 The Adoption Process</h2>
+            <p>
+              All adoptions are processed through Voice for the Voiceless to ensure the best
+              possible matches between cats and families:
+            </p>
+            <ul>
+              <li>Browse available cats and click "View Details" on any cat that interests you</li>
+              <li>For Featured Fosters, contact us directly to schedule a meet-and-greet</li>
+              <li>For Partner Fosters, click through to Adopt-a-Pet for foster family contact info</li>
+              <li>Complete Voice for the Voiceless's adoption application</li>
+              <li>VFV reviews applications and coordinates with foster families</li>
+              <li>Approved adopters meet the cat and finalize adoption details</li>
+              <li>Adoption fees help VFV continue their rescue work</li>
+            </ul>
+
+            <HighlightBox>
+              <p>
+                <strong>Interested in a Featured Foster cat?</strong> We're happy to answer
+                questions, share photos/videos, and arrange meet-and-greets at our home.
+                Reach out through the contact information on each cat's profile page.
+              </p>
+            </HighlightBox>
+
+            {/* Why We Foster */}
+            <h2>❤️ Why We Foster</h2>
+            <p>
+              Fostering is incredibly rewarding. We get to play a direct role in transforming
+              cats' lives—from scared and uncertain to confident and ready for adoption. Every
+              cat has a unique story, and we're honored to be part of their journey to finding
+              a loving forever home.
             </p>
             <p>
-              Thank you for considering adoption and supporting Voice for the Voiceless!
+              By working with Voice for the Voiceless, we're part of a community dedicated to
+              saving lives, one cat at a time. While the cats may technically belong to the
+              organization, they hold a special place in our hearts during their time with us.
             </p>
-          </ContentCard>
+
+            {/* Get Involved */}
+            <h2>🤝 Get Involved</h2>
+            <p>
+              There are many ways to support Voice for the Voiceless's mission:
+            </p>
+            <ul>
+              <li><strong>Adopt:</strong> Give a cat a forever home</li>
+              <li><strong>Foster:</strong> Become a foster parent like us</li>
+              <li><strong>Donate:</strong> Support medical care and operations</li>
+              <li><strong>Volunteer:</strong> Help with events, transport, or administrative tasks</li>
+              <li><strong>Spread the Word:</strong> Share adoptable cats on social media</li>
+            </ul>
+
+            {/* Disclaimer */}
+            <HighlightBox style={{ marginTop: '3rem' }}>
+              <p style={{ fontSize: '0.875rem' }}>
+                <strong>Transparency Note:</strong> This site may contain affiliate links. Small
+                commissions earned from ads are used to cover the cost of fostering, including
+                food, litter, and help offset veterinary care expenses. All cats remain the
+                property of Voice for the Voiceless, a 501(c)(3) nonprofit organization.
+              </p>
+            </HighlightBox>
+          </ContentSection>
+
+          {/* Call to Action */}
+          <CTASection>
+            <h2>Ready to Meet Your New Best Friend?</h2>
+            <p style={{ marginBottom: '2rem', color: '#6b7280' }}>
+              Browse our available cats and start your adoption journey today.
+            </p>
+            <div className="buttons">
+              <ButtonLink to="/cats" $variant="primary" $size="lg">
+                View Available Cats
+              </ButtonLink>
+              <ButtonLink to="/adoption" $variant="outline" $size="lg">
+                Adoption Process
+              </ButtonLink>
+            </div>
+          </CTASection>
         </Container>
       </Section>
     </>
