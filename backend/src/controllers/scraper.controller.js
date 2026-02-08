@@ -6,6 +6,7 @@ import {
   cleanupOldPartnerFosterCats,
   runFullScrape
 } from '../services/adoptAPetScraper.js';
+import { query } from '../lib/db.js';
 
 /**
  * POST /api/admin/scrape/adoptapet
@@ -82,8 +83,6 @@ export async function runFullScrapeEndpoint(req, res, next) {
  */
 export async function getScraperStatus(req, res, next) {
   try {
-    const { query } = await import('../lib/db.js');
-    
     // Get latest scraped cats
     const latestCats = await query(
       `SELECT 
