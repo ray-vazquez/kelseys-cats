@@ -1,4 +1,4 @@
-// Migrated CatsPage - Using Petfinder API for unified cat display
+// CatsPage - Unified listing with Featured Foster vs Partner Foster badges
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import styled from "styled-components";
@@ -90,21 +90,20 @@ const StatItem = styled.div`
 export default function CatsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState({
-    foster_cats: [],
-    shelter_cats: [],
-    total: 0,
-    duplicates_removed: 0
+    featured_foster_cats: [],
+    partner_foster_cats: [],
+    total: 0
   });
   const [loading, setLoading] = useState(true);
   const [seniorOnly, setSeniorOnly] = useState(false);
-  const [showShelterCats, setShowShelterCats] = useState(true);
+  const [showPartnerFosters, setShowPartnerFosters] = useState(true);
 
   const page = Number(searchParams.get("page") || "1");
 
   useEffect(() => {
     setLoading(true);
     
-    // Fetch all available cats (foster + shelter, deduplicated)
+    // Fetch all available cats (featured + partner, deduplicated via view)
     http
       .get('/cats/all-available')
       .then((res) => {
@@ -112,7 +111,7 @@ export default function CatsPage() {
       })
       .catch((err) => {
         console.error("Failed to load cats", err);
-        setData({ foster_cats: [], shelter_cats: [], total: 0, duplicates_removed: 0 });
+        setData({ featured_foster_cats: [], partner_foster_cats: [], total: 0 });
       })
       .finally(() => setLoading(false));
   }, []);
@@ -120,19 +119,16 @@ export default function CatsPage() {
   // Filter cats based on filters
   const filteredCats = React.useMemo(() => {
     let allCats = [
-      ...data.foster_cats,
-      ...(showShelterCats ? data.shelter_cats : [])
+      ...data.featured_foster_cats,
+      ...(showPartnerFosters ? data.partner_foster_cats : [])
     ];
     
     if (seniorOnly) {
-      allCats = allCats.filter(cat => 
-        cat.is_senior || 
-        (cat.petfinder_data?.age_text === 'Senior')
-      );
+      allCats = allCats.filter(cat => cat.is_senior);
     }
     
     return allCats;
-  }, [data, seniorOnly, showShelterCats]);
+  }, [data, seniorOnly, showPartnerFosters]);
 
   // Pagination
   const perPage = 12;
@@ -151,7 +147,7 @@ export default function CatsPage() {
         variant="gradient"
         size="md"
         title="Adoptable Cats"
-        subtitle="Find your perfect feline companion from our foster home and Voice for the Voiceless"
+        subtitle="Find your perfect feline companion from cats in our care and other VFV foster homes"
         actions={
           <ButtonLink to="/adoption" $variant="outline" $size="lg">
             How to Adopt
@@ -166,26 +162,18 @@ export default function CatsPage() {
           {!loading && data.total > 0 && (
             <StatsBar>
               <StatItem>
-                <span className="stat-value">{data.foster_cats.length}</span>
-                <span className="stat-label">🏠 Our Foster Cats</span>
+                <span className="stat-value">{data.featured_foster_cats?.length || 0}</span>
+                <span className="stat-label">⭐ Featured Fosters</span>
               </StatItem>
               <StatItem>
-                <span className="stat-value">{data.shelter_cats.length}</span>
-                <span className="stat-label">🐾 Voice Shelter Cats</span>
+                <span className="stat-value">{data.partner_foster_cats?.length || 0}</span>
+                <span className="stat-label">🏘️ Partner Fosters</span>
               </StatItem>
               <StatItem>
                 <span className="stat-value">{data.total}</span>
                 <span className="stat-label">Total Available</span>
               </StatItem>
             </StatsBar>
-          )}
-
-          {/* Info Alert */}
-          {!loading && data.duplicates_removed > 0 && (
-            <Alert $variant="info" style={{ marginBottom: '2rem' }}>
-              <strong>Smart Deduplication:</strong> We automatically removed {data.duplicates_removed} duplicate{data.duplicates_removed !== 1 ? 's' : ''} 
-              {' '}to show you a clean list of all available cats.
-            </Alert>
           )}
 
           {/* Filter Section */}
@@ -201,10 +189,10 @@ export default function CatsPage() {
               </CheckboxLabel>
               <CheckboxLabel>
                 <Checkbox
-                  checked={showShelterCats}
-                  onChange={(e) => setShowShelterCats(e.target.checked)}
+                  checked={showPartnerFosters}
+                  onChange={(e) => setShowPartnerFosters(e.target.checked)}
                 />
-                Include cats from Voice for the Voiceless shelter
+                Include cats from VFV partner foster homes
               </CheckboxLabel>
             </div>
           </FilterSection>
@@ -214,7 +202,7 @@ export default function CatsPage() {
             <ResultsCount>
               Showing {paginatedCats.length} of {filteredCats.length} cat{filteredCats.length !== 1 ? 's' : ''}
               {seniorOnly && ' (senior cats only)'}
-              {!showShelterCats && ' (foster cats only)'}
+              {!showPartnerFosters && ' (featured fosters only)'}
             </ResultsCount>
           )}
 
@@ -233,8 +221,8 @@ export default function CatsPage() {
               description={
                 seniorOnly
                   ? "No senior cats are currently available. Try clearing the filter to see all cats."
-                  : !showShelterCats
-                  ? "Enable shelter cats filter to see more available cats."
+                  : !showPartnerFosters
+                  ? "Enable partner fosters filter to see more available cats."
                   : "No cats are currently available. Check back soon for new arrivals!"
               }
               actions={
@@ -258,12 +246,12 @@ export default function CatsPage() {
             <>
               <Grid $cols={3} $mdCols={2}>
                 {paginatedCats.map((cat) => (
-                  <Card key={`${cat.source}-${cat.id || cat.petfinder_id}`} $hover style={{ position: 'relative' }}>
+                  <Card key={`${cat.source}-${cat.id}`} $hover style={{ position: 'relative' }}>
                     {/* Source Badge */}
                     <SourceBadge 
-                      $variant={cat.source === 'foster' ? 'success' : 'info'}
+                      $variant={cat.is_featured_foster ? 'success' : 'info'}
                     >
-                      {cat.source === 'foster' ? '🏠 Our Foster' : '🐾 Voice Shelter'}
+                      {cat.is_featured_foster ? '⭐ Featured Foster' : '🏘️ Partner Foster'}
                     </SourceBadge>
 
                     {cat.main_image_url && (
@@ -279,7 +267,7 @@ export default function CatsPage() {
                       <TextMuted>
                         {cat.age_years
                           ? `${cat.age_years} years old`
-                          : cat.petfinder_data?.age_text || "Age unknown"}{" "}
+                          : cat.age_text || "Age unknown"}{" "}
                         · {cat.breed || "Mixed breed"}
                       </TextMuted>
                       
@@ -287,7 +275,7 @@ export default function CatsPage() {
                         {cat.is_special_needs && (
                           <Badge $variant="warning">Special Needs</Badge>
                         )}
-                        {(cat.is_senior || cat.petfinder_data?.age_text === 'Senior') && (
+                        {cat.is_senior && (
                           <Badge $variant="secondary">Senior</Badge>
                         )}
                         {cat.bonded_pair_id && (
@@ -296,13 +284,13 @@ export default function CatsPage() {
                       </CardFooter>
                       
                       <div style={{ marginTop: "1rem" }}>
-                        {cat.source === 'foster' ? (
-                          // Foster cats link to your detail page
+                        {cat.is_featured_foster ? (
+                          // Featured foster cats link to your detail page
                           <ButtonLink to={`/cats/${cat.id}`} $variant="primary" $fullWidth>
                             View Details
                           </ButtonLink>
                         ) : (
-                          // Shelter cats link to Petfinder
+                          // Partner foster cats link to Adopt-a-Pet
                           <ButtonLink 
                             as="a"
                             href={cat.adoptapet_url} 
@@ -311,7 +299,7 @@ export default function CatsPage() {
                             $variant="primary" 
                             $fullWidth
                           >
-                            View on Petfinder →
+                            View on Adopt-a-Pet →
                           </ButtonLink>
                         )}
                       </div>
