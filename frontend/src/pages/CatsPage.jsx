@@ -163,11 +163,11 @@ export default function CatsPage() {
             <StatsBar>
               <StatItem>
                 <span className="stat-value">{data.featured_foster_cats?.length || 0}</span>
-                <span className="stat-label">⭐ Featured Fosters</span>
+                <span className="stat-label">🏠 Featured Fosters</span>
               </StatItem>
               <StatItem>
                 <span className="stat-value">{data.partner_foster_cats?.length || 0}</span>
-                <span className="stat-label">🏘️ Partner Fosters</span>
+                <span className="stat-label">🏘️ At Partner Homes</span>
               </StatItem>
               <StatItem>
                 <span className="stat-value">{data.total}</span>
@@ -247,11 +247,11 @@ export default function CatsPage() {
               <Grid $cols={3} $mdCols={2}>
                 {paginatedCats.map((cat) => (
                   <Card key={`${cat.source}-${cat.id}`} $hover style={{ position: 'relative' }}>
-                    {/* Source Badge */}
+                    {/* Source Badge - FIXED to use cat.source field */}
                     <SourceBadge 
-                      $variant={cat.is_featured_foster ? 'success' : 'info'}
+                      $variant={cat.source === 'featured_foster' ? 'success' : 'info'}
                     >
-                      {cat.is_featured_foster ? '⭐ Featured Foster' : '🏘️ Partner Foster'}
+                      {cat.source === 'featured_foster' ? '🏠 Featured Foster' : '🏘️ At Partner Home'}
                     </SourceBadge>
 
                     {cat.main_image_url && (
@@ -267,7 +267,7 @@ export default function CatsPage() {
                       <TextMuted>
                         {cat.age_years
                           ? `${cat.age_years} years old`
-                          : cat.age_text || "Age unknown"}{" "}
+                          : "Age unknown"}{" "}
                         · {cat.breed || "Mixed breed"}
                       </TextMuted>
                       
@@ -284,7 +284,7 @@ export default function CatsPage() {
                       </CardFooter>
                       
                       <div style={{ marginTop: "1rem" }}>
-                        {cat.is_featured_foster ? (
+                        {cat.source === 'featured_foster' ? (
                           // Featured foster cats link to your detail page
                           <ButtonLink to={`/cats/${cat.id}`} $variant="primary" $fullWidth>
                             View Details
