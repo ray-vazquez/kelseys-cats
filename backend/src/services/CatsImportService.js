@@ -15,7 +15,11 @@ export class CatsImportService {
         trim: true,
       });
     } catch (err) {
-      throw new Error("Invalid CSV format");
+      throw new Error("Invalid CSV format: " + err.message);
+    }
+
+    if (!records || records.length === 0) {
+      throw new Error("CSV file is empty or has no valid rows");
     }
 
     const previewRows = [];
@@ -53,11 +57,14 @@ export class CatsImportService {
         errors.push(`Invalid bonded_pair_id "${row.bonded_pair_id}"`);
       }
 
+      // Support both 'gender' and 'sex' columns for backwards compatibility
+      const gender = row.gender || row.sex || "unknown";
+
       const mapped = {
         id,
         name,
         age_years: ageYears,
-        sex: row.sex || "unknown",
+        gender: gender, // UPDATED: use gender field
         breed: row.breed || null,
         temperament: row.temperament || null,
         good_with_kids:
@@ -69,10 +76,13 @@ export class CatsImportService {
         medical_notes: row.medical_notes || null,
         is_special_needs:
           row.is_special_needs === "1" || row.is_special_needs === "true",
+        is_senior:
+          row.is_senior === "1" || row.is_senior === "true" || ageYears >= 10,
         status: row.status || (existing?.status ?? "available"),
         main_image_url: row.main_image_url || null,
         featured: row.featured === "1" || row.featured === "true",
         bonded_pair_id: bondedPairId,
+        adoptapet_url: row.adoptapet_url || null, // ADDED: support adoptapet_url
       };
 
       previewRows.push({
