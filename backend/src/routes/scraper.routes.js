@@ -2,7 +2,7 @@
 // Admin routes for scraping operations
 
 import express from 'express';
-import { requireAdmin } from '../middleware/auth.js';
+import { requireAuth, requireAdmin } from '../middleware/auth.middleware.js';
 import {
   scrapeAdoptaPet,
   cleanupOldCats,
@@ -13,6 +13,7 @@ import {
 const router = express.Router();
 
 // All scraper routes require admin authentication
+router.use(requireAuth);
 router.use(requireAdmin);
 
 /**
