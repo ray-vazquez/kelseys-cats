@@ -85,77 +85,23 @@ async function scrapeAllPages(browser) {
   console.log("⏳ Waiting for page to render...");
   await new Promise(resolve => setTimeout(resolve, 8000));
 
-  // DEBUG: Take screenshot
-  await page.screenshot({ path: 'debug-adoptapet.png', fullPage: true });
-  console.log("📸 Screenshot saved to debug-adoptapet.png");
-
-  // DEBUG: Log what's actually on the page
-  const debugInfo = await page.evaluate(() => {
-    const html = document.body.innerHTML.substring(0, 5000);
-    const testIds = Array.from(document.querySelectorAll('[data-testid]')).map(el => el.getAttribute('data-testid'));
-    const classes = Array.from(document.querySelectorAll('[class*="card"], [class*="Card"], [class*="pet"], [class*="Pet"]')).map(el => el.className).slice(0, 20);
-    
-    return {
-      title: document.title,
-      hasDataTestId: testIds.length > 0,
-      testIds: testIds.slice(0, 10),
-      cardClasses: classes,
-      firstDivs: Array.from(document.querySelectorAll('div')).slice(0, 5).map(d => d.className)
-    };
-  });
-
-  console.log("🔍 DEBUG INFO:");
-  console.log("   Title:", debugInfo.title);
-  console.log("   Has data-testid:", debugInfo.hasDataTestId);
-  console.log("   Sample testIds:", debugInfo.testIds);
-  console.log("   Card-like classes:", debugInfo.cardClasses.slice(0, 5));
-  console.log("   First div classes:", debugInfo.firstDivs);
-
   const allCats = [];
+  const skippedDogs = [];
   let pageIndex = 1;
 
   // Loop over pagination until no Next button
   while (true) {
     console.log(`🔍 Scraping page ${pageIndex}...`);
 
-    // Try multiple selector strategies
-    let cards = [];
-    
-    // Strategy 1: data-testid
-    cards = await page.$$('[data-testid="pet-card"]');
-    console.log(`   Selector [data-testid="pet-card"]: ${cards.length} cards`);
-    
-    if (cards.length === 0) {
-      // Strategy 2: class="pet-card"
-      cards = await page.$$('.pet-card');
-      console.log(`   Selector .pet-card: ${cards.length} cards`);
-    }
-    
-    if (cards.length === 0) {
-      // Strategy 3: any div with 'card' in class
-      cards = await page.$$('div[class*="Card"]');
-      console.log(`   Selector div[class*="Card"]: ${cards.length} cards`);
-    }
-
-    if (cards.length === 0) {
-      // Strategy 4: links to /pet/
-      const petLinks = await page.$$('a[href*="/pet/"]');
-      console.log(`   Found ${petLinks.length} pet links`);
-      
-      if (petLinks.length === 0) {
-        console.log("❌ No pet cards or links found. Check debug-adoptapet.png");
-        break;
-      }
-    }
-
     // Scroll to load lazy images
     await page.evaluate(() => {
       window.scrollTo(0, document.body.scrollHeight);
     });
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-    const catsOnPage = await page.evaluate(() => {
+    const pageResults = await page.evaluate(() => {
       const results = [];
+      const dogs = [];
 
       // Find all links to pet pages
       const petLinks = document.querySelectorAll('a[href*="/pet/"]');
@@ -163,7 +109,7 @@ async function scrapeAllPages(browser) {
       petLinks.forEach((link) => {
         try {
           const url = link.href;
-          if (!url) return;
+          if (!url || !url.includes('/pet/')) return;
 
           // Try to find parent card container
           let card = link.closest('[data-testid="pet-card"]') || 
@@ -179,18 +125,59 @@ async function scrapeAllPages(browser) {
           const name = nameEl?.textContent?.trim();
           if (!name) return;
 
+          // Get all text from card for analysis
+          const cardText = card?.textContent?.trim() || '';
+          const urlLower = url.toLowerCase();
+          const nameLower = name.toLowerCase();
+          const textLower = cardText.toLowerCase();
+
+          // FILTER: Skip dogs
+          const isDog = urlLower.includes('/dog/') ||
+                       urlLower.includes('-dog-') ||
+                       textLower.includes('breed:') && !textLower.includes('domestic') ||
+                       textLower.includes('labrador') ||
+                       textLower.includes('retriever') ||
+                       textLower.includes('shepherd') ||
+                       textLower.includes('terrier') ||
+                       textLower.includes('beagle') ||
+                       textLower.includes('poodle') ||
+                       textLower.includes('bulldog') ||
+                       textLower.includes('husky') ||
+                       textLower.includes('chihuahua') ||
+                       textLower.includes('corgi') ||
+                       textLower.includes('pitbull') ||
+                       textLower.includes('pit bull');
+
+          if (isDog) {
+            dogs.push(name);
+            return;
+          }
+
+          // FILTER: Must be a cat - look for cat indicators
+          const isCat = urlLower.includes('/cat/') ||
+                       urlLower.includes('-cat-') ||
+                       textLower.includes('domestic shorthair') ||
+                       textLower.includes('domestic longhair') ||
+                       textLower.includes('domestic medium') ||
+                       textLower.includes('tabby') ||
+                       textLower.includes('kitten') ||
+                       textLower.includes('cat');
+
+          // If we can't determine if it's a cat, skip it
+          if (!isCat) {
+            console.log(`⚠️ Skipping ${name} - cannot determine if cat`);
+            return;
+          }
+
           // Image
           const imgEl = card.querySelector('img') || link.querySelector('img');
           const image = imgEl?.src || imgEl?.getAttribute('data-src') || imgEl?.getAttribute('data-lazy-src');
-
-          // Get all text from card
-          const cardText = card?.textContent?.trim() || '';
 
           // Age
           let ageText = null;
           const ageCandidates = ['Kitten', 'Baby', 'Young', 'Adult', 'Senior'];
           for (const label of ageCandidates) {
-            if (cardText.toLowerCase().includes(label.toLowerCase())) {
+            if (textLower.includes(label.toLowerCase())) {
               ageText = label;
               break;
             }
@@ -198,18 +185,23 @@ async function scrapeAllPages(browser) {
 
           // Sex
           let sex = 'unknown';
-          if (cardText.toLowerCase().includes('female')) sex = 'female';
-          else if (cardText.toLowerCase().includes('male')) sex = 'male';
+          if (textLower.includes('female')) sex = 'female';
+          else if (textLower.includes('male')) sex = 'male';
 
-          // Breed
+          // Breed - look for cat breeds
           let breed = 'Domestic Shorthair';
-          const breedMatch = cardText.split(',')[0]?.trim();
-          if (breedMatch && breedMatch.length > 0 && breedMatch.length < 50) {
-            breed = breedMatch;
-          }
+          if (textLower.includes('domestic shorthair')) breed = 'Domestic Shorthair';
+          else if (textLower.includes('domestic longhair')) breed = 'Domestic Longhair';
+          else if (textLower.includes('domestic medium')) breed = 'Domestic Medium Hair';
+          else if (textLower.includes('tabby')) breed = 'Tabby';
+          else if (textLower.includes('siamese')) breed = 'Siamese';
+          else if (textLower.includes('maine coon')) breed = 'Maine Coon';
+          else if (textLower.includes('persian')) breed = 'Persian';
+          else if (textLower.includes('ragdoll')) breed = 'Ragdoll';
+          else if (textLower.includes('bengal')) breed = 'Bengal';
 
           // Description
-          const description = `${name} is a ${ageText || ''} ${sex !== 'unknown' ? sex : ''} cat looking for a loving home!`.trim();
+          const description = `${name} is a ${ageText || ''} ${sex !== 'unknown' ? sex : ''} cat available for adoption through Voice for the Voiceless.`.trim();
 
           // ID
           const idMatch = url.match(/\/pet\/(\d+)-/);
@@ -234,10 +226,18 @@ async function scrapeAllPages(browser) {
         }
       });
 
-      return results;
+      return { cats: results, dogs };
     });
 
-    console.log(`   ➕ Found ${catsOnPage.length} cats on page ${pageIndex}`);
+    const catsOnPage = pageResults.cats;
+    const dogsOnPage = pageResults.dogs;
+
+    console.log(`   🐈 Found ${catsOnPage.length} cats on page ${pageIndex}`);
+    if (dogsOnPage.length > 0) {
+      console.log(`   🐕 Filtered out ${dogsOnPage.length} dogs: ${dogsOnPage.join(', ')}`);
+      skippedDogs.push(...dogsOnPage);
+    }
+    
     allCats.push(...catsOnPage);
 
     // Try to click "Next" in pagination
@@ -249,12 +249,16 @@ async function scrapeAllPages(browser) {
 
       const nextBtn = container.querySelector('button[aria-label="Next"]') ||
                      container.querySelector('a[aria-label="Next"]') ||
-                     container.querySelector('button:last-child') ||
-                     container.querySelector('a:last-child');
+                     Array.from(container.querySelectorAll('button, a')).find(btn => 
+                       btn.textContent.includes('›') || 
+                       btn.textContent.includes('Next') ||
+                       btn.getAttribute('aria-label')?.includes('Next')
+                     );
 
       if (!nextBtn) return false;
       const disabled = nextBtn.getAttribute('disabled') !== null ||
-                      nextBtn.getAttribute('aria-disabled') === 'true';
+                      nextBtn.getAttribute('aria-disabled') === 'true' ||
+                      nextBtn.classList.contains('disabled');
       if (disabled) return false;
 
       nextBtn.click();
@@ -267,7 +271,7 @@ async function scrapeAllPages(browser) {
     }
 
     pageIndex += 1;
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
     // Safety: max 10 pages
     if (pageIndex > 10) {
@@ -276,7 +280,11 @@ async function scrapeAllPages(browser) {
     }
   }
 
-  console.log(`📦 Total cats scraped across all pages: ${allCats.length}`);
+  console.log(`\n📦 Total cats scraped across all pages: ${allCats.length}`);
+  if (skippedDogs.length > 0) {
+    console.log(`🐕 Total dogs filtered out: ${skippedDogs.length}`);
+  }
+  
   await page.close();
   return allCats;
 }
@@ -292,7 +300,7 @@ export async function scrapeAndSavePartnerFosterCats() {
     console.log(`📍 URL: ${VFV_ADOPTAPET_URL}`);
 
     browser = await puppeteer.launch({
-      headless: false, // DEBUG: Run with visible browser
+      headless: "new", // Back to headless for production
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -308,6 +316,8 @@ export async function scrapeAndSavePartnerFosterCats() {
     let updated = 0;
     let skipped = 0;
     let errors = 0;
+
+    console.log(`\n💾 Saving ${scrapedCats.length} cats to database...`);
 
     for (const cat of scrapedCats) {
       try {
