@@ -1,47 +1,37 @@
 // backend/src/controllers/shelterCats.controller.js
-// Controller for fetching all available cats (foster + shelter)
-// Uses database storage instead of in-memory cache (much faster!)
+// Controller for fetching all available cats (featured + partner fosters)
+// Uses database view for unified querying with automatic deduplication
 
-import { getVoiceCats, scrapeAndSaveVoiceCats, cleanupOldCats } from '../services/petfinderScraper.js';
+import { 
+  getPartnerFosterCats, 
+  scrapeAndSavePartnerFosterCats, 
+  cleanupOldPartnerFosterCats 
+} from '../services/adoptAPetScraper.js';
 import { query } from '../lib/db.js';
 
 /**
  * GET /api/cats/all-available
- * Returns merged list of foster cats + Voice shelter cats
- * Deduplicates by name automatically
+ * Returns merged list of featured foster cats + partner foster cats
+ * Uses all_available_cats view for automatic deduplication
  */
 export async function getAllAvailableCats(req, res) {
   try {
-    // 1. Get your foster cats from database
-    const fosterCats = await query(
-      `SELECT * FROM cats WHERE status = 'available' ORDER BY name ASC`
+    // Query the unified view (handles deduplication automatically)
+    const allCats = await query(
+      `SELECT * FROM all_available_cats ORDER BY name ASC`
     );
     
-    // 2. Get Voice shelter cats from database (fast!)
-    const shelterCats = await getVoiceCats();
+    // Separate into featured vs partner for stats
+    const featuredCats = allCats.filter(cat => cat.is_featured_foster);
+    const partnerCats = allCats.filter(cat => cat.is_partner_foster);
     
-    // 3. Deduplicate: Remove shelter cats that match foster cat names
-    const fosterCatNames = new Set(
-      fosterCats.map(cat => cat.name.toLowerCase().trim())
-    );
-    
-    const uniqueShelterCats = shelterCats.filter(
-      cat => !fosterCatNames.has(cat.name.toLowerCase().trim())
-    );
-    
-    // 4. Format foster cats with source indicator
-    const formattedFosterCats = fosterCats.map(cat => ({
-      ...cat,
-      source: 'foster',
-      is_foster: true
-    }));
-    
-    // 5. Return both lists separately (frontend can decide how to display)
+    // Return structured response
     res.json({
-      foster_cats: formattedFosterCats,
-      shelter_cats: uniqueShelterCats,
-      total: formattedFosterCats.length + uniqueShelterCats.length,
-      duplicates_removed: shelterCats.length - uniqueShelterCats.length
+      featured_foster_cats: featuredCats,
+      partner_foster_cats: partnerCats,
+      total: allCats.length,
+      featured_count: featuredCats.length,
+      partner_count: partnerCats.length
     });
     
   } catch (error) {
@@ -54,65 +44,65 @@ export async function getAllAvailableCats(req, res) {
 }
 
 /**
- * GET /api/cats/shelter
- * Returns only Voice shelter cats (no deduplication)
+ * GET /api/cats/partner-fosters
+ * Returns only partner foster cats (no featured fosters)
  */
-export async function getShelterCatsOnly(req, res) {
+export async function getPartnerFostersOnly(req, res) {
   try {
-    const shelterCats = await getVoiceCats();
+    const partnerCats = await getPartnerFosterCats();
     
     res.json({
-      items: shelterCats,
-      total: shelterCats.length,
+      items: partnerCats,
+      total: partnerCats.length,
       organization: 'Voice for the Voiceless',
-      source: 'database'
+      source: 'adoptapet_database'
     });
     
   } catch (error) {
-    console.error('Error fetching shelter cats:', error);
+    console.error('Error fetching partner foster cats:', error);
     res.status(500).json({ 
-      error: 'Failed to fetch shelter cats',
+      error: 'Failed to fetch partner foster cats',
       message: error.message 
     });
   }
 }
 
 /**
- * POST /api/cats/scrape-shelter
- * Manually scrape Petfinder and save to database
- * Admin only - use this to refresh shelter cat data
+ * POST /api/cats/scrape-partner-fosters
+ * Manually scrape Adopt-a-Pet and save to database
+ * Admin only - use this to refresh partner foster cat data
  */
-export async function scrapeShelterCats(req, res) {
+export async function scrapePartnerFosters(req, res) {
   try {
-    console.log('Starting Petfinder scrape...');
+    console.log('Starting Adopt-a-Pet scrape...');
     
     // Scrape and save to database
-    const result = await scrapeAndSaveVoiceCats();
+    const result = await scrapeAndSavePartnerFosterCats();
     
     // Clean up old cats (likely adopted)
-    const cleanup = await cleanupOldCats();
+    const cleanup = await cleanupOldPartnerFosterCats();
     
     res.json({
       success: true,
-      message: 'Shelter cats updated',
+      message: 'Partner foster cats updated from Adopt-a-Pet',
       scraping: result,
       cleanup: cleanup
     });
     
   } catch (error) {
-    console.error('Error scraping shelter cats:', error);
+    console.error('Error scraping partner foster cats:', error);
     res.status(500).json({ 
-      error: 'Failed to scrape shelter cats',
+      error: 'Failed to scrape partner foster cats',
       message: error.message 
     });
   }
 }
 
 /**
- * GET /api/cats/shelter-info
- * Get info about shelter cats in database
+ * GET /api/cats/partner-fosters-info
+ * Get info about partner foster cats in database
  */
-export async function getShelterInfo(req, res) {
+export async function getPartnerFostersInfo(req, res) {
   try {
     const counts = await query(
       `SELECT 
@@ -125,7 +115,7 @@ export async function getShelterInfo(req, res) {
     const info = counts[0] || { total: 0, last_updated: null, oldest_update: null };
     
     res.json({
-      total_cats: info.total,
+      total_partner_fosters: info.total,
       last_updated: info.last_updated,
       oldest_update: info.oldest_update,
       needs_refresh: info.total === 0 || 
@@ -133,9 +123,9 @@ export async function getShelterInfo(req, res) {
     });
     
   } catch (error) {
-    console.error('Error getting shelter info:', error);
+    console.error('Error getting partner foster info:', error);
     res.status(500).json({ 
-      error: 'Failed to get shelter info',
+      error: 'Failed to get partner foster info',
       message: error.message 
     });
   }
