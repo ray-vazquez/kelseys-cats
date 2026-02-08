@@ -14,9 +14,9 @@ import {
 } from "../controllers/catsImport.controller.js";
 import {
   getAllAvailableCats,
-  getShelterCatsOnly,
-  scrapeShelterCats,
-  getShelterInfo
+  getPartnerFostersOnly,
+  scrapePartnerFosters,
+  getPartnerFostersInfo
 } from "../controllers/shelterCats.controller.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.middleware.js";
 import { uploadCsv } from "../middleware/upload.middleware.js";
@@ -26,9 +26,9 @@ const router = express.Router();
 
 // Public routes
 router.get("/", listCats);
-router.get("/all-available", getAllAvailableCats); // Foster + Shelter cats (deduplicated)
-router.get("/shelter", getShelterCatsOnly); // Only shelter cats
-router.get("/shelter-info", getShelterInfo); // Shelter cat database info
+router.get("/all-available", getAllAvailableCats); // Featured + Partner fosters (deduplicated via view)
+router.get("/partner-fosters", getPartnerFostersOnly); // Only partner fosters
+router.get("/partner-fosters-info", getPartnerFostersInfo); // Partner foster database info
 router.get("/:id", getCat);
 
 // Admin routes
@@ -49,7 +49,7 @@ router.post(
 router.post("/import/confirm", requireAuth, requireAdmin, importConfirm);
 router.get("/export/csv", requireAuth, requireAdmin, exportCatsCsv);
 
-// Shelter cat management (admin only)
-router.post("/scrape-shelter", requireAuth, requireAdmin, scrapeShelterCats);
+// Partner foster management (admin only)
+router.post("/scrape-partner-fosters", requireAuth, requireAdmin, scrapePartnerFosters);
 
 export default router;
