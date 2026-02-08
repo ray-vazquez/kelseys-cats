@@ -21,9 +21,9 @@ export async function getAllAvailableCats(req, res) {
       `SELECT * FROM all_available_cats ORDER BY name ASC`
     );
     
-    // Separate into featured vs partner for stats
-    const featuredCats = allCats.filter(cat => cat.is_featured_foster);
-    const partnerCats = allCats.filter(cat => cat.is_partner_foster);
+    // Separate into featured vs partner for stats using 'source' field
+    const featuredCats = allCats.filter(cat => cat.source === 'featured_foster');
+    const partnerCats = allCats.filter(cat => cat.source === 'partner_foster');
     
     // Return structured response
     res.json({
