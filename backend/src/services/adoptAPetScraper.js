@@ -77,9 +77,12 @@ async function scrapeAllPages(browser) {
 
   console.log("⏳ Loading shelter page...");
   await page.goto(VFV_ADOPTAPET_URL, {
-    waitUntil: "networkidle0",
-    timeout: 45000,
+    waitUntil: "domcontentloaded",
+    timeout: 90000,
   });
+
+  // Wait for page to render
+  await new Promise(resolve => setTimeout(resolve, 5000));
 
   const allCats = [];
   let pageIndex = 1;
@@ -99,7 +102,7 @@ async function scrapeAllPages(browser) {
     await page.evaluate(() => {
       window.scrollTo(0, document.body.scrollHeight);
     });
-    await page.waitForTimeout(1500);
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     const catsOnPage = await page.evaluate(() => {
       const results = [];
@@ -223,7 +226,7 @@ async function scrapeAllPages(browser) {
     }
 
     pageIndex += 1;
-    await page.waitForTimeout(2000);
+    await new Promise(resolve => setTimeout(resolve, 2000));
   }
 
   console.log(`📦 Total cats scraped across all pages: ${allCats.length}`);
