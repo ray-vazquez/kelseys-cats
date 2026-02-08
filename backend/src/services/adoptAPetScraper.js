@@ -103,6 +103,22 @@ async function scrapeAllPages(browser) {
       const results = [];
       const dogs = [];
 
+      // Common dog breed keywords
+      const dogBreeds = [
+        'labrador', 'retriever', 'shepherd', 'terrier', 'beagle', 'poodle',
+        'bulldog', 'husky', 'chihuahua', 'corgi', 'pitbull', 'pit bull',
+        'rottweiler', 'boxer', 'dachshund', 'pomeranian', 'shih tzu',
+        'doberman', 'mastiff', 'collie', 'pointer', 'spaniel', 'setter',
+        'schnauzer', 'great dane', 'malamute', 'akita', 'aussie',
+        'australian', 'border collie', 'cattle dog', 'hound', 'pug',
+        'dalmatian', 'weimaraner', 'vizsla', 'newfoundland', 'saint bernard',
+        'bernese', 'bichon', 'cocker', 'springer', 'yorkshire', 'maltese',
+        'havanese', 'papillon', 'cavalier', 'boston terrier', 'french bulldog',
+        'english bulldog', 'american bulldog', 'staffordshire', 'bull terrier',
+        'american pit', 'pit mix', 'lab mix', 'shepherd mix', 'hound mix',
+        'terrier mix', 'retriever mix', 'mixed breed dog', 'mixed dog'
+      ];
+
       // Find all links to pet pages
       const petLinks = document.querySelectorAll('a[href*="/pet/"]');
       
@@ -118,7 +134,11 @@ async function scrapeAllPages(browser) {
                      link.closest('article') ||
                      link.parentElement;
 
-          // Name - try multiple approaches
+          // Check all data attributes for species info
+          const cardHTML = card.outerHTML || '';
+          const cardAttrs = Array.from(card.attributes || []).map(a => `${a.name}=${a.value}`).join(' ');
+
+          // Name
           const nameEl = card.querySelector('[data-testid="pet-card-name"]') ||
                         card.querySelector('h2, h3, .name, [class*="name"]') ||
                         link.querySelector('h2, h3, [class*="name"]');
@@ -130,42 +150,85 @@ async function scrapeAllPages(browser) {
           const urlLower = url.toLowerCase();
           const nameLower = name.toLowerCase();
           const textLower = cardText.toLowerCase();
+          const htmlLower = cardHTML.toLowerCase();
+          const attrsLower = cardAttrs.toLowerCase();
 
-          // FILTER: Skip dogs
-          const isDog = urlLower.includes('/dog/') ||
-                       urlLower.includes('-dog-') ||
-                       textLower.includes('breed:') && !textLower.includes('domestic') ||
-                       textLower.includes('labrador') ||
-                       textLower.includes('retriever') ||
-                       textLower.includes('shepherd') ||
-                       textLower.includes('terrier') ||
-                       textLower.includes('beagle') ||
-                       textLower.includes('poodle') ||
-                       textLower.includes('bulldog') ||
-                       textLower.includes('husky') ||
-                       textLower.includes('chihuahua') ||
-                       textLower.includes('corgi') ||
-                       textLower.includes('pitbull') ||
-                       textLower.includes('pit bull');
+          // STRICT FILTER: Check for dog indicators
+          const hasDogInURL = urlLower.includes('-dog-') || 
+                             urlLower.includes('/dog/') ||
+                             urlLower.includes('species=dog') ||
+                             urlLower.includes('type=dog');
 
-          if (isDog) {
+          const hasDogInHTML = htmlLower.includes('species="dog"') ||
+                              htmlLower.includes('species=dog') ||
+                              htmlLower.includes('data-species="dog"') ||
+                              htmlLower.includes('pettype="dog"') ||
+                              htmlLower.includes('data-type="dog"');
+
+          const hasDogInAttrs = attrsLower.includes('dog');
+
+          // Check for dog breed keywords
+          const hasDogBreed = dogBreeds.some(breed => 
+            textLower.includes(breed) || nameLower.includes(breed)
+          );
+
+          // Check for explicit species mentions
+          const hasSpeciesText = textLower.includes('species:') ||
+                                textLower.includes('animal type:') ||
+                                textLower.includes('pet type:');
+
+          let speciesIsDog = false;
+          if (hasSpeciesText) {
+            // Extract species from text like "Species: Dog" or "Animal Type: Dog"
+            const speciesMatch = textLower.match(/(?:species|animal type|pet type)\s*:?\s*(\w+)/);
+            if (speciesMatch && speciesMatch[1] === 'dog') {
+              speciesIsDog = true;
+            }
+          }
+
+          // If ANY dog indicator is found, skip it
+          if (hasDogInURL || hasDogInHTML || hasDogInAttrs || hasDogBreed || speciesIsDog) {
             dogs.push(name);
             return;
           }
 
-          // FILTER: Must be a cat - look for cat indicators
-          const isCat = urlLower.includes('/cat/') ||
-                       urlLower.includes('-cat-') ||
-                       textLower.includes('domestic shorthair') ||
-                       textLower.includes('domestic longhair') ||
-                       textLower.includes('domestic medium') ||
-                       textLower.includes('tabby') ||
-                       textLower.includes('kitten') ||
-                       textLower.includes('cat');
+          // POSITIVE FILTER: Must have cat indicators
+          const hasCatInURL = urlLower.includes('-cat-') || 
+                             urlLower.includes('/cat/') ||
+                             urlLower.includes('species=cat') ||
+                             urlLower.includes('type=cat');
 
-          // If we can't determine if it's a cat, skip it
+          const hasCatInHTML = htmlLower.includes('species="cat"') ||
+                              htmlLower.includes('species=cat') ||
+                              htmlLower.includes('data-species="cat"') ||
+                              htmlLower.includes('pettype="cat"') ||
+                              htmlLower.includes('data-type="cat"');
+
+          const catBreeds = [
+            'domestic shorthair', 'domestic longhair', 'domestic medium',
+            'tabby', 'calico', 'tuxedo', 'siamese', 'persian', 'maine coon',
+            'ragdoll', 'bengal', 'russian blue', 'british shorthair',
+            'scottish fold', 'sphynx', 'abyssinian', 'oriental', 'burmese',
+            'tonkinese', 'birman', 'himalayan', 'exotic shorthair', 'manx',
+            'devon rex', 'cornish rex', 'american shorthair', 'norwegian forest',
+            'kitten', 'cat mix', 'mixed breed cat'
+          ];
+
+          const hasCatBreed = catBreeds.some(breed => textLower.includes(breed));
+
+          let speciesIsCat = false;
+          if (hasSpeciesText) {
+            const speciesMatch = textLower.match(/(?:species|animal type|pet type)\s*:?\s*(\w+)/);
+            if (speciesMatch && speciesMatch[1] === 'cat') {
+              speciesIsCat = true;
+            }
+          }
+
+          // Must have at least ONE cat indicator
+          const isCat = hasCatInURL || hasCatInHTML || hasCatBreed || speciesIsCat || textLower.includes('cat');
+
           if (!isCat) {
-            console.log(`⚠️ Skipping ${name} - cannot determine if cat`);
+            console.log(`⚠️ Skipping ${name} - no cat indicators found`);
             return;
           }
 
@@ -199,6 +262,8 @@ async function scrapeAllPages(browser) {
           else if (textLower.includes('persian')) breed = 'Persian';
           else if (textLower.includes('ragdoll')) breed = 'Ragdoll';
           else if (textLower.includes('bengal')) breed = 'Bengal';
+          else if (textLower.includes('calico')) breed = 'Calico';
+          else if (textLower.includes('tuxedo')) breed = 'Tuxedo';
 
           // Description
           const description = `${name} is a ${ageText || ''} ${sex !== 'unknown' ? sex : ''} cat available for adoption through Voice for the Voiceless.`.trim();
@@ -300,7 +365,7 @@ export async function scrapeAndSavePartnerFosterCats() {
     console.log(`📍 URL: ${VFV_ADOPTAPET_URL}`);
 
     browser = await puppeteer.launch({
-      headless: "new", // Back to headless for production
+      headless: "new",
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
