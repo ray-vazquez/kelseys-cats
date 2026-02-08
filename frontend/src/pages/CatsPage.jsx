@@ -130,10 +130,35 @@ export default function CatsPage() {
     return allCats;
   }, [data, seniorOnly, showPartnerFosters]);
 
+  // Calculate filtered counts for dynamic stats
+  const filteredStats = React.useMemo(() => {
+    let featuredCats = data.featured_foster_cats || [];
+    let partnerCats = showPartnerFosters ? (data.partner_foster_cats || []) : [];
+    
+    if (seniorOnly) {
+      featuredCats = featuredCats.filter(cat => cat.is_senior);
+      partnerCats = partnerCats.filter(cat => cat.is_senior);
+    }
+    
+    return {
+      featured: featuredCats.length,
+      partner: partnerCats.length,
+      total: featuredCats.length + partnerCats.length
+    };
+  }, [data, seniorOnly, showPartnerFosters]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    if (page !== 1) {
+      setSearchParams({ page: "1" });
+    }
+  }, [seniorOnly, showPartnerFosters]);
+
   // Pagination
   const perPage = 12;
   const startIdx = (page - 1) * perPage;
-  const paginatedCats = filteredCats.slice(startIdx, startIdx + perPage);
+  const endIdx = Math.min(startIdx + perPage, filteredCats.length);
+  const paginatedCats = filteredCats.slice(startIdx, endIdx);
 
   function handlePageChange(nextPage) {
     setSearchParams({ page: String(nextPage) });
@@ -158,20 +183,22 @@ export default function CatsPage() {
       {/* Main Content */}
       <Section $padding="lg">
         <Container>
-          {/* Stats Bar */}
-          {!loading && data.total > 0 && (
+          {/* Stats Bar - NOW UPDATES DYNAMICALLY */}
+          {!loading && filteredStats.total > 0 && (
             <StatsBar>
               <StatItem>
-                <span className="stat-value">{data.featured_foster_cats?.length || 0}</span>
+                <span className="stat-value">{filteredStats.featured}</span>
                 <span className="stat-label">🏠 Featured Fosters</span>
               </StatItem>
+              {showPartnerFosters && (
+                <StatItem>
+                  <span className="stat-value">{filteredStats.partner}</span>
+                  <span className="stat-label">🏘️ At Partner Homes</span>
+                </StatItem>
+              )}
               <StatItem>
-                <span className="stat-value">{data.partner_foster_cats?.length || 0}</span>
-                <span className="stat-label">🏘️ At Partner Homes</span>
-              </StatItem>
-              <StatItem>
-                <span className="stat-value">{data.total}</span>
-                <span className="stat-label">Total Available</span>
+                <span className="stat-value">{filteredStats.total}</span>
+                <span className="stat-label">Total {seniorOnly ? 'Senior ' : ''}Available</span>
               </StatItem>
             </StatsBar>
           )}
@@ -197,10 +224,10 @@ export default function CatsPage() {
             </div>
           </FilterSection>
 
-          {/* Results Count */}
+          {/* Results Count - FIXED */}
           {!loading && filteredCats.length > 0 && (
             <ResultsCount>
-              Showing {paginatedCats.length} of {filteredCats.length} cat{filteredCats.length !== 1 ? 's' : ''}
+              Showing {startIdx + 1}-{endIdx} of {filteredCats.length} cat{filteredCats.length !== 1 ? 's' : ''}
               {seniorOnly && ' (senior cats only)'}
               {!showPartnerFosters && ' (featured fosters only)'}
             </ResultsCount>
@@ -247,7 +274,7 @@ export default function CatsPage() {
               <Grid $cols={3} $mdCols={2}>
                 {paginatedCats.map((cat) => (
                   <Card key={`${cat.source}-${cat.id}`} $hover style={{ position: 'relative' }}>
-                    {/* Source Badge - FIXED to use cat.source field */}
+                    {/* Source Badge */}
                     <SourceBadge 
                       $variant={cat.source === 'featured_foster' ? 'success' : 'info'}
                     >
