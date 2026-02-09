@@ -49,14 +49,14 @@ function classifySpecies(petData) {
 
   const reasons = [];
 
-  // Normalize all text to lowercase for comparison
-  const nameLower = name.toLowerCase();
-  const breedLower = breed.toLowerCase();
-  const speciesLower = species.toLowerCase();
-  const storyLower = story.toLowerCase();
-  const imageUrlLower = imageUrl.toLowerCase();
-  const shelterLower = shelterInfo.toLowerCase();
-  const pageLower = pageText.toLowerCase();
+  // Normalize all text to lowercase for comparison - with null safety
+  const nameLower = (name || '').toLowerCase();
+  const breedLower = (breed || '').toLowerCase();
+  const speciesLower = (species || '').toLowerCase();
+  const storyLower = (story || '').toLowerCase();
+  const imageUrlLower = (imageUrl || '').toLowerCase();
+  const shelterLower = (shelterInfo || '').toLowerCase();
+  const pageLower = (pageText || '').toLowerCase();
 
   // RULE A: Explicit species field
   const catSpeciesTerms = ['cat', 'kitten', 'feline'];
@@ -176,7 +176,7 @@ async function scrapePetDetails(page, url, name) {
         species: null,
         story: null,
         shelterInfo: null,
-        pageText: document.body.textContent
+        pageText: document.body.textContent || ''
       };
 
       // Find "My basic info" section
