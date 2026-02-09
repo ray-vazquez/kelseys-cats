@@ -33,56 +33,134 @@ function mapAgeToYears(ageText) {
 }
 
 /**
- * Check if a breed name is a dog breed
+ * Classify species using strict guidelines
+ * Returns: { species: "CAT" | "DOG" | "UNKNOWN", reasoning: string }
  */
-function isDogBreed(breed) {
-  if (!breed) return false;
+function classifySpecies(petData) {
+  const {
+    name = '',
+    breed = '',
+    species = '',
+    story = '',
+    imageUrl = '',
+    shelterInfo = '',
+    pageText = ''
+  } = petData;
+
+  const reasons = [];
+
+  // Normalize all text to lowercase for comparison
+  const nameLower = name.toLowerCase();
   const breedLower = breed.toLowerCase();
-  
-  const dogBreeds = [
-    'shepsky', 'labrador', 'retriever', 'shepherd', 'terrier', 'beagle', 'poodle',
-    'bulldog', 'husky', 'chihuahua', 'corgi', 'pitbull', 'pit bull',
-    'rottweiler', 'boxer', 'dachshund', 'pomeranian', 'shih tzu',
-    'doberman', 'mastiff', 'collie', 'pointer', 'spaniel', 'setter',
-    'schnauzer', 'great dane', 'malamute', 'akita', 'aussie',
-    'australian', 'border collie', 'cattle dog', 'hound', 'pug',
-    'dalmatian', 'weimaraner', 'vizsla', 'newfoundland', 'saint bernard',
-    'bernese', 'bichon', 'cocker', 'springer', 'yorkshire', 'maltese',
-    'havanese', 'papillon', 'cavalier', 'boston terrier', 'french bulldog',
-    'english bulldog', 'american bulldog', 'staffordshire', 'bull terrier',
-    'american pit', 'pit mix', 'lab mix', 'shepherd mix', 'hound mix',
-    'terrier mix', 'retriever mix', 'mixed breed dog', 'mixed dog',
-    'cane corso', 'rhodesian', 'basenji', 'samoyed', 'whippet', 'greyhound',
-    'american eskimo', 'chow chow', 'shar pei', 'german shepherd', 'husky mix'
+  const speciesLower = species.toLowerCase();
+  const storyLower = story.toLowerCase();
+  const imageUrlLower = imageUrl.toLowerCase();
+  const shelterLower = shelterInfo.toLowerCase();
+  const pageLower = pageText.toLowerCase();
+
+  // RULE A: Explicit species field
+  const catSpeciesTerms = ['cat', 'kitten', 'feline'];
+  const dogSpeciesTerms = ['dog', 'puppy', 'canine'];
+
+  if (speciesLower) {
+    if (catSpeciesTerms.some(term => speciesLower.includes(term))) {
+      reasons.push(`Species field contains "${species}"`);
+      return { species: 'CAT', reasoning: reasons.join('; ') };
+    }
+    if (dogSpeciesTerms.some(term => speciesLower.includes(term))) {
+      reasons.push(`Species field contains "${species}"`);
+      return { species: 'DOG', reasoning: reasons.join('; ') };
+    }
+  }
+
+  // RULE B: Strong text signals in breed, story, name
+  const catBreedTerms = [
+    'domestic shorthair', 'domestic longhair', 'domestic medium',
+    'tabby', 'calico', 'tortoiseshell', 'tuxedo',
+    'siamese', 'maine coon', 'bengal', 'ragdoll', 'persian',
+    'russian blue', 'british shorthair', 'sphynx', 'abyssinian'
   ];
 
-  return dogBreeds.some(dogBreed => breedLower.includes(dogBreed));
+  const dogBreedTerms = [
+    'labrador', 'retriever', 'shepherd', 'bulldog', 'poodle',
+    'beagle', 'terrier', 'chihuahua', 'pit bull', 'husky',
+    'rottweiler', 'boxer', 'dachshund', 'corgi', 'pomeranian',
+    'mastiff', 'collie', 'spaniel', 'schnauzer', 'great dane',
+    'shepsky', 'cattle dog', 'hound mix', 'lab mix', 'shepherd mix'
+  ];
+
+  const catTextTerms = ['cat', 'kitten', 'feline'];
+  const dogTextTerms = ['dog', 'puppy', 'canine'];
+
+  // Check breed field
+  let breedMatchesCat = catBreedTerms.some(term => breedLower.includes(term));
+  let breedMatchesDog = dogBreedTerms.some(term => breedLower.includes(term));
+
+  if (breedMatchesCat && !breedMatchesDog) {
+    reasons.push(`Breed "${breed}" is a cat breed`);
+    return { species: 'CAT', reasoning: reasons.join('; ') };
+  }
+
+  if (breedMatchesDog && !breedMatchesCat) {
+    reasons.push(`Breed "${breed}" is a dog breed`);
+    return { species: 'DOG', reasoning: reasons.join('; ') };
+  }
+
+  // Check story text for explicit species mentions
+  const catPhrases = [
+    'this cat', 'the cat', 'a cat', 'cat who', 'cat is', 'sweet cat',
+    'this kitten', 'the kitten'
+  ];
+  const dogPhrases = [
+    'this dog', 'the dog', 'a dog', 'dog who', 'dog is', 'sweet dog',
+    'this puppy', 'the puppy', 'velcro dog', 'good dog'
+  ];
+
+  let storyMentionsCat = catPhrases.some(phrase => storyLower.includes(phrase));
+  let storyMentionsDog = dogPhrases.some(phrase => storyLower.includes(phrase));
+
+  if (storyMentionsCat && !storyMentionsDog) {
+    reasons.push('Story explicitly refers to pet as "cat"');
+    return { species: 'CAT', reasoning: reasons.join('; ') };
+  }
+
+  if (storyMentionsDog && !storyMentionsCat) {
+    reasons.push('Story explicitly refers to pet as "dog"');
+    return { species: 'DOG', reasoning: reasons.join('; ') };
+  }
+
+  // RULE C: Image URL cues
+  if (imageUrlLower.includes('cat') || imageUrlLower.includes('kitten') || imageUrlLower.includes('nopetphoto_cat')) {
+    reasons.push('Image URL contains cat-related keywords');
+    return { species: 'CAT', reasoning: reasons.join('; ') };
+  }
+
+  if (imageUrlLower.includes('dog') || imageUrlLower.includes('puppy') || imageUrlLower.includes('nopetphoto_dog')) {
+    reasons.push('Image URL contains dog-related keywords');
+    return { species: 'DOG', reasoning: reasons.join('; ') };
+  }
+
+  // Check page text for general cat/dog mentions (weaker signal)
+  const catMentions = (pageLower.match(/\bcat\b|\bkitten\b/g) || []).length;
+  const dogMentions = (pageLower.match(/\bdog\b|\bpuppy\b/g) || []).length;
+
+  if (catMentions > dogMentions && catMentions >= 3) {
+    reasons.push(`Page text mentions "cat/kitten" ${catMentions} times vs "dog/puppy" ${dogMentions} times`);
+    return { species: 'CAT', reasoning: reasons.join('; ') };
+  }
+
+  if (dogMentions > catMentions && dogMentions >= 3) {
+    reasons.push(`Page text mentions "dog/puppy" ${dogMentions} times vs "cat/kitten" ${catMentions} times`);
+    return { species: 'DOG', reasoning: reasons.join('; ') };
+  }
+
+  // RULE E: Ambiguity - cannot determine
+  reasons.push('Insufficient evidence to classify species');
+  return { species: 'UNKNOWN', reasoning: reasons.join('; ') };
 }
 
 /**
- * Parse size field to extract max weight in pounds
- * Examples: "Med. 26-60 lbs" → 60, "Small. 0-25 lbs" → 25
- */
-function parseMaxWeightFromSize(sizeText) {
-  if (!sizeText) return null;
-  
-  // Look for pattern like "26-60 lbs" or "0-25 lbs"
-  const rangeMatch = sizeText.match(/(\d+)-(\d+)\s*(?:lbs|pounds)/i);
-  if (rangeMatch) {
-    return parseInt(rangeMatch[2], 10); // Return the max value
-  }
-  
-  // Look for single value like "15 lbs"
-  const singleMatch = sizeText.match(/(\d+)\s*(?:lbs|pounds)/i);
-  if (singleMatch) {
-    return parseInt(singleMatch[1], 10);
-  }
-  
-  return null;
-}
-
-/**
- * Scrape an individual pet page to get detailed info
+ * Scrape an individual pet page for detailed information
  */
 async function scrapePetDetails(page, url, name) {
   try {
@@ -93,81 +171,61 @@ async function scrapePetDetails(page, url, name) {
     const details = await page.evaluate(() => {
       const result = {
         breed: null,
-        weight: null,
-        size: null,
         age: null,
         sex: null,
         species: null,
-        story: null
+        story: null,
+        shelterInfo: null,
+        pageText: document.body.textContent
       };
 
-      // Get the full page text
-      const pageText = document.body.textContent;
-      const textLower = pageText.toLowerCase();
-
       // Find "My basic info" section
-      const basicInfoSection = document.querySelector('[class*="BasicInfo"]') ||
-                              document.querySelector('[class*="basic-info"]') ||
-                              Array.from(document.querySelectorAll('*')).find(el => 
-                                el.textContent.includes('My basic info')
-                              );
+      const basicInfoSection = Array.from(document.querySelectorAll('*')).find(el => 
+        el.textContent.includes('My basic info')
+      );
 
       if (basicInfoSection) {
         const infoText = basicInfoSection.textContent;
         
         // Extract breed
         const breedMatch = infoText.match(/Breed[:\s]+([^\n]+)/i);
-        if (breedMatch) {
-          result.breed = breedMatch[1].trim();
-        }
-
-        // Extract size (which may contain weight range)
-        const sizeMatch = infoText.match(/Size[:\s]+([^\n]+)/i);
-        if (sizeMatch) {
-          result.size = sizeMatch[1].trim();
-        }
-
-        // Extract weight
-        const weightMatch = infoText.match(/Weight[:\s]+([^\n]+)/i);
-        if (weightMatch && weightMatch[1].trim() !== '–' && weightMatch[1].trim() !== '-') {
-          const weightText = weightMatch[1].trim();
-          const weightNum = weightText.match(/(\d+)/);
-          if (weightNum) {
-            result.weight = parseInt(weightNum[1], 10);
-          }
-        }
+        if (breedMatch) result.breed = breedMatch[1].trim();
 
         // Extract age
         const ageMatch = infoText.match(/Age[:\s]+([^\n]+)/i);
-        if (ageMatch) {
-          result.age = ageMatch[1].trim();
-        }
+        if (ageMatch) result.age = ageMatch[1].trim();
 
         // Extract sex
         const sexMatch = infoText.match(/Sex[:\s]+([^\n]+)/i);
-        if (sexMatch) {
-          result.sex = sexMatch[1].trim().toLowerCase();
-        }
+        if (sexMatch) result.sex = sexMatch[1].trim().toLowerCase();
       }
 
-      // Find "My story" section - CRITICAL for species detection
-      const storySection = document.querySelector('[class*="Story"]') ||
-                          document.querySelector('[class*="story"]') ||
-                          Array.from(document.querySelectorAll('*')).find(el => 
-                            el.textContent.includes('My story') || 
-                            el.textContent.includes("Here's what the humans")
-                          );
+      // Find "My story" section
+      const storySection = Array.from(document.querySelectorAll('*')).find(el => 
+        el.textContent.includes('My story') || el.textContent.includes("Here's what the humans")
+      );
 
       if (storySection) {
         result.story = storySection.textContent.trim();
       }
 
-      // Look for explicit species mention anywhere on page
-      if (textLower.includes('species:')) {
-        const speciesMatch = pageText.match(/species[:\s]+(\w+)/i);
-        if (speciesMatch) {
-          result.species = speciesMatch[1].toLowerCase();
-        }
+      // Look for shelter/rescue organization info
+      const shelterInfoEl = document.querySelector('[class*="shelter"]') ||
+                           document.querySelector('[class*="rescue"]') ||
+                           Array.from(document.querySelectorAll('*')).find(el => 
+                             el.textContent.includes('Cared for by') ||
+                             el.textContent.includes('Rescue') ||
+                             el.textContent.includes('Shelter')
+                           );
+
+      if (shelterInfoEl) {
+        result.shelterInfo = shelterInfoEl.textContent.trim();
+      }
+
+      // Look for explicit species field
+      const speciesMatch = document.body.textContent.match(/Species[:\s]+(\w+)/i);
+      if (speciesMatch) {
+        result.species = speciesMatch[1];
       }
 
       return result;
@@ -178,104 +236,6 @@ async function scrapePetDetails(page, url, name) {
     console.error(`      ❌ Error fetching details for ${name}:`, error.message);
     return null;
   }
-}
-
-/**
- * Analyze pet details to determine if it's a dog (returns true if dog, false if cat)
- */
-function isPetADog(details, name) {
-  if (!details) return null; // Unknown
-
-  const reasons = [];
-
-  // CHECK 1: Explicit species field
-  if (details.species === 'dog') {
-    reasons.push('Species field says "dog"');
-    return { isDog: true, reasons };
-  }
-
-  if (details.species === 'cat') {
-    return { isDog: false, reasons: ['Species field says "cat"'] };
-  }
-
-  // CHECK 2: Story text mentions - MOST RELIABLE
-  if (details.story) {
-    const storyLower = details.story.toLowerCase();
-    
-    // Look for explicit dog mentions
-    const dogPhrases = [
-      'this dog', 'the dog', 'dogs you', 'puppy', 'puppies',
-      'velcro dog', 'good dog', 'sweet dog', 'loyal dog',
-      'dog who', 'dog is', 'dog was', 'dog will'
-    ];
-    
-    const catPhrases = [
-      'this cat', 'the cat', 'cats you', 'kitten', 'kittens',
-      'good cat', 'sweet cat', 'cat who', 'cat is', 'cat was', 'cat will'
-    ];
-
-    const hasDogPhrase = dogPhrases.some(phrase => storyLower.includes(phrase));
-    const hasCatPhrase = catPhrases.some(phrase => storyLower.includes(phrase));
-
-    if (hasDogPhrase && !hasCatPhrase) {
-      reasons.push('Story explicitly mentions "dog"');
-      return { isDog: true, reasons };
-    }
-
-    if (hasCatPhrase && !hasDogPhrase) {
-      return { isDog: false, reasons: ['Story explicitly mentions "cat"'] };
-    }
-  }
-
-  // CHECK 3: Breed is a known dog breed
-  if (details.breed && isDogBreed(details.breed)) {
-    reasons.push(`Breed "${details.breed}" is a dog breed`);
-    return { isDog: true, reasons };
-  }
-
-  // CHECK 4: Weight check
-  if (details.weight && details.weight >= 30) {
-    reasons.push(`Weight ${details.weight} lbs is too heavy for cat`);
-    return { isDog: true, reasons };
-  }
-
-  // CHECK 5: Size field max weight
-  if (details.size) {
-    const maxWeight = parseMaxWeightFromSize(details.size);
-    if (maxWeight && maxWeight >= 30) {
-      reasons.push(`Size range "${details.size}" (max ${maxWeight} lbs) is too heavy for cat`);
-      return { isDog: true, reasons };
-    }
-  }
-
-  // If we found positive cat indicators, accept it
-  const catBreeds = [
-    'domestic shorthair', 'domestic longhair', 'domestic medium',
-    'tabby', 'calico', 'tuxedo', 'siamese', 'persian', 'maine coon'
-  ];
-  
-  if (details.breed) {
-    const breedLower = details.breed.toLowerCase();
-    if (catBreeds.some(catBreed => breedLower.includes(catBreed))) {
-      return { isDog: false, reasons: [`Breed "${details.breed}" is a cat breed`] };
-    }
-  }
-
-  // If weight/size is reasonable for cat
-  if (details.weight && details.weight < 25) {
-    return { isDog: false, reasons: [`Weight ${details.weight} lbs is typical for cat`] };
-  }
-
-  // If size range max is under 25 lbs
-  if (details.size) {
-    const maxWeight = parseMaxWeightFromSize(details.size);
-    if (maxWeight && maxWeight < 25) {
-      return { isDog: false, reasons: [`Size range max ${maxWeight} lbs is typical for cat`] };
-    }
-  }
-
-  // Default: cannot determine
-  return null;
 }
 
 /**
@@ -310,6 +270,80 @@ export async function getPartnerFosterCats() {
 }
 
 /**
+ * Scrape Voice for the Voiceless "About" page
+ */
+export async function scrapeAboutPage() {
+  let browser;
+  try {
+    console.log("\n📖 Scraping VFV About page...");
+    
+    browser = await puppeteer.launch({
+      headless: "new",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+      ],
+    });
+
+    const page = await browser.newPage();
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    );
+
+    await page.goto(VFV_ADOPTAPET_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    const aboutInfo = await page.evaluate(() => {
+      const result = {
+        motto: null,
+        description: null,
+        location: null,
+        adoptionFee: null,
+        applicationUrl: null
+      };
+
+      const pageText = document.body.textContent;
+
+      // Extract motto
+      const mottoMatch = pageText.match(/(?:Our motto is|motto:)\s*["']?([^"'\n]+)["']?/i);
+      if (mottoMatch) result.motto = mottoMatch[1].trim();
+
+      // Extract location
+      const locationMatch = pageText.match(/(Schenectady,\s*NY\s*\d+)/i);
+      if (locationMatch) result.location = locationMatch[1].trim();
+
+      // Extract adoption fee
+      const feeMatch = pageText.match(/Adoption fee[:\s]*\$?(\d+)/i);
+      if (feeMatch) result.adoptionFee = parseInt(feeMatch[1], 10);
+
+      // Find application URL
+      const appLink = document.querySelector('a[href*="google.com/forms"]');
+      if (appLink) result.applicationUrl = appLink.href;
+
+      // Get full description
+      result.description = pageText.includes('No Feline Left Behind') ? 
+        'Voice for the Voiceless is a cat rescue with the motto "No Feline Left Behind". They are particularly passionate about FIV/FELV positives as well as the treatment of FIP kitties.' :
+        null;
+
+      return result;
+    });
+
+    console.log(`✅ About page scraped:`);
+    console.log(`   Motto: ${aboutInfo.motto || 'Not found'}`);
+    console.log(`   Location: ${aboutInfo.location || 'Not found'}`);
+    console.log(`   Adoption Fee: $${aboutInfo.adoptionFee || 'Not found'}`);
+
+    await browser.close();
+    return aboutInfo;
+  } catch (error) {
+    console.error("❌ Error scraping about page:", error);
+    if (browser) await browser.close();
+    return null;
+  }
+}
+
+/**
  * Scrape all pages of VFV cats from Adopt-a-Pet
  */
 async function scrapeAllPages(browser) {
@@ -318,10 +352,10 @@ async function scrapeAllPages(browser) {
 
   await listPage.setViewport({ width: 1920, height: 1080 });
   await listPage.setUserAgent(
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
   );
   await detailPage.setUserAgent(
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
   );
 
   console.log("⏳ Loading shelter page...");
@@ -334,11 +368,15 @@ async function scrapeAllPages(browser) {
   await new Promise(resolve => setTimeout(resolve, 8000));
 
   const allCats = [];
-  const skippedDogs = [];
+  const filtered = {
+    dogs: [],
+    unknown: [],
+    wrongShelter: []
+  };
   let pageIndex = 1;
 
   while (true) {
-    console.log(`🔍 Scraping page ${pageIndex}...`);
+    console.log(`\n🔍 Scraping page ${pageIndex}...`);
 
     await listPage.evaluate(() => {
       window.scrollTo(0, document.body.scrollHeight);
@@ -387,21 +425,46 @@ async function scrapeAllPages(browser) {
         continue;
       }
 
-      const analysis = isPetADog(details, pet.name);
+      // FILTER 1: Must be from Voice for the Voiceless
+      if (details.shelterInfo) {
+        const shelterLower = details.shelterInfo.toLowerCase();
+        if (!shelterLower.includes('voice for the voiceless') && 
+            (shelterLower.includes('cared for by') || 
+             shelterLower.includes('rescue') || 
+             shelterLower.includes('shelter'))) {
+          console.log(`      🚫 Filtered ${pet.name} - Wrong shelter: ${details.shelterInfo.substring(0, 60)}...`);
+          filtered.wrongShelter.push(pet.name);
+          continue;
+        }
+      }
 
-      if (analysis === null) {
-        console.log(`      ⚠️ Skipping ${pet.name} - cannot determine species`);
+      // FILTER 2: Classify species
+      const classification = classifySpecies({
+        name: pet.name,
+        breed: details.breed,
+        species: details.species,
+        story: details.story,
+        imageUrl: pet.main_image_url,
+        shelterInfo: details.shelterInfo,
+        pageText: details.pageText
+      });
+
+      console.log(`      📊 ${pet.name}: ${JSON.stringify(classification)}`);
+
+      if (classification.species === 'DOG') {
+        console.log(`      🐕 Filtered ${pet.name} - Classified as dog`);
+        filtered.dogs.push(pet.name);
         continue;
       }
 
-      if (analysis.isDog) {
-        console.log(`      🐕 Filtered ${pet.name} - ${analysis.reasons.join('; ')}`);
-        skippedDogs.push(pet.name);
+      if (classification.species === 'UNKNOWN') {
+        console.log(`      ❓ Filtered ${pet.name} - Cannot determine species`);
+        filtered.unknown.push(pet.name);
         continue;
       }
 
-      // It's a cat!
-      console.log(`      ✅ ${pet.name} - ${analysis.reasons.join('; ')}`);
+      // It's a cat from VFV!
+      console.log(`      ✅ ${pet.name} - Classified as CAT`);
       
       allCats.push({
         adoptapet_id: pet.adoptapet_id,
@@ -412,6 +475,7 @@ async function scrapeAllPages(browser) {
         main_image_url: pet.main_image_url,
         adoptapet_url: pet.url,
         description: `${pet.name} is a ${details.age || ''} ${details.sex !== 'unknown' ? details.sex : ''} cat available for adoption through Voice for the Voiceless.`.trim(),
+        classification_reasoning: classification.reasoning
       });
     }
 
@@ -442,7 +506,7 @@ async function scrapeAllPages(browser) {
     });
 
     if (!wentToNext) {
-      console.log("⏹ No more pages detected");
+      console.log("\n⏹ No more pages detected");
       break;
     }
 
@@ -450,16 +514,16 @@ async function scrapeAllPages(browser) {
     await new Promise(resolve => setTimeout(resolve, 3000));
     
     if (pageIndex > 10) {
-      console.log("⚠️ Reached page limit (10)");
+      console.log("\n⚠️ Reached page limit (10)");
       break;
     }
   }
 
   console.log(`\n📦 Total cats scraped: ${allCats.length}`);
-  if (skippedDogs.length > 0) {
-    console.log(`🐕 Total dogs filtered: ${skippedDogs.length}`);
-    console.log(`   Dogs: ${skippedDogs.join(', ')}`);
-  }
+  console.log(`\n🚫 Filtered out:`);
+  console.log(`   🐕 Dogs: ${filtered.dogs.length}${filtered.dogs.length > 0 ? ' - ' + filtered.dogs.join(', ') : ''}`);
+  console.log(`   ❓ Unknown: ${filtered.unknown.length}${filtered.unknown.length > 0 ? ' - ' + filtered.unknown.join(', ') : ''}`);
+  console.log(`   🏠 Wrong shelter: ${filtered.wrongShelter.length}${filtered.wrongShelter.length > 0 ? ' - ' + filtered.wrongShelter.join(', ') : ''}`);
   
   await listPage.close();
   await detailPage.close();
@@ -627,17 +691,20 @@ export async function cleanupOldPartnerFosterCats(daysOld = 7) {
 }
 
 /**
- * Run full scrape: scrape new cats + cleanup old ones
+ * Run full scrape: about page + cats + cleanup
  */
 export async function runFullScrape() {
   try {
     console.log("🚀 Starting full scrape cycle...\n");
+    
+    const aboutResult = await scrapeAboutPage();
     const scrapeResult = await scrapeAndSavePartnerFosterCats();
     const cleanupResult = await cleanupOldPartnerFosterCats(7);
 
     console.log("\n✅ Full scrape completed successfully!");
     return {
       success: true,
+      about: aboutResult,
       scrape: scrapeResult,
       cleanup: cleanupResult,
       timestamp: new Date().toISOString(),
