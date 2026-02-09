@@ -270,80 +270,6 @@ export async function getPartnerFosterCats() {
 }
 
 /**
- * Scrape Voice for the Voiceless "About" page
- */
-export async function scrapeAboutPage() {
-  let browser;
-  try {
-    console.log("\n📖 Scraping VFV About page...");
-    
-    browser = await puppeteer.launch({
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-      ],
-    });
-
-    const page = await browser.newPage();
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    );
-
-    await page.goto(VFV_ADOPTAPET_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const aboutInfo = await page.evaluate(() => {
-      const result = {
-        motto: null,
-        description: null,
-        location: null,
-        adoptionFee: null,
-        applicationUrl: null
-      };
-
-      const pageText = document.body.textContent;
-
-      // Extract motto
-      const mottoMatch = pageText.match(/(?:Our motto is|motto:)\s*["']?([^"'\n]+)["']?/i);
-      if (mottoMatch) result.motto = mottoMatch[1].trim();
-
-      // Extract location
-      const locationMatch = pageText.match(/(Schenectady,\s*NY\s*\d+)/i);
-      if (locationMatch) result.location = locationMatch[1].trim();
-
-      // Extract adoption fee
-      const feeMatch = pageText.match(/Adoption fee[:\s]*\$?(\d+)/i);
-      if (feeMatch) result.adoptionFee = parseInt(feeMatch[1], 10);
-
-      // Find application URL
-      const appLink = document.querySelector('a[href*="google.com/forms"]');
-      if (appLink) result.applicationUrl = appLink.href;
-
-      // Get full description
-      result.description = pageText.includes('No Feline Left Behind') ? 
-        'Voice for the Voiceless is a cat rescue with the motto "No Feline Left Behind". They are particularly passionate about FIV/FELV positives as well as the treatment of FIP kitties.' :
-        null;
-
-      return result;
-    });
-
-    console.log(`✅ About page scraped:`);
-    console.log(`   Motto: ${aboutInfo.motto || 'Not found'}`);
-    console.log(`   Location: ${aboutInfo.location || 'Not found'}`);
-    console.log(`   Adoption Fee: $${aboutInfo.adoptionFee || 'Not found'}`);
-
-    await browser.close();
-    return aboutInfo;
-  } catch (error) {
-    console.error("❌ Error scraping about page:", error);
-    if (browser) await browser.close();
-    return null;
-  }
-}
-
-/**
  * Scrape all pages of VFV cats from Adopt-a-Pet
  */
 async function scrapeAllPages(browser) {
@@ -691,20 +617,18 @@ export async function cleanupOldPartnerFosterCats(daysOld = 7) {
 }
 
 /**
- * Run full scrape: about page + cats + cleanup
+ * Run full scrape: scrape cats + cleanup
  */
 export async function runFullScrape() {
   try {
     console.log("🚀 Starting full scrape cycle...\n");
     
-    const aboutResult = await scrapeAboutPage();
     const scrapeResult = await scrapeAndSavePartnerFosterCats();
     const cleanupResult = await cleanupOldPartnerFosterCats(7);
 
     console.log("\n✅ Full scrape completed successfully!");
     return {
       success: true,
-      about: aboutResult,
       scrape: scrapeResult,
       cleanup: cleanupResult,
       timestamp: new Date().toISOString(),
