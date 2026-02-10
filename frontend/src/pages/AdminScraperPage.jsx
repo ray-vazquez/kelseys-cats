@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Container, Section } from '../components/Common/StyledComponents.js';
 import SectionHero from '../components/Common/SectionHero.jsx';
-import api from '../services/api.js';
+import http from '../api/http.js';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -149,7 +149,7 @@ export default function AdminScraperPage() {
 
   const fetchStatus = async () => {
     try {
-      const response = await api.get('/admin/scrape/status');
+      const response = await http.get('/admin/scrape/status');
       setStatus(response.data);
     } catch (err) {
       console.error('Error fetching scraper status:', err);
@@ -162,7 +162,7 @@ export default function AdminScraperPage() {
     setLogs(['🚀 Starting full scrape cycle...']);
     
     try {
-      const response = await api.post('/admin/scrape/full');
+      const response = await http.post('/admin/scrape/full');
       setLastResult(response.data);
       setLogs(prev => [...prev, 
         '✅ Scrape completed successfully!',
@@ -187,7 +187,7 @@ export default function AdminScraperPage() {
     setLogs(['🤖 Starting Adopt-a-Pet scrape...']);
     
     try {
-      const response = await api.post('/admin/scrape/adoptapet');
+      const response = await http.post('/admin/scrape/adoptapet');
       setLastResult(response.data);
       setLogs(prev => [...prev, 
         '✅ Scrape completed!',
@@ -211,7 +211,7 @@ export default function AdminScraperPage() {
     setLogs(['🧹 Running cleanup...']);
     
     try {
-      const response = await api.post('/admin/scrape/cleanup', { daysOld: 7 });
+      const response = await http.post('/admin/scrape/cleanup', { daysOld: 7 });
       setLogs(prev => [...prev, 
         '✅ Cleanup completed!',
         `🗑️ Deleted ${response.data.deleted} old entries`
