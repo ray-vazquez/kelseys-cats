@@ -4,7 +4,8 @@
 import { 
   scrapeAndSavePartnerFosterCats,
   cleanupOldPartnerFosterCats,
-  runFullScrape
+  runFullScrape,
+  stopScraper
 } from '../services/adoptAPetScraper.js';
 import { query } from '../lib/db.js';
 
@@ -77,6 +78,64 @@ export async function runFullScrapeEndpoint(req, res, next) {
 }
 
 /**
+ * GET /api/admin/scrape/stream
+ * Server-Sent Events endpoint for real-time scraper logs
+ * Admin only
+ */
+export async function streamScraperLogs(req, res) {
+  // Set SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  // Send log function
+  const sendLog = (message, type = 'info') => {
+    res.write(`data: ${JSON.stringify({ message, type, timestamp: new Date().toISOString() })}\n\n`);
+  };
+
+  try {
+    sendLog('🚀 Starting full scrape cycle...', 'info');
+    
+    const result = await runFullScrape((log) => {
+      // Log callback from scraper
+      sendLog(log.message, log.type);
+    });
+    
+    // Send final result
+    sendLog('✅ Scrape completed successfully!', 'success');
+    res.write(`data: ${JSON.stringify({ type: 'complete', result })}\n\n`);
+  } catch (error) {
+    sendLog(`❌ Error: ${error.message}`, 'error');
+    res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+  } finally {
+    res.end();
+  }
+}
+
+/**
+ * POST /api/admin/scrape/stop
+ * Stop the currently running scraper
+ * Admin only
+ */
+export async function stopScraperEndpoint(req, res, next) {
+  try {
+    console.log('🛑 Stop scraper requested...');
+    
+    const result = stopScraper();
+    
+    res.json({
+      success: true,
+      message: 'Scraper stop requested',
+      data: result
+    });
+  } catch (error) {
+    console.error('Error in stopScraperEndpoint controller:', error);
+    next(error);
+  }
+}
+
+/**
  * GET /api/admin/scrape/status
  * Get scraping status and last run info
  * Admin only
@@ -92,6 +151,13 @@ export async function getScraperStatus(req, res, next) {
       FROM vfv_cats`
     );
     
+    // Get cats in Kelsey's care
+    const kelseysCats = await query(
+      `SELECT COUNT(*) as count
+       FROM cats
+       WHERE status = 'available' AND deleted_at IS NULL`
+    );
+    
     // Get count of old cats (not updated in 7 days)
     const oldCats = await query(
       `SELECT COUNT(*) as count
@@ -99,15 +165,24 @@ export async function getScraperStatus(req, res, next) {
        WHERE updated_at < DATE_SUB(NOW(), INTERVAL 7 DAY)`
     );
     
+    // Format last scrape time
+    const lastScrapeTime = latestCats[0]?.last_updated 
+      ? new Date(latestCats[0].last_updated).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        })
+      : 'Never';
+    
     res.json({
       success: true,
-      data: {
-        total_partner_cats: latestCats[0]?.total_cats || 0,
-        last_scraped: latestCats[0]?.last_scraped,
-        last_updated: latestCats[0]?.last_updated,
-        old_cats_count: oldCats[0]?.count || 0,
-        old_cats_threshold: 7 // days
-      }
+      totalPartnerCats: latestCats[0]?.total_cats || 0,
+      catsInKelseysCare: kelseysCats[0]?.count || 0,
+      lastScrapeTime: lastScrapeTime,
+      oldCatsCount: oldCats[0]?.count || 0
     });
   } catch (error) {
     console.error('Error in getScraperStatus controller:', error);
