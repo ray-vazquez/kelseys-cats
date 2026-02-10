@@ -1,4 +1,4 @@
-// Migrated AdoptionPage - Using Phase 1+2 enhanced components
+// Migrated AdoptionPage - Using Phase 1+2 enhanced components - FIXED CONTACT TEXT COLOR
 import React from 'react';
 import styled from 'styled-components';
 import {
@@ -168,10 +168,10 @@ export default function AdoptionPage() {
       {/* Main Content */}
       <Section $padding="lg">
         <Container $size="md">
-          {/* Important Notice */}
+          {/* Important Notice - FIXED TEXT COLOR */}
           <Alert $variant="info" style={{ marginBottom: '3rem' }}>
             <strong>Ready to adopt?</strong> Contact us at{' '}
-            <a href="mailto:kelsey@example.org" style={{ color: 'inherit', fontWeight: 'bold' }}>
+            <a href="mailto:kelsey@example.org" style={{ color: '#1e40af', fontWeight: 'bold', textDecoration: 'underline' }}>
               kelsey@example.org
             </a>{' '}
             to start the adoption process. We'll guide you through every step!

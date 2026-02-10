@@ -1,4 +1,4 @@
-// Fixed AdminCatEditPage - With improved layout, senior tag, bio field, and CORRECT spacing
+// Fixed AdminCatEditPage - UPDATED STATUS OPTIONS: Removed 'Adopted', Alumni renamed to 'Alumni - (Adopted)'
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -126,7 +126,6 @@ export default function AdminCatEditPage({ mode }) {
       setLoadingData(true);
       http.get(`/cats/${id}`)
         .then((res) => {
-          // Convert null values to empty strings for form display
           const cat = res.data;
           setFormData({
             name: cat.name || '',
@@ -173,26 +172,22 @@ export default function AdminCatEditPage({ mode }) {
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
     
-    // Special handling for status changes
     if (name === 'status') {
       const newStatus = value;
-      const isAlumniOrAdopted = newStatus === 'alumni' || newStatus === 'adopted';
+      const isAlumni = newStatus === 'alumni';
       
-      // If changing to alumni/adopted AND currently featured, auto-uncheck featured
-      if (isAlumniOrAdopted && formData.featured) {
+      if (isAlumni && formData.featured) {
         setFormData((prev) => ({
           ...prev,
           status: newStatus,
           featured: false
         }));
         
-        // Show warning
         setShowAlumniWarning(true);
         
-        // Show toast notification
         addToast({
           title: 'Featured Status Removed',
-          message: `${newStatus === 'alumni' ? 'Alumni' : 'Adopted'} cats are not shown on the homepage, so the Featured checkbox has been automatically unchecked.`,
+          message: 'Alumni cats are not shown on the homepage, so the Featured checkbox has been automatically unchecked.',
           variant: 'warning',
           duration: 7000
         });
@@ -210,27 +205,21 @@ export default function AdminCatEditPage({ mode }) {
       }));
     }
     
-    // Clear error when user makes changes
     if (error) setError(null);
   }
 
-  // Clean form data for submission - convert empty strings to null for backend
   function prepareFormData(data) {
     const cleaned = {};
     for (const [key, value] of Object.entries(data)) {
-      // Convert empty strings to null
       if (value === '') {
         cleaned[key] = null;
       }
-      // Keep booleans as-is
       else if (typeof value === 'boolean') {
         cleaned[key] = value;
       }
-      // Keep numbers as-is (including 0)
       else if (typeof value === 'number') {
         cleaned[key] = value;
       }
-      // Keep non-empty strings as-is
       else {
         cleaned[key] = value;
       }
@@ -244,7 +233,6 @@ export default function AdminCatEditPage({ mode }) {
     setError(null);
 
     try {
-      // Clean the data before sending
       const cleanedData = prepareFormData(formData);
       console.log('Submitting cleaned data:', cleanedData);
 
@@ -266,14 +254,12 @@ export default function AdminCatEditPage({ mode }) {
         });
       }
       
-      // Navigate after a short delay to allow user to see the toast
       setTimeout(() => {
         navigate('/admin/cats');
       }, 1000);
     } catch (err) {
       console.error('Failed to save cat:', err);
       
-      // Extract error message from response
       const errorMessage = err.response?.data?.message || 
                           err.response?.data?.error || 
                           err.message || 
@@ -286,7 +272,7 @@ export default function AdminCatEditPage({ mode }) {
         title: mode === 'create' ? 'Failed to Add Cat' : 'Failed to Update Cat',
         message: errorMessage,
         variant: 'error',
-        duration: 0 // Keep visible until manually closed
+        duration: 0
       });
     }
   }
@@ -341,7 +327,7 @@ export default function AdminCatEditPage({ mode }) {
     );
   }
 
-  const isAlumniOrAdopted = formData.status === 'alumni' || formData.status === 'adopted';
+  const isAlumni = formData.status === 'alumni';
 
   return (
     <>
@@ -462,15 +448,14 @@ export default function AdminCatEditPage({ mode }) {
                     <option value="available">Available</option>
                     <option value="pending">Pending</option>
                     <option value="hold">Hold</option>
-                    <option value="adopted">Adopted</option>
-                    <option value="alumni">Alumni</option>
+                    <option value="alumni">Alumni - (Adopted)</option>
                   </Select>
                   <StatusHint>
-                    Available: Ready for adoption | Pending: Application in review | Hold: Reserved | Adopted/Alumni: Successfully adopted
+                    Available: Ready for adoption | Pending: Application in review | Hold: Reserved | Alumni: Successfully adopted
                   </StatusHint>
                   {showAlumniWarning && (
                     <WarningBox>
-                      Featured status has been automatically removed because {formData.status === 'alumni' ? 'alumni' : 'adopted'} cats are not displayed on the homepage.
+                      Featured status has been automatically removed because alumni cats are not displayed on the homepage.
                     </WarningBox>
                   )}
                 </FormGroup>
@@ -504,7 +489,7 @@ export default function AdminCatEditPage({ mode }) {
                       checked={formData.good_with_dogs}
                       onChange={handleChange}
                       disabled={loading}
-                    />
+                      />
                     Good with Dogs
                   </CheckboxLabel>
 
@@ -533,13 +518,13 @@ export default function AdminCatEditPage({ mode }) {
                       name="featured"
                       checked={formData.featured}
                       onChange={handleChange}
-                      disabled={loading || isAlumniOrAdopted}
-                      title={isAlumniOrAdopted ? 'Alumni/Adopted cats cannot be featured' : ''}
+                      disabled={loading || isAlumni}
+                      title={isAlumni ? 'Alumni cats cannot be featured' : ''}
                     />
                     Featured
-                    {isAlumniOrAdopted && (
+                    {isAlumni && (
                       <StatusHint style={{ display: 'inline', marginLeft: '0.5rem' }}>
-                        (Not available for Alumni/Adopted cats)
+                        (Not available for Alumni cats)
                       </StatusHint>
                     )}
                   </CheckboxLabel>
