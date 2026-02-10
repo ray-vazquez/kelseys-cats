@@ -35,7 +35,8 @@ const Button = styled.button`
     theme.colors.primary.main};
   color: ${({ theme, variant }) => 
     variant === 'secondary' ? theme.colors.text.primary : 
-    variant === 'primary' ? '#1e293b' : // Dark text for primary button
+    variant === 'danger' ? 'white' :
+    variant === 'primary' ? '#1e293b' :
     'white'};
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.md};
@@ -144,7 +145,6 @@ export default function AdminScraperPage() {
   const [lastResult, setLastResult] = useState(null);
   const [error, setError] = useState(null);
   const logContainerRef = useRef(null);
-  const pollIntervalRef = useRef(null);
 
   // Auto-scroll logs to bottom
   useEffect(() => {
@@ -156,15 +156,6 @@ export default function AdminScraperPage() {
   // Fetch initial status
   useEffect(() => {
     fetchStatus();
-  }, []);
-
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-      }
-    };
   }, []);
 
   const fetchStatus = async () => {
@@ -181,43 +172,17 @@ export default function AdminScraperPage() {
     setLogs(prev => [...prev, { message: `[${timestamp}] ${message}`, type }]);
   };
 
-  const simulateScrapingLogs = () => {
-    // Simulate progressive scraping updates
-    const logMessages = [
-      { msg: '⏳ Loading shelter page...', delay: 1000 },
-      { msg: '⏳ Waiting for page to render...', delay: 8000 },
-      { msg: '🔍 Scraping page 1...', delay: 2000 },
-      { msg: '   📋 Found pets on page...', delay: 3000 },
-      { msg: '      🔍 Fetching pet details...', delay: 2000 },
-    ];
-
-    let delay = 0;
-    logMessages.forEach(({ msg, delay: msgDelay }) => {
-      delay += msgDelay;
-      setTimeout(() => {
-        if (loading) { // Only add if still loading
-          addLog(msg, 'info');
-        }
-      }, delay);
-    });
-  };
-
   const runFullScrape = async () => {
     setLoading(true);
     setError(null);
     setLogs([]);
     addLog('🚀 Starting full scrape cycle...', 'info');
-    
-    // Simulate progressive logs
-    simulateScrapingLogs();
+    addLog('⏳ This may take 20-60 seconds...', 'info');
     
     try {
       const response = await http.post('/admin/scrape/full');
       setLastResult(response.data);
       
-      // Clear simulated logs and show real results
-      setLogs([]);
-      addLog('🚀 Starting full scrape cycle...', 'info');
       addLog('✅ Scrape completed successfully!', 'success');
       addLog(`📦 Total cats scraped: ${response.data.scrape.total}`, 'info');
       addLog(`➕ Added: ${response.data.scrape.added}`, 'success');
@@ -244,15 +209,12 @@ export default function AdminScraperPage() {
     setError(null);
     setLogs([]);
     addLog('🤖 Starting Adopt-a-Pet scrape...', 'info');
-    
-    simulateScrapingLogs();
+    addLog('⏳ This may take 20-60 seconds...', 'info');
     
     try {
       const response = await http.post('/admin/scrape/adoptapet');
       setLastResult(response.data);
       
-      setLogs([]);
-      addLog('🤖 Starting Adopt-a-Pet scrape...', 'info');
       addLog('✅ Scrape completed!', 'success');
       addLog(`📦 Total cats scraped: ${response.data.total}`, 'info');
       addLog(`➕ Added: ${response.data.added}`, 'success');
@@ -293,6 +255,17 @@ export default function AdminScraperPage() {
     }
   };
 
+  const stopScraper = async () => {
+    try {
+      addLog('🛑 Stop requested...', 'warning');
+      await http.post('/admin/scrape/stop');
+      addLog('🛑 Scraper will stop after current operation', 'warning');
+      setLoading(false);
+    } catch (err) {
+      addLog(`❌ Could not stop scraper: ${err.message}`, 'error');
+    }
+  };
+
   return (
     <>
       <SectionHero
@@ -305,6 +278,19 @@ export default function AdminScraperPage() {
       <Section $padding="lg">
         <Container>
           <PageContainer>
+            {/* Info - Moved to top */}
+            <StatusCard style={{ background: '#f0f9ff', borderColor: '#bae6fd' }}>
+              <Title>ℹ️ About the Scraper</Title>
+              <div style={{ color: '#0c4a6e', lineHeight: '1.7' }}>
+                <p><strong>Full Scrape:</strong> Scrapes all VFV cats from Adopt-a-Pet, saves to database, and removes old entries (7+ days)</p>
+                <p><strong>Scrape Only:</strong> Only fetches and updates cat data without cleanup</p>
+                <p><strong>Cleanup Only:</strong> Removes partner foster cats not updated in 7+ days</p>
+                <p style={{ marginTop: '1rem', fontSize: '14px' }}>
+                  ⏰ <strong>Automatic scraping runs daily at 3:00 AM EST</strong>
+                </p>
+              </div>
+            </StatusCard>
+
             {/* Control Panel */}
             <ControlPanel>
               <Title>🎛️ Scraper Controls</Title>
@@ -329,6 +315,13 @@ export default function AdminScraperPage() {
                   disabled={loading}
                 >
                   🧹 Cleanup Only
+                </Button>
+                <Button 
+                  variant="danger"
+                  onClick={stopScraper}
+                  disabled={!loading}
+                >
+                  🛑 Stop Scraper
                 </Button>
                 <Button 
                   variant="secondary"
@@ -429,25 +422,12 @@ export default function AdminScraperPage() {
                   ))}
                   {loading && (
                     <div className="log-line info">
-                      <span style={{ animation: 'pulse 1.5s infinite' }}>⏳ Processing...</span>
+                      <span>⏳ Processing... (check backend console for live details)</span>
                     </div>
                   )}
                 </LogContainer>
               </StatusCard>
             )}
-
-            {/* Info */}
-            <StatusCard style={{ background: '#f0f9ff', borderColor: '#bae6fd' }}>
-              <Title>ℹ️ About the Scraper</Title>
-              <div style={{ color: '#0c4a6e', lineHeight: '1.7' }}>
-                <p><strong>Full Scrape:</strong> Scrapes all VFV cats from Adopt-a-Pet, saves to database, and removes old entries (7+ days)</p>
-                <p><strong>Scrape Only:</strong> Only fetches and updates cat data without cleanup</p>
-                <p><strong>Cleanup Only:</strong> Removes partner foster cats not updated in 7+ days</p>
-                <p style={{ marginTop: '1rem', fontSize: '14px' }}>
-                  ⏰ <strong>Automatic scraping runs daily at 3:00 AM EST</strong>
-                </p>
-              </div>
-            </StatusCard>
           </PageContainer>
         </Container>
       </Section>
