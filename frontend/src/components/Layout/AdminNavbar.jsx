@@ -88,6 +88,7 @@ export default function AdminNavbar() {
         <Brand to="/admin/cats">Admin Panel</Brand>
         <NavLinks>
           <NavLink to="/admin/cats">Manage Cats</NavLink>
+          <NavLink to="/admin/scraper">Scraper</NavLink>
           <NavLink to="/">Public Site</NavLink>
           <LogoutButton onClick={handleLogout}>
             Logout
