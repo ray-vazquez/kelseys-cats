@@ -74,6 +74,7 @@ export default function PublicNavbar() {
           <NavLink to="/cats">Current Cats</NavLink>
           <NavLink to="/alumni">Alumni</NavLink>
           <NavLink to="/adoption">Adoption Info</NavLink>
+          <NavLink to="/about">About</NavLink>
         </NavLinks>
       </NavContainer>
     </Nav>
