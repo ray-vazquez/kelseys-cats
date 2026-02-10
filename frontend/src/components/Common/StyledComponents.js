@@ -1,5 +1,5 @@
-// Updated StyledComponents with lighter success alert text
-import styled, { css } from 'styled-components';
+// Updated StyledComponents with lighter success alert text and loading components
+import styled, { css, keyframes } from 'styled-components';
 import { Link } from 'react-router-dom';
 
 // Container
@@ -375,6 +375,19 @@ export const Checkbox = styled.input.attrs({ type: 'checkbox' })`
   margin-right: ${({ theme }) => theme.spacing[2]};
 `;
 
+export const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
+  cursor: pointer;
+  font-size: ${({ theme }) => theme.fontSizes.base};
+  color: ${({ theme }) => theme.colors.text.primary};
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
 // Text Utilities
 export const TextMuted = styled.p`
   color: ${({ theme }) => theme.colors.text.secondary};
@@ -384,4 +397,51 @@ export const TextMuted = styled.p`
 
 export const TextBold = styled.span`
   font-weight: ${({ theme }) => theme.fontWeights.bold};
+`;
+
+// Loading Components
+const spin = keyframes`
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+export const Spinner = styled.div`
+  width: ${({ $size }) => $size || '32px'};
+  height: ${({ $size }) => $size || '32px'};
+  border: 3px solid ${({ theme }) => theme.colors.gray[200]};
+  border-top-color: ${({ theme }) => theme.colors.primary.main};
+  border-radius: 50%;
+  animation: ${spin} 0.8s linear infinite;
+`;
+
+export const CenteredSpinner = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: ${({ theme }) => theme.spacing[12]} 0;
+`;
+
+const shimmer = keyframes`
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+`;
+
+export const Skeleton = styled.div`
+  height: ${({ $height }) => $height || '20px'};
+  background: linear-gradient(
+    to right,
+    #f0f0f0 0%,
+    #e0e0e0 20%,
+    #f0f0f0 40%,
+    #f0f0f0 100%
+  );
+  background-size: 800px 100px;
+  animation: ${shimmer} 1.5s infinite linear;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  width: 100%;
 `;
