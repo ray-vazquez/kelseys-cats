@@ -1,7 +1,7 @@
 // frontend/src/pages/AdminScraperPage.jsx
 // Admin page for controlling and monitoring the Adopt-a-Pet scraper
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Container, Section } from '../components/Common/StyledComponents.js';
 import SectionHero from '../components/Common/SectionHero.jsx';
@@ -34,7 +34,9 @@ const Button = styled.button`
     variant === 'secondary' ? theme.colors.background.tertiary :
     theme.colors.primary.main};
   color: ${({ theme, variant }) => 
-    variant === 'secondary' ? theme.colors.text.primary : 'white'};
+    variant === 'secondary' ? theme.colors.text.primary : 
+    variant === 'primary' ? '#1e293b' : // Dark text for primary button
+    'white'};
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
@@ -141,10 +143,28 @@ export default function AdminScraperPage() {
   const [logs, setLogs] = useState([]);
   const [lastResult, setLastResult] = useState(null);
   const [error, setError] = useState(null);
+  const logContainerRef = useRef(null);
+  const pollIntervalRef = useRef(null);
+
+  // Auto-scroll logs to bottom
+  useEffect(() => {
+    if (logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    }
+  }, [logs]);
 
   // Fetch initial status
   useEffect(() => {
     fetchStatus();
+  }, []);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
   }, []);
 
   const fetchStatus = async () => {
@@ -156,26 +176,64 @@ export default function AdminScraperPage() {
     }
   };
 
+  const addLog = (message, type = 'info') => {
+    const timestamp = new Date().toLocaleTimeString();
+    setLogs(prev => [...prev, { message: `[${timestamp}] ${message}`, type }]);
+  };
+
+  const simulateScrapingLogs = () => {
+    // Simulate progressive scraping updates
+    const logMessages = [
+      { msg: '⏳ Loading shelter page...', delay: 1000 },
+      { msg: '⏳ Waiting for page to render...', delay: 8000 },
+      { msg: '🔍 Scraping page 1...', delay: 2000 },
+      { msg: '   📋 Found pets on page...', delay: 3000 },
+      { msg: '      🔍 Fetching pet details...', delay: 2000 },
+    ];
+
+    let delay = 0;
+    logMessages.forEach(({ msg, delay: msgDelay }) => {
+      delay += msgDelay;
+      setTimeout(() => {
+        if (loading) { // Only add if still loading
+          addLog(msg, 'info');
+        }
+      }, delay);
+    });
+  };
+
   const runFullScrape = async () => {
     setLoading(true);
     setError(null);
-    setLogs(['🚀 Starting full scrape cycle...']);
+    setLogs([]);
+    addLog('🚀 Starting full scrape cycle...', 'info');
+    
+    // Simulate progressive logs
+    simulateScrapingLogs();
     
     try {
       const response = await http.post('/admin/scrape/full');
       setLastResult(response.data);
-      setLogs(prev => [...prev, 
-        '✅ Scrape completed successfully!',
-        `📊 Added: ${response.data.scrape.added}`,
-        `✏️ Updated: ${response.data.scrape.updated}`,
-        `⏭️ Skipped: ${response.data.scrape.skipped}`,
-        `🗑️ Cleaned up: ${response.data.cleanup.deleted} old entries`
-      ]);
+      
+      // Clear simulated logs and show real results
+      setLogs([]);
+      addLog('🚀 Starting full scrape cycle...', 'info');
+      addLog('✅ Scrape completed successfully!', 'success');
+      addLog(`📦 Total cats scraped: ${response.data.scrape.total}`, 'info');
+      addLog(`➕ Added: ${response.data.scrape.added}`, 'success');
+      addLog(`✏️ Updated: ${response.data.scrape.updated}`, 'info');
+      addLog(`⏭️ Skipped: ${response.data.scrape.skipped}`, 'info');
+      if (response.data.scrape.errors > 0) {
+        addLog(`❌ Errors: ${response.data.scrape.errors}`, 'error');
+      }
+      addLog(`🗑️ Cleaned up: ${response.data.cleanup.deleted} old entries`, 'info');
+      addLog('✅ Full scrape cycle complete!', 'success');
+      
       await fetchStatus();
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.message;
       setError(errorMsg);
-      setLogs(prev => [...prev, `❌ Error: ${errorMsg}`]);
+      addLog(`❌ Error: ${errorMsg}`, 'error');
     } finally {
       setLoading(false);
     }
@@ -184,22 +242,31 @@ export default function AdminScraperPage() {
   const runScrapeOnly = async () => {
     setLoading(true);
     setError(null);
-    setLogs(['🤖 Starting Adopt-a-Pet scrape...']);
+    setLogs([]);
+    addLog('🤖 Starting Adopt-a-Pet scrape...', 'info');
+    
+    simulateScrapingLogs();
     
     try {
       const response = await http.post('/admin/scrape/adoptapet');
       setLastResult(response.data);
-      setLogs(prev => [...prev, 
-        '✅ Scrape completed!',
-        `📊 Added: ${response.data.added}`,
-        `✏️ Updated: ${response.data.updated}`,
-        `⏭️ Skipped: ${response.data.skipped}`
-      ]);
+      
+      setLogs([]);
+      addLog('🤖 Starting Adopt-a-Pet scrape...', 'info');
+      addLog('✅ Scrape completed!', 'success');
+      addLog(`📦 Total cats scraped: ${response.data.total}`, 'info');
+      addLog(`➕ Added: ${response.data.added}`, 'success');
+      addLog(`✏️ Updated: ${response.data.updated}`, 'info');
+      addLog(`⏭️ Skipped: ${response.data.skipped}`, 'info');
+      if (response.data.errors > 0) {
+        addLog(`❌ Errors: ${response.data.errors}`, 'error');
+      }
+      
       await fetchStatus();
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.message;
       setError(errorMsg);
-      setLogs(prev => [...prev, `❌ Error: ${errorMsg}`]);
+      addLog(`❌ Error: ${errorMsg}`, 'error');
     } finally {
       setLoading(false);
     }
@@ -208,19 +275,19 @@ export default function AdminScraperPage() {
   const runCleanup = async () => {
     setLoading(true);
     setError(null);
-    setLogs(['🧹 Running cleanup...']);
+    setLogs([]);
+    addLog('🧹 Running cleanup...', 'info');
     
     try {
       const response = await http.post('/admin/scrape/cleanup', { daysOld: 7 });
-      setLogs(prev => [...prev, 
-        '✅ Cleanup completed!',
-        `🗑️ Deleted ${response.data.deleted} old entries`
-      ]);
+      addLog('✅ Cleanup completed!', 'success');
+      addLog(`🗑️ Deleted ${response.data.deleted} old entries`, 'info');
+      
       await fetchStatus();
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.message;
       setError(errorMsg);
-      setLogs(prev => [...prev, `❌ Error: ${errorMsg}`]);
+      addLog(`❌ Error: ${errorMsg}`, 'error');
     } finally {
       setLoading(false);
     }
@@ -243,6 +310,7 @@ export default function AdminScraperPage() {
               <Title>🎛️ Scraper Controls</Title>
               <ButtonGroup>
                 <Button 
+                  variant="primary"
                   onClick={runFullScrape} 
                   disabled={loading}
                 >
@@ -350,20 +418,20 @@ export default function AdminScraperPage() {
             {logs.length > 0 && (
               <StatusCard>
                 <Title>📋 Operation Logs</Title>
-                <LogContainer>
+                <LogContainer ref={logContainerRef}>
                   {logs.map((log, index) => (
                     <div 
                       key={index} 
-                      className={`log-line ${
-                        log.includes('✅') || log.includes('success') ? 'success' :
-                        log.includes('❌') || log.includes('Error') ? 'error' :
-                        log.includes('⚠️') || log.includes('Warning') ? 'warning' :
-                        'info'
-                      }`}
+                      className={`log-line ${log.type}`}
                     >
-                      {log}
+                      {log.message}
                     </div>
                   ))}
+                  {loading && (
+                    <div className="log-line info">
+                      <span style={{ animation: 'pulse 1.5s infinite' }}>⏳ Processing...</span>
+                    </div>
+                  )}
                 </LogContainer>
               </StatusCard>
             )}
