@@ -1,4 +1,4 @@
-// Enhanced Theme System - Phase 1+2: Professional UI Polish
+// Enhanced Theme System - Phase 1+2: Professional UI Polish - UPDATED FONT SIZES
 // Extended color palette, fluid typography, refined spacing and shadows
 
 export const theme = {
@@ -79,7 +79,7 @@ export const theme = {
     overlayLight: 'rgba(0, 0, 0, 0.25)',
   },
   
-  // Fluid typography using clamp() for responsive scaling
+  // Fluid typography using clamp() for responsive scaling - INCREASED SIZES
   fonts: {
     heading: '"Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     body: '"Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -87,16 +87,16 @@ export const theme = {
   },
   
   fontSizes: {
-    xs: 'clamp(0.6875rem, 0.65rem + 0.2vw, 0.75rem)',     // 11-12px
-    sm: 'clamp(0.8125rem, 0.75rem + 0.3vw, 0.875rem)',    // 13-14px
-    base: 'clamp(0.9375rem, 0.875rem + 0.3vw, 1rem)',     // 15-16px
-    lg: 'clamp(1.0625rem, 1rem + 0.3vw, 1.125rem)',       // 17-18px
-    xl: 'clamp(1.1875rem, 1.125rem + 0.3vw, 1.25rem)',    // 19-20px
-    '2xl': 'clamp(1.375rem, 1.25rem + 0.625vw, 1.5rem)',  // 22-24px
-    '3xl': 'clamp(1.75rem, 1.5rem + 1.25vw, 1.875rem)',   // 28-30px
-    '4xl': 'clamp(2rem, 1.75rem + 1.25vw, 2.25rem)',      // 32-36px
-    '5xl': 'clamp(2.5rem, 2rem + 2.5vw, 3rem)',           // 40-48px
-    '6xl': 'clamp(3rem, 2.5rem + 2.5vw, 3.75rem)',        // 48-60px
+    xs: 'clamp(0.8125rem, 0.75rem + 0.3vw, 0.875rem)',    // 13-14px (was 11-12px)
+    sm: 'clamp(0.9375rem, 0.875rem + 0.3vw, 1rem)',       // 15-16px (was 13-14px)
+    base: 'clamp(1.0625rem, 1rem + 0.3vw, 1.125rem)',     // 17-18px (was 15-16px)
+    lg: 'clamp(1.1875rem, 1.125rem + 0.3vw, 1.25rem)',    // 19-20px (was 17-18px)
+    xl: 'clamp(1.3125rem, 1.25rem + 0.3vw, 1.375rem)',    // 21-22px (was 19-20px)
+    '2xl': 'clamp(1.5rem, 1.375rem + 0.625vw, 1.625rem)', // 24-26px (was 22-24px)
+    '3xl': 'clamp(1.875rem, 1.625rem + 1.25vw, 2rem)',    // 30-32px (was 28-30px)
+    '4xl': 'clamp(2.125rem, 1.875rem + 1.25vw, 2.375rem)',// 34-38px (was 32-36px)
+    '5xl': 'clamp(2.625rem, 2.125rem + 2.5vw, 3.125rem)', // 42-50px (was 40-48px)
+    '6xl': 'clamp(3.125rem, 2.625rem + 2.5vw, 3.875rem)', // 50-62px (was 48-60px)
   },
   
   fontWeights: {
