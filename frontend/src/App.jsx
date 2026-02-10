@@ -6,9 +6,11 @@ import CatDetailPage from './pages/CatDetailPage.jsx';
 import AlumniPage from './pages/AlumniPage.jsx';
 import AlumniDetailPage from './pages/AlumniDetailPage.jsx';
 import AdoptionPage from './pages/AdoptionPage.jsx';
+import AboutPage from './pages/AboutPage.jsx';
 import AdminLoginPage from './pages/AdminLoginPage.jsx';
 import AdminCatsPage from './pages/AdminCatsPage.jsx';
 import AdminCatEditPage from './pages/AdminCatEditPage.jsx';
+import AdminScraperPage from './pages/AdminScraperPage.jsx';
 import PublicNavbar from './components/Layout/PublicNavbar.jsx';
 import AdminNavbar from './components/Layout/AdminNavbar.jsx';
 import Footer from './components/Layout/Footer.jsx';
@@ -90,6 +92,14 @@ export default function App() {
           }
         />
         <Route
+          path="/about"
+          element={
+            <PublicLayout>
+              <AboutPage />
+            </PublicLayout>
+          }
+        />
+        <Route
           path="/admin/login"
           element={
             <PublicLayout>
@@ -118,6 +128,14 @@ export default function App() {
           element={
             <AdminLayout>
               <AdminCatEditPage mode="edit" />
+            </AdminLayout>
+          }
+        />
+        <Route
+          path="/admin/scraper"
+          element={
+            <AdminLayout>
+              <AdminScraperPage />
             </AdminLayout>
           }
         />
