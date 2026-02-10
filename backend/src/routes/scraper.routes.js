@@ -7,6 +7,8 @@ import {
   scrapeAdoptaPet,
   cleanupOldCats,
   runFullScrapeEndpoint,
+  streamScraperLogs,
+  stopScraperEndpoint,
   getScraperStatus
 } from '../controllers/scraper.controller.js';
 
@@ -37,6 +39,20 @@ router.post('/cleanup', cleanupOldCats);
  * @access  Admin only
  */
 router.post('/full', runFullScrapeEndpoint);
+
+/**
+ * @route   GET /api/admin/scrape/stream
+ * @desc    Stream real-time scraper logs via SSE
+ * @access  Admin only
+ */
+router.get('/stream', streamScraperLogs);
+
+/**
+ * @route   POST /api/admin/scrape/stop
+ * @desc    Stop the currently running scraper
+ * @access  Admin only
+ */
+router.post('/stop', stopScraperEndpoint);
 
 /**
  * @route   GET /api/admin/scrape/status
