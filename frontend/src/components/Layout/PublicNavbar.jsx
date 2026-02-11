@@ -58,31 +58,11 @@ const NavLink = styled(Link)`
   color: ${({ theme, $isActive }) => 
     $isActive ? theme.colors.primary : theme.colors.white
   };
-  text-decoration: none;
-  position: relative;
-  padding-bottom: ${({ theme }) => theme.spacing[1]};
-  transition: all ${({ theme }) => theme.transitions.fast};
-
-  /* Active state indicator - underline */
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background-color: ${({ theme }) => theme.colors.primary};
-    transform: scaleX(${({ $isActive }) => ($isActive ? '1' : '0')});
-    transform-origin: left;
-    transition: transform ${({ theme }) => theme.transitions.fast};
-  }
+  text-decoration: ${({ $isActive }) => ($isActive ? 'underline' : 'none')};
+  transition: color ${({ theme }) => theme.transitions.fast};
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
-
-    &::after {
-      transform: scaleX(1);
-    }
   }
 `;
 
