@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 
 const Nav = styled.nav`
@@ -55,26 +55,65 @@ const NavLink = styled(Link)`
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: ${({ theme }) => theme.colors.white};
+  color: ${({ theme, $isActive }) => 
+    $isActive ? theme.colors.primary : theme.colors.white
+  };
   text-decoration: none;
+  position: relative;
+  padding-bottom: ${({ theme }) => theme.spacing[1]};
   transition: all ${({ theme }) => theme.transitions.fast};
+
+  /* Active state indicator - underline */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: ${({ theme }) => theme.colors.primary};
+    transform: scaleX(${({ $isActive }) => ($isActive ? '1' : '0')});
+    transform-origin: left;
+    transition: transform ${({ theme }) => theme.transitions.fast};
+  }
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
-    text-decoration: underline;
+
+    &::after {
+      transform: scaleX(1);
+    }
   }
 `;
 
 export default function PublicNavbar() {
+  const location = useLocation();
+
+  // Helper function to check if a link is active
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
+
   return (
     <Nav>
       <NavContainer>
         <Brand to="/">Kelsey's Cats</Brand>
         <NavLinks>
-          <NavLink to="/cats">Current Cats</NavLink>
-          <NavLink to="/alumni">Alumni</NavLink>
-          <NavLink to="/adoption">Adoption Info</NavLink>
-          <NavLink to="/about">About</NavLink>
+          <NavLink to="/cats" $isActive={isActive('/cats')}>
+            Current Cats
+          </NavLink>
+          <NavLink to="/alumni" $isActive={isActive('/alumni')}>
+            Alumni
+          </NavLink>
+          <NavLink to="/adoption" $isActive={isActive('/adoption')}>
+            Adoption Info
+          </NavLink>
+          <NavLink to="/about" $isActive={isActive('/about')}>
+            About
+          </NavLink>
         </NavLinks>
       </NavContainer>
     </Nav>
