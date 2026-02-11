@@ -1,10 +1,28 @@
 # 🚀 Kelsey's Cats - Next Steps & Roadmap
 
-**Last Updated:** February 6, 2026, 10:44 PM EST
+**Last Updated:** February 10, 2026, 9:25 PM EST
 
 ---
 
-## ✅ Completed
+## 📋 Recent Session Summary (Feb 9-10, 2026)
+
+### ✅ Just Completed
+- ✅ Improved text contrast (success alerts, adoption contact email)
+- ✅ Redesigned masthead buttons (white normal, teal hover)
+- ✅ Increased global font sizes (2px bump across all sizes)
+- ✅ Updated admin status dropdown (removed "Adopted", renamed "Alumni")
+- ✅ Fixed missing component exports (Spinner, CenteredSpinner, Skeleton)
+- ✅ Investigated auth persistence, scraper time display, VFV count discrepancy
+
+### 🔍 Action Items from Last Session
+1. **Deploy latest changes** from commit `33d43c9`
+2. **Run scraper cleanup** to resolve VFV count discrepancy (72 vs 51)
+3. **Gather requirements** for "more formal" homepage design
+4. **Clarify button color** reversion request (which buttons, which pages)
+
+---
+
+## ✅ Completed (Historical)
 
 ### Phase 1: Theme System & Base Components
 - ✅ Enhanced theme system with extended color palette
@@ -28,39 +46,82 @@
 - ✅ Tooltip component with multiple placements
 - ✅ 5,000+ words of Phase 3 documentation
 
+### Phase 4: UI Polish (Recent)
+- ✅ Text contrast improvements (alerts, links)
+- ✅ Custom masthead button styling
+- ✅ Global font size optimization
+- ✅ Admin workflow simplification (status options)
+- ✅ Loading component exports fixed
+
 ---
 
 ## 🎯 Priority Roadmap
 
-### 🔥 Priority 1: Critical Bug Fixes
+### 🔥 Priority 1: Immediate Actions
 
-#### 1.1 Admin Edit Page - Save Functionality 🐛 **CRITICAL**
-**Issue:** Changes made in the admin edit page do not save
+#### 1.1 VFV Scraper Cleanup 🧹 **IMMEDIATE**
+**Issue:** Database shows 72 cats, Adopt-a-Pet shows 51 on VFV profile
 
-**Impact:** High - Blocks admin users from updating cat profiles
+**Action Required:**
+- [ ] Access scraper control panel at `/admin/scraper`
+- [ ] Click "Cleanup Only" button
+- [ ] Removes partner foster cats not updated in 7+ days
+- [ ] Should align database count with Adopt-a-Pet
 
-**Investigation needed:**
-- [ ] Check form submission handler
-- [ ] Verify API endpoint connection (URL, method, headers)
-- [ ] Validate request payload format
-- [ ] Test authentication/authorization
-- [ ] Check for silent validation errors
-- [ ] Add error feedback/toast notifications
-- [ ] Review state management
-- [ ] Test CORS configuration (if applicable)
+**Files to use:**
+- `frontend/src/pages/AdminScraperPage.jsx`
+- Backend cleanup function already implemented
 
-**Files to review:**
-- `frontend/src/pages/admin/EditCatPage.jsx` (or similar)
-- `frontend/src/api/http.js`
-- Backend API routes for PUT/PATCH `/cats/:id`
-- Backend authentication middleware
+**Expected outcome:** Database count matches Adopt-a-Pet (or close to it)
 
-**Expected outcome:**
-- Form successfully saves changes
-- User receives success/error feedback via Toast
-- Proper error handling and validation messages
+**Estimated effort:** 5 minutes (just run the cleanup)
 
-**Estimated effort:** 2-4 hours
+---
+
+#### 1.2 Homepage Design Requirements 📋 **NEEDS CLARIFICATION**
+**Issue:** User mentioned wanting a "more formal" homepage
+
+**Action Required:**
+- [ ] Schedule design review session
+- [ ] Clarify what "formal" means in context:
+  - More professional language/copy?
+  - More structured layout?
+  - Different visual hierarchy?
+  - Additional sections (mission, team, etc.)?
+  - Less playful imagery/tone?
+- [ ] Gather specific examples or references
+- [ ] Create mockup or wireframe for approval
+
+**Current state:** Clean, modern design with gradient hero, featured cats grid, mission section
+
+**Considerations:**
+- Current design is already quite professional
+- May need content changes vs. style changes
+- Consider audience: potential adopters want warmth + credibility
+
+**Estimated effort:** TBD after requirements gathered
+
+---
+
+#### 1.3 Button Color Clarification 🎨 **NEEDS CLARIFICATION**
+**Issue:** User mentioned reverting "View Details / View on Adopt-a-Pet" buttons back to green background/white text
+
+**Action Required:**
+- [ ] Clarify which buttons are being referenced:
+  - CatsPage cat cards?
+  - CatDetailPage?
+  - Homepage featured cats?
+  - All of the above?
+- [ ] Current state: Primary variant (green background, dark text)
+- [ ] Requested state: Green background, white text
+- [ ] Verify this doesn't conflict with accessibility standards
+
+**Files affected (depending on scope):**
+- `frontend/src/pages/CatsPage.jsx`
+- `frontend/src/pages/HomePage.jsx`
+- Or potentially `frontend/src/components/Common/StyledComponents.js` (Button component)
+
+**Estimated effort:** 30 minutes - 1 hour (depending on scope)
 
 ---
 
@@ -150,45 +211,20 @@
 
 ---
 
-#### 2.3 Enhanced Bio Section for Cat Details **MEDIUM VALUE**
+#### 2.3 Enhanced Bio Section for Cat Details **ALREADY ADDED** ✅
 **Description:** Rich bio section for detailed cat stories
 
-**User story:** As Kelsey, I want to share detailed stories about each cat so potential adopters can connect emotionally.
+**Status:** Bio field already exists in database and admin form!
+- ✅ Database has `bio` field (TEXT)
+- ✅ Admin form has bio textarea
+- ✅ Validation and save working
 
-**Features:**
-- Rich text area for longer stories (vs. single-line temperament)
-- Support for:
-  - Multiple paragraphs
-  - Basic formatting (bold, italic)
-  - Line breaks
-- Display on cat detail page as dedicated section
-- Could supplement or replace temperament field
+**Remaining work:**
+- [ ] Add bio display to CatDetailPage (if not already visible)
+- [ ] Style bio section appropriately
+- [ ] Consider character limit indicator in admin form
 
-**Implementation options:**
-1. **Simple Textarea** (Easiest)
-   - Plain text with preserved line breaks
-   - Display with white-space: pre-line
-   - No special editor needed
-
-2. **Markdown Support** (Medium)
-   - Write in Markdown
-   - Render to HTML
-   - Libraries: `react-markdown`
-
-3. **Rich Text Editor** (Most complex)
-   - WYSIWYG editor
-   - Libraries: `react-quill`, `slate`
-   - More user-friendly for admins
-
-**Recommended:** Start with option 1 (simple textarea), upgrade later if needed.
-
-**Technical requirements:**
-- Database: Add `bio` field (TEXT)
-- Frontend: Textarea in admin form, styled display on detail page
-- API: Include bio in cat responses
-- Optional: Character limit (e.g., 1000 chars)
-
-**Estimated effort:** 2-3 hours (simple), 4-6 hours (markdown/rich text)
+**Estimated effort:** 1-2 hours (just display styling)
 
 ---
 
@@ -341,39 +377,40 @@
 
 ## 📋 Recommended Implementation Order
 
-### Sprint 1 (Week 1) - Critical & High Value
-1. **Fix admin edit page save bug** (Priority 1.1) - 2-4 hours
-2. **Implement adoption interest form** (Priority 2.1) - 4-6 hours
+### Sprint 1 (Immediate) - Clarifications & Quick Fixes
+1. **Run VFV scraper cleanup** (Priority 1.1) - 5 minutes
+2. **Gather homepage design requirements** (Priority 1.2) - 1-2 hours
+3. **Clarify button color request** (Priority 1.3) - 30 minutes
+4. **Implement button color changes** (if confirmed) - 30-60 minutes
+
+**Total Sprint 1:** 2-4 hours
+
+---
+
+### Sprint 2 (Week 1) - High Value Features
+5. **Implement adoption interest form** (Priority 2.1) - 4-6 hours
    - Start with modal version
    - Add to CatDetailPage
    - Backend endpoint
    - Email notification
 
-**Total Sprint 1:** 6-10 hours
-
----
-
-### Sprint 2 (Week 2) - Feature Enhancement
-3. **Add temperament tags system** (Priority 2.2) - 3-5 hours
+6. **Add temperament tags system** (Priority 2.2) - 3-5 hours
    - Database schema update
    - Admin tag selector
    - Display on cat pages
    - Filter functionality
 
-4. **Enhance bio section** (Priority 2.3) - 2-3 hours
-   - Simple textarea version
-   - Display formatting
-
-**Total Sprint 2:** 5-8 hours
+**Total Sprint 2:** 7-11 hours
 
 ---
 
-### Sprint 3 (Week 3) - Polish
-5. **Navigation active states** (Priority 3.1) - 1-2 hours
-6. **Image optimization** (Priority 3.2) - 2-3 hours
-7. **Search functionality** (Priority 3.3) - 3-4 hours
+### Sprint 3 (Week 2) - Polish
+7. **Navigation active states** (Priority 3.1) - 1-2 hours
+8. **Image optimization** (Priority 3.2) - 2-3 hours
+9. **Search functionality** (Priority 3.3) - 3-4 hours
+10. **Display bio field on detail pages** (Priority 2.3) - 1-2 hours
 
-**Total Sprint 3:** 6-9 hours
+**Total Sprint 3:** 7-11 hours
 
 ---
 
@@ -394,22 +431,27 @@ These can be done anytime for quick improvements:
 - [ ] Add 404 page
 - [ ] Add footer with contact info
 - [ ] Add "Last updated" timestamp to cat profiles
+- [x] Fix success alert text contrast (completed Feb 9)
+- [x] Fix adoption contact email contrast (completed Feb 9)
+- [x] Update masthead buttons (completed Feb 9)
+- [x] Increase global font sizes (completed Feb 9)
+- [x] Simplify admin status options (completed Feb 9)
 
 ---
 
 ## 📊 Impact vs. Effort Matrix
 
 ```
-High Impact │  [Admin Save Bug]     [Adoption Form]
-Low Effort  │  [Active Nav]         [Temperament Tags]
-            │  [Bio Section]
+High Impact │  [Scraper Cleanup]     [Adoption Form]
+Low Effort  │  [Active Nav]          [Button Colors]
+            │  [Bio Display]
             │
-            │  [Image Gallery]      [Advanced Filters]
-High Impact │  [Search]             [Admin Dashboard]
-High Effort │  [Email System]       [Calendar]
+            │  [Temperament Tags]    [Homepage Redesign]
+High Impact │  [Search]              [Admin Dashboard]
+High Effort │  [Email System]        [Calendar]
             │
             └─────────────────────────────────────────
-              Low Effort            High Effort
+              Low Effort             High Effort
 ```
 
 ---
@@ -421,11 +463,14 @@ High Effort │  [Email System]       [Calendar]
 - Testing time is included
 - Documentation updates are included
 - Priority can shift based on user feedback or business needs
+- **Recent changes** (Feb 9-10) focused on UI polish and admin workflow
+- **Next focus** should be clarifications, then high-value features
 
 ---
 
 ## 🔗 Related Documentation
 
+- [Executive Handoff](./EXECUTIVE_HANDOFF.md) - Latest session summary (Feb 9-10)
 - [Phase 1+2 Summary](./PHASE_1_2_SUMMARY.md) - Component library overview
 - [Phase 3 Guide](./PHASE_3_GUIDE.md) - Interactive components usage
 - [Migration Complete](./MIGRATION_COMPLETE.md) - What's been accomplished
@@ -434,3 +479,8 @@ High Effort │  [Email System]       [Calendar]
 ---
 
 **Questions or want to adjust priorities?** This roadmap is flexible and can be adapted based on your needs!
+
+**Last Session Commits:**
+- `c836cd8` - Font sizes, buttons, text colors
+- `42772df` - Adoption contact, status options
+- `33d43c9` - Loading component exports
