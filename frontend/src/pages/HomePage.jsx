@@ -41,18 +41,31 @@ const MissionText = styled.p`
   margin: 0 auto ${({ theme }) => theme.spacing[8]};
 `;
 
-// Updated masthead button with white background normal state
+// Masthead buttons - teal background with white text
 const MastheadButton = styled(ButtonLink)`
-  background: ${({ $variant }) => 
-    $variant === 'primary' ? '#ffffff' : 'transparent'};
-  color: ${({ $variant }) => 
-    $variant === 'primary' ? '#1abc9c' : '#ffffff'};
+  background: #16a085;
+  color: #ffffff;
+  border-color: #16a085;
+  
+  &:hover:not(:disabled) {
+    background: #138d75;
+    color: #ffffff;
+    border-color: #138d75;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+// Outline variant for secondary button
+const MastheadButtonOutline = styled(ButtonLink)`
+  background: transparent;
+  color: #ffffff;
   border-color: #ffffff;
   
   &:hover:not(:disabled) {
-    background: #16a085;
-    color: #ffffff;
-    border-color: #16a085;
+    background: #ffffff;
+    color: #16a085;
+    border-color: #ffffff;
     transform: translateY(-2px);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   }
@@ -87,7 +100,7 @@ export default function HomePage() {
 
   return (
     <>
-      {/* Hero Section - Using new SectionHero component with updated buttons */}
+      {/* Hero Section - Using new SectionHero component with teal buttons */}
       <SectionHero
         variant="gradient"
         size="lg"
@@ -95,12 +108,12 @@ export default function HomePage() {
         subtitle="Finding loving homes for cats in need. Every cat deserves a second chance at happiness."
         actions={
           <>
-            <MastheadButton to="/cats" $variant="primary" $size="lg">
+            <MastheadButton to="/cats" $size="lg">
               Meet Current Cats
             </MastheadButton>
-            <MastheadButton to="/adoption" $variant="outline" $size="lg">
+            <MastheadButtonOutline to="/adoption" $size="lg">
               How to Adopt
-            </MastheadButton>
+            </MastheadButtonOutline>
           </>
         }
       />
