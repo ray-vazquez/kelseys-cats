@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { Button } from '../Common/StyledComponents.js';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -43,13 +43,34 @@ const NavLink = styled(Link)`
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   text-transform: uppercase;
-  color: ${({ theme }) => theme.colors.white};
+  color: ${({ theme, $isActive }) => 
+    $isActive ? theme.colors.primary : theme.colors.white
+  };
   text-decoration: none;
+  position: relative;
+  padding-bottom: ${({ theme }) => theme.spacing[1]};
   transition: all ${({ theme }) => theme.transitions.fast};
+
+  /* Active state indicator - underline */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: ${({ theme }) => theme.colors.primary};
+    transform: scaleX(${({ $isActive }) => ($isActive ? '1' : '0')});
+    transform-origin: left;
+    transition: transform ${({ theme }) => theme.transitions.fast};
+  }
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
-    text-decoration: underline;
+
+    &::after {
+      transform: scaleX(1);
+    }
   }
 `;
 
@@ -76,19 +97,29 @@ const LogoutButton = styled(Button)`
 export default function AdminNavbar() {
   const { logoutUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   function handleLogout() {
     logoutUser();
     navigate('/admin/login');
   }
 
+  // Helper function to check if a link is active
+  const isActive = (path) => {
+    return location.pathname.startsWith(path);
+  };
+
   return (
     <Nav>
       <NavContainer>
         <Brand to="/admin/cats">Admin Panel</Brand>
         <NavLinks>
-          <NavLink to="/admin/cats">Manage Cats</NavLink>
-          <NavLink to="/admin/scraper">Scraper</NavLink>
+          <NavLink to="/admin/cats" $isActive={isActive('/admin/cats')}>
+            Manage Cats
+          </NavLink>
+          <NavLink to="/admin/scraper" $isActive={isActive('/admin/scraper')}>
+            Scraper
+          </NavLink>
           <NavLink to="/">Public Site</NavLink>
           <LogoutButton onClick={handleLogout}>
             Logout
