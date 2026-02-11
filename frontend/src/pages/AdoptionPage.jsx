@@ -168,10 +168,10 @@ export default function AdoptionPage() {
       {/* Main Content */}
       <Section $padding="lg">
         <Container $size="md">
-          {/* Important Notice - FIXED TEXT COLOR */}
+          {/* Important Notice - Link inherits dark blue color from Alert component */}
           <Alert $variant="info" style={{ marginBottom: '3rem' }}>
             <strong>Ready to adopt?</strong> Contact us at{' '}
-            <a href="mailto:kelsey@example.org" style={{ color: '#1e40af', fontWeight: 'bold', textDecoration: 'underline' }}>
+            <a href="mailto:kelsey@example.org">
               kelsey@example.org
             </a>{' '}
             to start the adoption process. We'll guide you through every step!
