@@ -79,7 +79,7 @@ export const theme = {
     overlayLight: 'rgba(0, 0, 0, 0.25)',
   },
   
-  // Fluid typography using clamp() for responsive scaling - ORIGINAL VALUES
+  // Fluid typography using clamp() for responsive scaling
   fonts: {
     heading: '"Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     body: '"Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -87,16 +87,16 @@ export const theme = {
   },
   
   fontSizes: {
-    xs: 'clamp(0.6875rem, 0.625rem + 0.3vw, 0.75rem)',     // 11-12px
-    sm: 'clamp(0.8125rem, 0.75rem + 0.3vw, 0.875rem)',     // 13-14px
-    base: 'clamp(0.9375rem, 0.875rem + 0.3vw, 1rem)',      // 15-16px
-    lg: 'clamp(1.0625rem, 1rem + 0.3vw, 1.125rem)',        // 17-18px
-    xl: 'clamp(1.1875rem, 1.125rem + 0.3vw, 1.25rem)',     // 19-20px
-    '2xl': 'clamp(1.375rem, 1.25rem + 0.625vw, 1.5rem)',   // 22-24px
-    '3xl': 'clamp(1.75rem, 1.5rem + 1.25vw, 1.875rem)',    // 28-30px
-    '4xl': 'clamp(2rem, 1.75rem + 1.25vw, 2.25rem)',       // 32-36px
-    '5xl': 'clamp(2.5rem, 2rem + 2.5vw, 3rem)',            // 40-48px
-    '6xl': 'clamp(3rem, 2.5rem + 2.5vw, 3.75rem)',         // 48-60px
+    xs: 'clamp(0.6875rem, 0.65rem + 0.2vw, 0.75rem)',     // 11-12px
+    sm: 'clamp(0.8125rem, 0.75rem + 0.3vw, 0.875rem)',    // 13-14px
+    base: 'clamp(0.9375rem, 0.875rem + 0.3vw, 1rem)',     // 15-16px
+    lg: 'clamp(1.0625rem, 1rem + 0.3vw, 1.125rem)',       // 17-18px
+    xl: 'clamp(1.1875rem, 1.125rem + 0.3vw, 1.25rem)',    // 19-20px
+    '2xl': 'clamp(1.375rem, 1.25rem + 0.625vw, 1.5rem)',  // 22-24px
+    '3xl': 'clamp(1.75rem, 1.5rem + 1.25vw, 1.875rem)',   // 28-30px
+    '4xl': 'clamp(2rem, 1.75rem + 1.25vw, 2.25rem)',      // 32-36px
+    '5xl': 'clamp(2.5rem, 2rem + 2.5vw, 3rem)',           // 40-48px
+    '6xl': 'clamp(3rem, 2.5rem + 2.5vw, 3.75rem)',        // 48-60px
   },
   
   fontWeights: {
