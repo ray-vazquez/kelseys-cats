@@ -1,4 +1,4 @@
-// Updated StyledComponents with lighter success alert text and loading components
+// Updated StyledComponents with darker success alert text and loading components
 import styled, { css, keyframes } from 'styled-components';
 import { Link } from 'react-router-dom';
 
@@ -242,7 +242,7 @@ export const Badge = styled.span`
   }}
 `;
 
-// Alert - Updated with lighter text for success variant
+// Alert - Updated with much darker green text for success variant
 export const Alert = styled.div`
   padding: ${({ theme }) => theme.spacing[4]};
   border-radius: ${({ theme }) => theme.borderRadius.md};
@@ -256,7 +256,7 @@ export const Alert = styled.div`
         return css`
           background: ${theme.colors.success.light};
           border-color: ${theme.colors.success.main};
-          color: #065f46; // Darker green for better contrast
+          color: #064e3b; /* Very dark green for maximum contrast */
         `;
       case 'warning':
         return css`
@@ -274,7 +274,7 @@ export const Alert = styled.div`
         return css`
           background: ${theme.colors.info.light};
           border-color: ${theme.colors.info.main};
-          color: ${theme.colors.info.dark};
+          color: #1e3a8a; /* Very dark blue for maximum contrast */
         `;
       default:
         return css`
@@ -287,6 +287,16 @@ export const Alert = styled.div`
 
   strong {
     font-weight: ${({ theme }) => theme.fontWeights.bold};
+  }
+  
+  a {
+    color: inherit;
+    font-weight: ${({ theme }) => theme.fontWeights.bold};
+    text-decoration: underline;
+    
+    &:hover {
+      opacity: 0.8;
+    }
   }
 `;
 
