@@ -1,4 +1,4 @@
-// Migrated CatDetailPage - Using Phase 1+2 enhanced components with compact title, senior badge, and bio
+// Migrated CatDetailPage - Using Phase 1+2 enhanced components with Image Gallery
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
@@ -8,11 +8,11 @@ import {
   ButtonLink,
   Badge,
   Alert,
-  Flex,
 } from "../components/Common/StyledComponents.js";
 import SectionHero from "../components/Common/SectionHero.jsx";
 import LoadingState from "../components/Common/LoadingState.jsx";
 import EmptyState from "../components/Common/EmptyState.jsx";
+import ImageGallery from "../components/Common/ImageGallery.jsx";
 import http from "../api/http.js";
 
 const DetailGrid = styled.div`
@@ -24,24 +24,6 @@ const DetailGrid = styled.div`
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     grid-template-columns: 1fr;
     gap: ${({ theme }) => theme.spacing[8]};
-  }
-`;
-
-const ImageWrapper = styled.div`
-  position: sticky;
-  top: ${({ theme }) => theme.spacing[4]};
-  
-  img {
-    width: 100%;
-    border-radius: ${({ theme }) => theme.borderRadius.lg};
-    box-shadow: ${({ theme }) => theme.shadows.lg};
-    object-fit: cover;
-    aspect-ratio: 1;
-  }
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    position: relative;
-    top: 0;
   }
 `;
 
@@ -160,9 +142,9 @@ export default function CatDetailPage() {
         <Section $padding="lg">
           <Container>
             <DetailGrid>
-              <ImageWrapper>
+              <div>
                 <LoadingState variant="skeleton" skeletonCount={1} skeletonHeight="400px" />
-              </ImageWrapper>
+              </div>
               <DetailContent>
                 <LoadingState variant="skeleton" skeletonCount={8} />
               </DetailContent>
@@ -212,9 +194,19 @@ export default function CatDetailPage() {
   }
 
   const isAvailable = cat.status === 'available';
-  const isAdopted = cat.status === 'adopted';
+  const isAdopted = cat.status === 'alumni';
   // Check for senior status: prioritize is_senior column, fallback to age >= 10
   const isSenior = cat.is_senior || (cat.age_years && cat.age_years >= 10);
+
+  // Prepare images array for gallery
+  const catImages = [];
+  if (cat.main_image_url) {
+    catImages.push(cat.main_image_url);
+  }
+  // Add additional images if they exist
+  if (cat.additional_images && Array.isArray(cat.additional_images)) {
+    catImages.push(...cat.additional_images);
+  }
 
   return (
     <>
@@ -246,25 +238,8 @@ export default function CatDetailPage() {
           )}
 
           <DetailGrid>
-            {/* Image Column */}
-            <ImageWrapper>
-              {cat.main_image_url ? (
-                <img src={cat.main_image_url} alt={cat.name} />
-              ) : (
-                <div style={{
-                  width: '100%',
-                  aspectRatio: '1',
-                  background: '#e5e5e5',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '48px'
-                }}>
-                  🐱
-                </div>
-              )}
-            </ImageWrapper>
+            {/* Image Gallery Column */}
+            <ImageGallery images={catImages} alt={cat.name} />
 
             {/* Details Column */}
             <DetailContent>
