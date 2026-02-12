@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Container, Card, CardBody, FormGroup, Label, Input, Textarea, Select, Button, CheckboxLabel, Checkbox, Alert } from '../components/Common/StyledComponents.js';
+import { Container, Card, CardBody, FormGroup, Label, Input, Textarea, Select, Button, Alert } from '../components/Common/StyledComponents.js';
 import { Toast } from '../components/Common/Toast.jsx';
 import http from '../api/http.js';
 
@@ -94,6 +94,55 @@ const WarningBox = styled.div`
   }
 `;
 
+const CheckboxLabel = styled.label`
+  display: inline-flex;
+  align-items: center;
+  font-size: ${({ theme }) => theme.fontSizes.base};
+  cursor: ${({ $disabled }) => ($disabled ? 'not-allowed' : 'pointer')};
+  user-select: none;
+  width: fit-content;
+  opacity: ${({ $muted }) => ($muted ? 0.4 : 1)};
+  color: ${({ theme, $muted }) => ($muted ? theme.colors.text.tertiary : 'inherit')};
+
+  &:hover {
+    color: ${({ theme, $disabled, $muted }) => 
+      ($disabled || $muted) ? 'inherit' : theme.colors.primary
+    };
+  }
+  
+  input[type="checkbox"] {
+    opacity: ${({ $muted }) => ($muted ? 0.4 : 1)};
+  }
+`;
+
+const Checkbox = styled.input.attrs({ type: "checkbox" })`
+  width: 18px;
+  height: 18px;
+  margin-right: ${({ theme }) => theme.spacing[2]};
+  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
+  accent-color: ${({ theme }) => theme.colors.primary};
+  flex-shrink: 0;
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.focus};
+    outline-offset: 2px;
+  }
+`;
+
+const NameInputWrapper = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing[3]};
+`;
+
+const NameErrorText = styled.span`
+  color: ${({ theme }) => theme.colors.danger};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  white-space: nowrap;
+  padding-top: ${({ theme }) => theme.spacing[3]};
+`;
+
 export default function AdminCatEditPage({ mode }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -120,6 +169,7 @@ export default function AdminCatEditPage({ mode }) {
   const [error, setError] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [showAlumniWarning, setShowAlumniWarning] = useState(false);
+  const [nameError, setNameError] = useState(false);
 
   useEffect(() => {
     if (mode === 'edit' && id) {
@@ -171,6 +221,10 @@ export default function AdminCatEditPage({ mode }) {
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
+    
+    if (name === 'name') {
+      setNameError(false);
+    }
     
     if (name === 'status') {
       const newStatus = value;
@@ -229,6 +283,20 @@ export default function AdminCatEditPage({ mode }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    
+    // Name validation
+    if (!formData.name || formData.name.trim() === '') {
+      setNameError(true);
+      setError('Name is required');
+      addToast({
+        title: 'Validation Error',
+        message: 'Please enter a name for the cat',
+        variant: 'error',
+        duration: 5000
+      });
+      return;
+    }
+    
     setLoading(true);
     setError(null);
 
@@ -346,14 +414,19 @@ export default function AdminCatEditPage({ mode }) {
               <form onSubmit={handleSubmit}>
                 <FormGroup>
                   <Label>Name *</Label>
-                  <Input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    disabled={loading}
-                  />
+                  <NameInputWrapper>
+                    <Input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      disabled={loading}
+                      $error={nameError}
+                      style={{ flex: 1 }}
+                    />
+                    {nameError && <NameErrorText>Name is required</NameErrorText>}
+                  </NameInputWrapper>
                 </FormGroup>
 
                 <FormGroup>
@@ -513,13 +586,16 @@ export default function AdminCatEditPage({ mode }) {
                     Senior
                   </CheckboxLabel>
 
-                  <CheckboxLabel>
+                  <CheckboxLabel 
+                    $disabled={isAlumni}
+                    $muted={isAlumni}
+                    title={isAlumni ? 'Alumni cats cannot be featured' : ''}
+                  >
                     <Checkbox
                       name="featured"
                       checked={formData.featured}
                       onChange={handleChange}
                       disabled={loading || isAlumni}
-                      title={isAlumni ? 'Alumni cats cannot be featured' : ''}
                     />
                     Featured
                     {isAlumni && (

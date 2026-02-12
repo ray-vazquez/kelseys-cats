@@ -453,6 +453,7 @@ export const Checkbox = styled.input.attrs({ type: "checkbox" })`
   margin-right: ${({ theme }) => theme.spacing[2]};
   cursor: pointer;
   accent-color: ${({ theme }) => theme.colors.primary};
+  flex-shrink: 0;
 
   &:focus-visible {
     outline: 2px solid ${({ theme }) => theme.colors.focus};
@@ -461,11 +462,12 @@ export const Checkbox = styled.input.attrs({ type: "checkbox" })`
 `;
 
 export const CheckboxLabel = styled.label`
-  display: flex;
+  display: inline-flex;
   align-items: center;
   font-size: ${({ theme }) => theme.fontSizes.base};
   cursor: pointer;
   user-select: none;
+  width: fit-content;
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
@@ -494,26 +496,26 @@ export const Alert = styled.div`
       case 'success':
         return css`
           background-color: ${theme.colors.successLight};
-          color: ${theme.colors.success};
+          color: ${theme.colors.successDark};
           border-color: ${theme.colors.success};
         `;
       case 'warning':
         return css`
           background-color: ${theme.colors.warningLight};
-          color: ${theme.colors.warning};
+          color: ${theme.colors.warningDark};
           border-color: ${theme.colors.warning};
         `;
       case 'danger':
         return css`
           background-color: ${theme.colors.dangerLight};
-          color: ${theme.colors.danger};
+          color: ${theme.colors.dangerDark};
           border-color: ${theme.colors.danger};
         `;
       case 'info':
       default:
         return css`
           background-color: ${theme.colors.infoLight};
-          color: ${theme.colors.info};
+          color: ${theme.colors.infoDark};
           border-color: ${theme.colors.info};
         `;
     }
