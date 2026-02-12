@@ -220,17 +220,20 @@ export default function HomePage() {
                           : cat.temperament}
                       </p>
                     )}
-                    <CardFooter>
-                      {cat.is_special_needs && (
-                        <Badge $variant="warning">Special Needs</Badge>
-                      )}
-                      {cat.is_senior && (
-                        <Badge $variant="secondary">Senior</Badge>
-                      )}
-                      {cat.bonded_pair_id && (
-                        <Badge $variant="info">Bonded Pair</Badge>
-                      )}
-                    </CardFooter>
+                    {/* FIXED: Only render CardFooter if there are badges to show */}
+                    {(cat.is_special_needs || cat.is_senior || cat.bonded_pair_id) && (
+                      <CardFooter>
+                        {cat.is_special_needs && (
+                          <Badge $variant="warning">Special Needs</Badge>
+                        )}
+                        {cat.is_senior && (
+                          <Badge $variant="secondary">Senior</Badge>
+                        )}
+                        {cat.bonded_pair_id && (
+                          <Badge $variant="info">Bonded Pair</Badge>
+                        )}
+                      </CardFooter>
+                    )}
                     <div style={{ marginTop: "1rem" }}>
                       <LearnMoreButton to={`/cats/${cat.id}`}>
                         Learn More

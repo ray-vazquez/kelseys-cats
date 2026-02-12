@@ -251,17 +251,20 @@ export default function AlumniPage() {
                           </TextMuted>
                         )}
                         
-                        <CardFooter>
-                          {cat.is_special_needs && (
-                            <Badge $variant="warning">Special Needs</Badge>
-                          )}
-                          {isSenior && (
-                            <Badge $variant="secondary">Senior</Badge>
-                          )}
-                          {cat.bonded_pair_id && (
-                            <Badge $variant="info">Bonded Pair</Badge>
-                          )}
-                        </CardFooter>
+                        {/* FIXED: Only render CardFooter if there are badges to show */}
+                        {(cat.is_special_needs || isSenior || cat.bonded_pair_id) && (
+                          <CardFooter>
+                            {cat.is_special_needs && (
+                              <Badge $variant="warning">Special Needs</Badge>
+                            )}
+                            {isSenior && (
+                              <Badge $variant="secondary">Senior</Badge>
+                            )}
+                            {cat.bonded_pair_id && (
+                              <Badge $variant="info">Bonded Pair</Badge>
+                            )}
+                          </CardFooter>
+                        )}
                         
                         <div style={{ marginTop: "1rem" }}>
                           <ButtonLink to={`/alumni/${cat.id}`} $variant="primary" $fullWidth>
