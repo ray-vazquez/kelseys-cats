@@ -1,6 +1,6 @@
 // AdminCatsPage - Enhanced with status filters and delete confirmation modal - FIXED SPACING
 import React, { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import {
   Container,
@@ -51,13 +51,24 @@ const FilterSection = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
+const FilterHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
+`;
+
 const FilterLabel = styled.div`
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: ${({ theme }) => theme.spacing[3]};
   font-size: ${({ theme }) => theme.fontSizes.sm};
   text-transform: uppercase;
   letter-spacing: 0.05em;
+`;
+
+const DeletedCatsLink = styled(Button)`
+  font-size: ${({ theme }) => theme.fontSizes.xs};
+  padding: ${({ theme }) => theme.spacing[1]} ${({ theme }) => theme.spacing[3]};
 `;
 
 const FilterGroup = styled.div`
@@ -163,6 +174,7 @@ const EmptyState = styled.div`
 `;
 
 export default function AdminCatsPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState({
     items: [],
@@ -389,7 +401,16 @@ export default function AdminCatsPage() {
 
           {/* Status Filters */}
           <FilterSection>
-            <FilterLabel>Filter by Status</FilterLabel>
+            <FilterHeader>
+              <FilterLabel>Filter by Status</FilterLabel>
+              <DeletedCatsLink
+                $variant="outline"
+                $size="sm"
+                onClick={() => navigate('/admin/cats/deleted')}
+              >
+                🗑️ View Deleted Cats
+              </DeletedCatsLink>
+            </FilterHeader>
             <FilterGroup>
               <CheckboxLabel>
                 <Checkbox
