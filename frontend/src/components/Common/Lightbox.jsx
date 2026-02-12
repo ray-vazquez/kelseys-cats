@@ -13,6 +13,7 @@ const LightboxOverlay = styled.div`
   align-items: center;
   justify-content: center;
   animation: fadeIn 0.2s ease-in-out;
+  padding: 80px 40px 40px;
   
   @keyframes fadeIn {
     from {
@@ -22,23 +23,27 @@ const LightboxOverlay = styled.div`
       opacity: 1;
     }
   }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: 60px 20px 20px;
+  }
 `;
 
 const LightboxContent = styled.div`
   position: relative;
-  max-width: 90vw;
-  max-height: 90vh;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
 `;
 
 const LightboxImage = styled.img`
-  max-width: 100%;
-  max-height: 90vh;
+  width: 85vw;
+  height: 85vh;
   object-fit: contain;
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  box-shadow: ${({ theme }) => theme.shadows['2xl']};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
   animation: zoomIn 0.2s ease-in-out;
   
   @keyframes zoomIn {
@@ -51,34 +56,53 @@ const LightboxImage = styled.img`
       opacity: 1;
     }
   }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    width: 90vw;
+    height: 75vh;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    width: 95vw;
+    height: 70vh;
+  }
 `;
 
 const CloseButton = styled.button`
   position: absolute;
-  top: ${({ theme }) => theme.spacing[4]};
-  right: ${({ theme }) => theme.spacing[4]};
-  background: rgba(255, 255, 255, 0.1);
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.15);
   border: 2px solid ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.white};
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: ${({ theme }) => theme.borderRadius.full};
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: ${({ theme }) => theme.fontSizes['2xl']};
+  font-size: 32px;
   line-height: 1;
+  font-weight: 300;
   transition: all ${({ theme }) => theme.transitions.fast};
   z-index: 10;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
     transform: scale(1.1);
   }
 
   &:active {
     transform: scale(0.95);
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    width: 44px;
+    height: 44px;
+    font-size: 28px;
+    top: 15px;
+    right: 15px;
   }
 `;
 
@@ -86,28 +110,29 @@ const NavButton = styled.button`
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  ${({ $direction }) => ($direction === 'prev' ? 'left: 20px;' : 'right: 20px;')}
-  background: rgba(255, 255, 255, 0.1);
+  ${({ $direction }) => ($direction === 'prev' ? 'left: 30px;' : 'right: 30px;')}
+  background: rgba(255, 255, 255, 0.15);
   border: 2px solid ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.white};
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
   border-radius: ${({ theme }) => theme.borderRadius.full};
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: ${({ theme }) => theme.fontSizes['3xl']};
+  font-size: 40px;
   line-height: 1;
+  font-weight: 300;
   transition: all ${({ theme }) => theme.transitions.fast};
   z-index: 10;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.2);
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.25);
     transform: translateY(-50%) scale(1.1);
   }
 
-  &:active {
+  &:active:not(:disabled) {
     transform: translateY(-50%) scale(0.95);
   }
 
@@ -117,25 +142,32 @@ const NavButton = styled.button`
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    width: 44px;
-    height: 44px;
-    font-size: ${({ theme }) => theme.fontSizes.xl};
-    ${({ $direction }) => ($direction === 'prev' ? 'left: 10px;' : 'right: 10px;')}
+    width: 48px;
+    height: 48px;
+    font-size: 32px;
+    ${({ $direction }) => ($direction === 'prev' ? 'left: 15px;' : 'right: 15px;')}
   }
 `;
 
 const ImageCounter = styled.div`
   position: absolute;
-  bottom: ${({ theme }) => theme.spacing[4]};
+  bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.75);
   color: ${({ theme }) => theme.colors.white};
-  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[4]};
+  padding: ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[5]};
   border-radius: ${({ theme }) => theme.borderRadius.full};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-size: ${({ theme }) => theme.fontSizes.base};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    bottom: 20px;
+    font-size: ${({ theme }) => theme.fontSizes.sm};
+    padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[4]};
+  }
 `;
 
 export default function Lightbox({ images, currentIndex, onClose, onNext, onPrev }) {
