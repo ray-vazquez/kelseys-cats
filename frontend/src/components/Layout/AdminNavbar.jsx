@@ -46,11 +46,12 @@ const NavLink = styled(Link)`
   color: ${({ theme, $isActive }) => 
     $isActive ? theme.colors.primary : theme.colors.white
   };
-  text-decoration: ${({ $isActive }) => ($isActive ? 'underline' : 'none')};
-  transition: color ${({ theme }) => theme.transitions.fast};
+  text-decoration: none;
+  transition: all ${({ theme }) => theme.transitions.fast};
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};
+    text-decoration: underline;
   }
 `;
 
