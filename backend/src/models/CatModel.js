@@ -17,6 +17,21 @@ export class CatModel {
   }
 
   /**
+   * Find a single cat by id, including soft-deleted rows.
+   * Used for restore functionality.
+   */
+  static async findByIdIncludingDeleted(id) {
+    const rows = await query(
+      "SELECT * FROM cats WHERE id = ?",
+      [id],
+    );
+    if (rows[0]) {
+      return this._deserializeRow(rows[0]);
+    }
+    return null;
+  }
+
+  /**
    * Deserialize a database row, converting JSONB fields to proper JS types.
    */
   static _deserializeRow(row) {
@@ -96,6 +111,20 @@ export class CatModel {
     const sql = `SELECT * FROM cats ${where} ORDER BY created_at DESC`;
 
     const rows = await query(sql, params);
+    return rows.map(row => this._deserializeRow(row));
+  }
+
+  /**
+   * Find all soft-deleted cats.
+   * Returns: array of deleted cat objects with deletion timestamp
+   */
+  static async findDeleted() {
+    const sql = `
+      SELECT * FROM cats 
+      WHERE deleted_at IS NOT NULL 
+      ORDER BY deleted_at DESC
+    `;
+    const rows = await query(sql);
     return rows.map(row => this._deserializeRow(row));
   }
 
@@ -371,5 +400,23 @@ export class CatModel {
       WHERE id = ? AND deleted_at IS NULL
     `;
     await query(sql, [id]);
+  }
+
+  /**
+   * Restore a soft-deleted cat by clearing deleted_at.
+   */
+  static async restore(id) {
+    const sql = `
+      UPDATE cats
+      SET deleted_at = NULL
+      WHERE id = ? AND deleted_at IS NOT NULL
+    `;
+    const result = await query(sql, [id]);
+    
+    // Return the restored cat
+    if (result.affectedRows > 0) {
+      return this.findById(id);
+    }
+    return null;
   }
 }
