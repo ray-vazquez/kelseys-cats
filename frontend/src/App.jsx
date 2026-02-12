@@ -10,6 +10,7 @@ import AboutPage from './pages/AboutPage.jsx';
 import AdminLoginPage from './pages/AdminLoginPage.jsx';
 import AdminCatsPage from './pages/AdminCatsPage.jsx';
 import AdminCatEditPage from './pages/AdminCatEditPage.jsx';
+import AdminDeletedCatsPage from './pages/AdminDeletedCatsPage.jsx';
 import AdminScraperPage from './pages/AdminScraperPage.jsx';
 import PublicNavbar from './components/Layout/PublicNavbar.jsx';
 import AdminNavbar from './components/Layout/AdminNavbar.jsx';
@@ -112,6 +113,14 @@ export default function App() {
           element={
             <AdminLayout>
               <AdminCatsPage />
+            </AdminLayout>
+          }
+        />
+        <Route
+          path="/admin/cats/deleted"
+          element={
+            <AdminLayout>
+              <AdminDeletedCatsPage />
             </AdminLayout>
           }
         />
