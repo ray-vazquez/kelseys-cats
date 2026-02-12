@@ -1,4 +1,4 @@
-// Fixed AdminCatEditPage - UPDATED STATUS OPTIONS: Removed 'Adopted', Alumni renamed to 'Alumni - (Adopted)'
+// AdminCatEditPage with Multiple Images Support
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -41,6 +41,82 @@ const TagsTitle = styled.h4`
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0 0 ${({ theme }) => theme.spacing[1]} 0;
+`;
+
+const ImagesSection = styled.div`
+  border: 2px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  padding: ${({ theme }) => theme.spacing[5]};
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
+`;
+
+const ImageList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[3]};
+  margin-top: ${({ theme }) => theme.spacing[3]};
+`;
+
+const ImageItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  padding: ${({ theme }) => theme.spacing[3]};
+  background: ${({ theme }) => theme.colors.light};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+`;
+
+const ImagePreview = styled.img`
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  flex-shrink: 0;
+`;
+
+const ImagePlaceholder = styled.div`
+  width: 60px;
+  height: 60px;
+  background: ${({ theme }) => theme.colors.neutral[200]};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+`;
+
+const ImageUrl = styled.span`
+  flex: 1;
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  word-break: break-all;
+`;
+
+const RemoveButton = styled.button`
+  background: ${({ theme }) => theme.colors.danger};
+  color: white;
+  border: none;
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  cursor: pointer;
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  transition: background ${({ theme }) => theme.transitions.fast};
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.dangerHover};
+  }
+`;
+
+const AddImageSection = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing[2]};
+  margin-top: ${({ theme }) => theme.spacing[3]};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    flex-direction: column;
+  }
 `;
 
 const ButtonGroup = styled.div`
@@ -163,9 +239,11 @@ export default function AdminCatEditPage({ mode }) {
     is_senior: false,
     status: 'available',
     main_image_url: '',
+    additional_images: [],
     featured: false
   });
 
+  const [newImageUrl, setNewImageUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(mode === 'edit');
   const [error, setError] = useState(null);
@@ -194,6 +272,7 @@ export default function AdminCatEditPage({ mode }) {
             is_senior: cat.is_senior || false,
             status: cat.status || 'available',
             main_image_url: cat.main_image_url || '',
+            additional_images: cat.additional_images || [],
             featured: cat.featured || false
           });
           setLoadingData(false);
@@ -264,6 +343,45 @@ export default function AdminCatEditPage({ mode }) {
     if (error) setError(null);
   }
 
+  function handleAddImage() {
+    if (!newImageUrl.trim()) {
+      addToast({
+        title: 'Invalid URL',
+        message: 'Please enter a valid image URL',
+        variant: 'warning',
+        duration: 3000
+      });
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      additional_images: [...prev.additional_images, newImageUrl.trim()]
+    }));
+    setNewImageUrl('');
+    
+    addToast({
+      title: 'Image Added',
+      message: 'Image URL added to gallery',
+      variant: 'success',
+      duration: 3000
+    });
+  }
+
+  function handleRemoveImage(index) {
+    setFormData(prev => ({
+      ...prev,
+      additional_images: prev.additional_images.filter((_, i) => i !== index)
+    }));
+    
+    addToast({
+      title: 'Image Removed',
+      message: 'Image removed from gallery',
+      variant: 'info',
+      duration: 3000
+    });
+  }
+
   function prepareFormData(data) {
     const cleaned = {};
     for (const [key, value] of Object.entries(data)) {
@@ -274,6 +392,9 @@ export default function AdminCatEditPage({ mode }) {
         cleaned[key] = value;
       }
       else if (typeof value === 'number') {
+        cleaned[key] = value;
+      }
+      else if (Array.isArray(value)) {
         cleaned[key] = value;
       }
       else {
@@ -513,7 +634,50 @@ export default function AdminCatEditPage({ mode }) {
                     disabled={loading}
                     placeholder="https://..."
                   />
+                  <StatusHint>
+                    This image will be shown as the primary image in lists and the main gallery image.
+                  </StatusHint>
                 </FormGroup>
+
+                {/* Additional Images Section */}
+                <ImagesSection>
+                  <TagsTitle>Additional Images Gallery</TagsTitle>
+                  <StatusHint>
+                    Add extra images to create a photo gallery on the cat's detail page. These will appear as thumbnails below the main image.
+                  </StatusHint>
+
+                  {formData.additional_images.length > 0 && (
+                    <ImageList>
+                      {formData.additional_images.map((url, index) => (
+                        <ImageItem key={index}>
+                          {url ? (
+                            <ImagePreview src={url} alt={`Additional ${index + 1}`} onError={(e) => e.target.style.display = 'none'} />
+                          ) : (
+                            <ImagePlaceholder>🖼️</ImagePlaceholder>
+                          )}
+                          <ImageUrl>{url}</ImageUrl>
+                          <RemoveButton type="button" onClick={() => handleRemoveImage(index)}>
+                            Remove
+                          </RemoveButton>
+                        </ImageItem>
+                      ))}
+                    </ImageList>
+                  )}
+
+                  <AddImageSection>
+                    <Input
+                      type="text"
+                      value={newImageUrl}
+                      onChange={(e) => setNewImageUrl(e.target.value)}
+                      placeholder="https://example.com/image.jpg"
+                      disabled={loading}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddImage())}
+                    />
+                    <Button type="button" onClick={handleAddImage} disabled={loading} $variant="outline">
+                      Add Image
+                    </Button>
+                  </AddImageSection>
+                </ImagesSection>
 
                 <FormGroup>
                   <Label>Status</Label>
