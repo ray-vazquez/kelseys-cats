@@ -41,7 +41,7 @@ const MissionText = styled.p`
   margin: 0 auto ${({ theme }) => theme.spacing[8]};
 `;
 
-// Masthead button styling override - teal background, white text, white border
+// Masthead button styling - matches navbar secondary color
 const MastheadButton = styled(Link)`
   display: inline-flex;
   align-items: center;
@@ -63,12 +63,12 @@ const MastheadButton = styled(Link)`
     if ($size === 'lg') return theme.fontSizes.lg;
     return theme.fontSizes.base;
   }};
-  background-color: ${({ theme }) => theme.colors.primary};
+  background-color: ${({ theme }) => theme.colors.secondary};
   color: ${({ theme }) => theme.colors.white};
   border: 2px solid ${({ theme }) => theme.colors.white};
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.primaryHover};
+    background-color: ${({ theme }) => theme.colors.secondaryHover};
     border-color: ${({ theme }) => theme.colors.white};
     color: ${({ theme }) => theme.colors.white};
     transform: translateY(-1px);

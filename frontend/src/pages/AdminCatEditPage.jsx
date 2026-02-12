@@ -31,13 +31,16 @@ const TagsSection = styled.div`
   border-radius: ${({ theme }) => theme.borderRadius.base};
   padding: ${({ theme }) => theme.spacing[5]};
   margin-bottom: ${({ theme }) => theme.spacing[6]};
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[3]};
 `;
 
 const TagsTitle = styled.h4`
   font-size: ${({ theme }) => theme.fontSizes.base};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 ${({ theme }) => theme.spacing[4]} 0;
+  margin: 0 0 ${({ theme }) => theme.spacing[1]} 0;
 `;
 
 const ButtonGroup = styled.div`
@@ -95,7 +98,7 @@ const WarningBox = styled.div`
 `;
 
 const CheckboxLabel = styled.label`
-  display: inline-flex;
+  display: flex;
   align-items: center;
   font-size: ${({ theme }) => theme.fontSizes.base};
   cursor: ${({ $disabled }) => ($disabled ? 'not-allowed' : 'pointer')};
@@ -129,18 +132,17 @@ const Checkbox = styled.input.attrs({ type: "checkbox" })`
   }
 `;
 
-const NameInputWrapper = styled.div`
+const NameFieldWrapper = styled.div`
   display: flex;
-  align-items: flex-start;
-  gap: ${({ theme }) => theme.spacing[3]};
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[1]};
 `;
 
 const NameErrorText = styled.span`
   color: ${({ theme }) => theme.colors.danger};
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
-  white-space: nowrap;
-  padding-top: ${({ theme }) => theme.spacing[3]};
+  display: block;
 `;
 
 export default function AdminCatEditPage({ mode }) {
@@ -414,19 +416,17 @@ export default function AdminCatEditPage({ mode }) {
               <form onSubmit={handleSubmit}>
                 <FormGroup>
                   <Label>Name *</Label>
-                  <NameInputWrapper>
+                  <NameFieldWrapper>
                     <Input
                       type="text"
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      required
                       disabled={loading}
                       $error={nameError}
-                      style={{ flex: 1 }}
                     />
                     {nameError && <NameErrorText>Name is required</NameErrorText>}
-                  </NameInputWrapper>
+                  </NameFieldWrapper>
                 </FormGroup>
 
                 <FormGroup>
