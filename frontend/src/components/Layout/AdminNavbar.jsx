@@ -44,10 +44,10 @@ const NavLink = styled(Link)`
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   text-transform: uppercase;
   color: ${({ theme, $isActive }) => 
-    $isActive ? theme.colors.primary : theme.colors.white
+    $isActive ? theme.colors.light : theme.colors.white
   };
-  text-decoration: none;
-  transition: all ${({ theme }) => theme.transitions.fast};
+  text-decoration: ${({ $isActive }) => ($isActive ? 'underline' : 'none')};
+  transition: color ${({ theme }) => theme.transitions.fast};
 
   &:hover {
     color: ${({ theme }) => theme.colors.primary};

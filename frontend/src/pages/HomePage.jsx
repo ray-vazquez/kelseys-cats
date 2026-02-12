@@ -9,7 +9,6 @@ import {
   CardImage,
   CardBody,
   CardTitle,
-  ButtonLink,
   Badge,
   TextMuted,
 } from "../components/Common/StyledComponents.js";
@@ -17,6 +16,7 @@ import SectionHero from "../components/Common/SectionHero.jsx";
 import LoadingState from "../components/Common/LoadingState.jsx";
 import { NoCatsFound } from "../components/Common/EmptyState.jsx";
 import http from "../api/http.js";
+import { Link } from "react-router-dom";
 
 const SectionTitle = styled.h2`
   text-align: center;
@@ -39,6 +39,90 @@ const MissionText = styled.p`
   color: ${({ theme }) => theme.colors.text.secondary};
   max-width: 700px;
   margin: 0 auto ${({ theme }) => theme.spacing[8]};
+`;
+
+// Masthead button styling override - teal background, white text, white border
+const MastheadButton = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  font-family: ${({ theme }) => theme.fonts.body};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  text-align: center;
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  cursor: pointer;
+  transition: all ${({ theme }) => theme.transitions.fast};
+  text-decoration: none;
+  white-space: nowrap;
+  padding: ${({ theme, $size }) => {
+    if ($size === 'lg') return `${theme.spacing[4]} ${theme.spacing[8]}`;
+    return `${theme.spacing[3]} ${theme.spacing[6]}`;
+  }};
+  font-size: ${({ theme, $size }) => {
+    if ($size === 'lg') return theme.fontSizes.lg;
+    return theme.fontSizes.base;
+  }};
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: ${({ theme }) => theme.colors.white};
+  border: 2px solid ${({ theme }) => theme.colors.white};
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primaryHover};
+    border-color: ${({ theme }) => theme.colors.white};
+    color: ${({ theme }) => theme.colors.white};
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.focus};
+    outline-offset: 2px;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    width: 100%;
+  }
+`;
+
+const LearnMoreButton = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+  font-family: ${({ theme }) => theme.fonts.body};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  text-align: center;
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  cursor: pointer;
+  transition: all ${({ theme }) => theme.transitions.fast};
+  text-decoration: none;
+  white-space: nowrap;
+  padding: ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[6]};
+  font-size: ${({ theme }) => theme.fontSizes.base};
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: ${({ theme }) => theme.colors.white};
+  border: 2px solid ${({ theme }) => theme.colors.primary};
+  width: 100%;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primaryHover};
+    border-color: ${({ theme }) => theme.colors.primaryHover};
+    color: ${({ theme }) => theme.colors.white};
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.focus};
+    outline-offset: 2px;
+  }
 `;
 
 export default function HomePage() {
@@ -78,12 +162,12 @@ export default function HomePage() {
         subtitle="Finding loving homes for cats in need. Every cat deserves a second chance at happiness."
         actions={
           <>
-            <ButtonLink to="/cats" $variant="outline" $size="lg">
+            <MastheadButton to="/cats" $size="lg">
               Meet Our Cats
-            </ButtonLink>
-            <ButtonLink to="/adoption" $variant="secondary" $size="lg">
+            </MastheadButton>
+            <MastheadButton to="/adoption" $size="lg">
               Adoption Info
-            </ButtonLink>
+            </MastheadButton>
           </>
         }
       />
@@ -105,9 +189,9 @@ export default function HomePage() {
             <NoCatsFound
               description="No featured cats available right now. Check back soon or browse all our cats!"
               actions={
-                <ButtonLink to="/cats" $variant="primary">
+                <LearnMoreButton to="/cats">
                   View All Cats
-                </ButtonLink>
+                </LearnMoreButton>
               }
             />
           ) : (
@@ -148,9 +232,9 @@ export default function HomePage() {
                       )}
                     </CardFooter>
                     <div style={{ marginTop: "1rem" }}>
-                      <ButtonLink to={`/cats/${cat.id}`} $variant="primary">
+                      <LearnMoreButton to={`/cats/${cat.id}`}>
                         Learn More
-                      </ButtonLink>
+                      </LearnMoreButton>
                     </div>
                   </CardBody>
                 </Card>
@@ -171,12 +255,12 @@ export default function HomePage() {
             us make a difference in these cats' lives.
           </MissionText>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <ButtonLink to="/adoption" $variant="primary" $size="lg">
+            <MastheadButton to="/adoption" $size="lg">
               How to Adopt
-            </ButtonLink>
-            <ButtonLink to="/alumni" $variant="outline" $size="lg">
+            </MastheadButton>
+            <MastheadButton to="/alumni" $size="lg">
               Success Stories
-            </ButtonLink>
+            </MastheadButton>
           </div>
         </Container>
       </Section>
