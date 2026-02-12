@@ -10,7 +10,54 @@ export class CatModel {
       "SELECT * FROM cats WHERE id = ? AND deleted_at IS NULL",
       [id],
     );
-    return rows[0] || null;
+    if (rows[0]) {
+      return this._deserializeRow(rows[0]);
+    }
+    return null;
+  }
+
+  /**
+   * Deserialize a database row, converting JSONB fields to proper JS types.
+   */
+  static _deserializeRow(row) {
+    if (!row) return null;
+    
+    // Parse additional_images if it's a string (some MySQL drivers return JSONB as string)
+    if (row.additional_images && typeof row.additional_images === 'string') {
+      try {
+        row.additional_images = JSON.parse(row.additional_images);
+      } catch (e) {
+        console.error('Failed to parse additional_images:', e);
+        row.additional_images = [];
+      }
+    }
+    
+    // Ensure it's an array
+    if (!Array.isArray(row.additional_images)) {
+      row.additional_images = [];
+    }
+    
+    return row;
+  }
+
+  /**
+   * Serialize additional_images array to JSON string for database storage.
+   */
+  static _serializeAdditionalImages(images) {
+    if (!images) return '[]';
+    if (Array.isArray(images)) {
+      return JSON.stringify(images);
+    }
+    if (typeof images === 'string') {
+      // Already a string, verify it's valid JSON
+      try {
+        JSON.parse(images);
+        return images;
+      } catch (e) {
+        return '[]';
+      }
+    }
+    return '[]';
   }
 
   /**
@@ -48,7 +95,8 @@ export class CatModel {
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
     const sql = `SELECT * FROM cats ${where} ORDER BY created_at DESC`;
 
-    return query(sql, params);
+    const rows = await query(sql, params);
+    return rows.map(row => this._deserializeRow(row));
   }
 
   /**
@@ -114,7 +162,8 @@ export class CatModel {
     ${whereClause}
   `;
 
-    const items = await query(listSql, params);
+    const rows = await query(listSql, params);
+    const items = rows.map(row => this._deserializeRow(row));
     const [countRow] = await query(countSql, params);
 
     return { items, total: countRow.count };
@@ -157,12 +206,13 @@ export class CatModel {
         is_senior,
         status,
         main_image_url,
+        additional_images,
         featured,
         bonded_pair_id,
         adoption_date,
         adoption_story
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
@@ -179,6 +229,7 @@ export class CatModel {
       isSenior,
       data.status ?? "available",
       data.main_image_url ?? data.mainimageurl ?? null,
+      this._serializeAdditionalImages(data.additional_images ?? data.additionalimages),
       data.featured ? 1 : 0,
       data.bonded_pair_id ?? data.bondedpairid ?? null,
       data.adoption_date ?? null,
@@ -233,6 +284,8 @@ export class CatModel {
       status: "status",
       main_image_url: "main_image_url",
       mainimageurl: "main_image_url",
+      additional_images: "additional_images",
+      additionalimages: "additional_images",
       featured: "featured",
       bonded_pair_id: "bonded_pair_id",
       bondedpairid: "bonded_pair_id",
@@ -253,8 +306,12 @@ export class CatModel {
 
         fields.push(`${column} = ?`);
 
+        // Handle additional_images JSONB field
+        if (column === 'additional_images') {
+          params.push(this._serializeAdditionalImages(value));
+        }
         // Boolean / tinyint flags
-        if (
+        else if (
           [
             "good_with_kids",
             "goodwithkids",
