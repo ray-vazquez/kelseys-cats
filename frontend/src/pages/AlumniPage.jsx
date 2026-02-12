@@ -8,7 +8,6 @@ import {
   Grid,
   Card,
   CardImage,
-  CardBody,
   CardTitle,
   ButtonLink,
   Badge,
@@ -54,11 +53,28 @@ const AdoptionDate = styled.p`
   }
 `;
 
+// Updated CardBody with flexbox to push button to bottom
+const CardBody = styled.div`
+  padding: ${({ theme }) => theme.spacing[6]};
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+`;
+
+const CardContent = styled.div`
+  flex: 1;
+`;
+
 const CardFooter = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing[2]};
   margin-top: ${({ theme }) => theme.spacing[3]};
   flex-wrap: wrap;
+  min-height: 2rem; /* Reserve space even when empty */
+`;
+
+const ButtonWrapper = styled.div`
+  margin-top: ${({ theme }) => theme.spacing[4]};
 `;
 
 export default function AlumniPage() {
@@ -232,27 +248,26 @@ export default function AlumniPage() {
                         />
                       )}
                       <CardBody>
-                        <CardTitle>{cat.name}</CardTitle>
-                        
-                        <AdoptionDate>
-                          Adopted{" "}
-                          {cat.adoption_date
-                            ? new Date(cat.adoption_date).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                              })
-                            : "date unknown"}
-                        </AdoptionDate>
-                        
-                        {cat.age_years && (
-                          <TextMuted>
-                            {cat.age_years} years old · {cat.breed || "Mixed breed"}
-                          </TextMuted>
-                        )}
-                        
-                        {/* FIXED: Use explicit boolean checks to prevent rendering 0 */}
-                        {(!!cat.is_special_needs || !!isSenior || (cat.bonded_pair_id > 0)) && (
+                        <CardContent>
+                          <CardTitle>{cat.name}</CardTitle>
+                          
+                          <AdoptionDate>
+                            Adopted{" "}
+                            {cat.adoption_date
+                              ? new Date(cat.adoption_date).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                })
+                              : "date unknown"}
+                          </AdoptionDate>
+                          
+                          {cat.age_years && (
+                            <TextMuted>
+                              {cat.age_years} years old · {cat.breed || "Mixed breed"}
+                            </TextMuted>
+                          )}
+                          
                           <CardFooter>
                             {!!cat.is_special_needs && (
                               <Badge $variant="warning">Special Needs</Badge>
@@ -264,13 +279,13 @@ export default function AlumniPage() {
                               <Badge $variant="info">Bonded Pair</Badge>
                             )}
                           </CardFooter>
-                        )}
+                        </CardContent>
                         
-                        <div style={{ marginTop: "1rem" }}>
+                        <ButtonWrapper>
                           <ButtonLink to={`/alumni/${cat.id}`} $variant="primary" $fullWidth>
                             View Story
                           </ButtonLink>
-                        </div>
+                        </ButtonWrapper>
                       </CardBody>
                     </Card>
                   );
