@@ -7,7 +7,6 @@ import {
   Grid,
   Card,
   CardImage,
-  CardBody,
   CardTitle,
   Badge,
   TextMuted,
@@ -25,11 +24,28 @@ const SectionTitle = styled.h2`
   font-size: ${({ theme }) => theme.fontSizes["4xl"]};
 `;
 
+// Updated CardBody with flexbox to push button to bottom
+const CardBody = styled.div`
+  padding: ${({ theme }) => theme.spacing[6]};
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+`;
+
+const CardContent = styled.div`
+  flex: 1;
+`;
+
 const CardFooter = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing[2]};
   margin-top: ${({ theme }) => theme.spacing[4]};
   flex-wrap: wrap;
+  min-height: 2rem; /* Reserve space even when empty */
+`;
+
+const ButtonWrapper = styled.div`
+  margin-top: ${({ theme }) => theme.spacing[4]};
 `;
 
 const MissionText = styled.p`
@@ -206,22 +222,21 @@ export default function HomePage() {
                     />
                   )}
                   <CardBody>
-                    <CardTitle>{cat.name}</CardTitle>
-                    <TextMuted>
-                      {cat.age_years
-                        ? `${cat.age_years} years old`
-                        : "Age unknown"}{" "}
-                      · {cat.breed || "Mixed breed"}
-                    </TextMuted>
-                    {cat.temperament && (
-                      <p style={{ marginBottom: '1rem', lineHeight: 1.5 }}>
-                        {cat.temperament.length > 100
-                          ? `${cat.temperament.substring(0, 100)}...`
-                          : cat.temperament}
-                      </p>
-                    )}
-                    {/* FIXED: Use explicit boolean checks to prevent rendering 0 */}
-                    {(!!cat.is_special_needs || !!cat.is_senior || (cat.bonded_pair_id > 0)) && (
+                    <CardContent>
+                      <CardTitle>{cat.name}</CardTitle>
+                      <TextMuted>
+                        {cat.age_years
+                          ? `${cat.age_years} years old`
+                          : "Age unknown"}{" "}
+                        · {cat.breed || "Mixed breed"}
+                      </TextMuted>
+                      {cat.temperament && (
+                        <p style={{ marginBottom: '1rem', lineHeight: 1.5 }}>
+                          {cat.temperament.length > 100
+                            ? `${cat.temperament.substring(0, 100)}...`
+                            : cat.temperament}
+                        </p>
+                      )}
                       <CardFooter>
                         {!!cat.is_special_needs && (
                           <Badge $variant="warning">Special Needs</Badge>
@@ -233,12 +248,12 @@ export default function HomePage() {
                           <Badge $variant="info">Bonded Pair</Badge>
                         )}
                       </CardFooter>
-                    )}
-                    <div style={{ marginTop: "1rem" }}>
+                    </CardContent>
+                    <ButtonWrapper>
                       <LearnMoreButton to={`/cats/${cat.id}`}>
                         Learn More
                       </LearnMoreButton>
-                    </div>
+                    </ButtonWrapper>
                   </CardBody>
                 </Card>
               ))}
