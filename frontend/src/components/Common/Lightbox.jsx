@@ -13,6 +13,7 @@ const LightboxOverlay = styled.div`
   align-items: center;
   justify-content: center;
   animation: fadeIn 0.2s ease-in-out;
+  padding: ${({ theme }) => theme.spacing[4]};
   
   @keyframes fadeIn {
     from {
@@ -26,18 +27,24 @@ const LightboxOverlay = styled.div`
 
 const LightboxContent = styled.div`
   position: relative;
-  max-width: 90vw;
-  max-height: 90vh;
+  width: 100%;
+  height: 100%;
+  max-width: 95vw;
+  max-height: 95vh;
   display: flex;
   align-items: center;
   justify-content: center;
 `;
 
 const LightboxImage = styled.img`
+  width: auto;
+  height: auto;
   max-width: 100%;
-  max-height: 90vh;
+  max-height: 100%;
+  min-width: 60vw;
+  min-height: 60vh;
   object-fit: contain;
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
   box-shadow: ${({ theme }) => theme.shadows['2xl']};
   animation: zoomIn 0.2s ease-in-out;
   
@@ -50,6 +57,11 @@ const LightboxImage = styled.img`
       transform: scale(1);
       opacity: 1;
     }
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    min-width: 80vw;
+    min-height: 50vh;
   }
 `;
 
