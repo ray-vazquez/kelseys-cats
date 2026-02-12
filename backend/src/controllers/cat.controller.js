@@ -32,7 +32,6 @@ export async function listCats(req, res, next) {
   }
 }
 
-
 export async function getCat(req, res, next) {
   try {
     const cat = await CatService.getCatWithTags(req.params.id);
@@ -40,6 +39,33 @@ export async function getCat(req, res, next) {
       return res.status(404).json({ error: "Not found" });
     }
     res.json(cat);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listDeletedCats(req, res, next) {
+  try {
+    const deletedCats = await CatService.listDeletedCats();
+    res.json({
+      items: deletedCats,
+      total: deletedCats.length,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function restoreCat(req, res, next) {
+  try {
+    const cat = await CatService.restoreCat(req.params.id);
+    if (!cat) {
+      return res.status(404).json({ error: "Cat not found or not deleted" });
+    }
+    res.json({
+      message: "Cat restored successfully",
+      cat,
+    });
   } catch (err) {
     next(err);
   }

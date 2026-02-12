@@ -59,6 +59,36 @@ export class CatService {
   }
 
   /**
+   * List all soft-deleted cats.
+   */
+  static async listDeletedCats() {
+    const deletedCats = await CatModel.findDeleted();
+    
+    // Attach tags to each deleted cat
+    const catsWithTags = await Promise.all(
+      deletedCats.map(async (cat) => {
+        const tags = await TagModel.findTagsForCat(cat.id);
+        return {
+          ...cat,
+          tags: tags.map((t) => t.name),
+        };
+      })
+    );
+
+    return catsWithTags;
+  }
+
+  /**
+   * Restore a soft-deleted cat.
+   */
+  static async restoreCat(id) {
+    const restored = await CatModel.restore(id);
+    if (!restored) return null;
+
+    return this.getCatWithTags(id);
+  }
+
+  /**
    * Create a cat and set tags (if provided).
    * Accepts payload with camelCase keys from controllers:
    *  - ageyears, goodwithkids, goodwithcats, goodwithdogs,
