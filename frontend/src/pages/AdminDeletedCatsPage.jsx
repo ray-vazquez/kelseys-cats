@@ -76,7 +76,7 @@ const MetaItem = styled.span`
 
 const DeletedDate = styled.span`
   font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ theme }) => theme.colors.error.main};
+  color: ${({ theme }) => theme.colors.error || theme.colors.danger || '#dc2626'};
   font-style: italic;
 `;
 
