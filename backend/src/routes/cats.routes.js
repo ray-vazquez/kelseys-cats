@@ -7,6 +7,8 @@ import {
   updateCat,
   deleteCat,
   adoptCat,
+  listDeletedCats,
+  restoreCat,
 } from "../controllers/cat.controller.js";
 import {
   importPreview,
@@ -36,6 +38,10 @@ router.post("/", requireAuth, requireAdmin, createCat);
 router.put("/:id", requireAuth, requireAdmin, updateCat);
 router.delete("/:id", requireAuth, requireAdmin, deleteCat);
 router.post("/:id/adopt", requireAuth, requireAdmin, adoptCat);
+
+// Soft delete management (admin only)
+router.get("/deleted/list", requireAuth, requireAdmin, listDeletedCats);
+router.post("/:id/restore", requireAuth, requireAdmin, restoreCat);
 
 // CSV import
 router.post(
