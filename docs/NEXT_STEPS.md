@@ -1,486 +1,635 @@
-# 🚀 Kelsey's Cats - Next Steps & Roadmap
+# 🚀 Kelsey's Cats - Next Steps & Action Plan
 
-**Last Updated:** February 10, 2026, 9:25 PM EST
-
----
-
-## 📋 Recent Session Summary (Feb 9-10, 2026)
-
-### ✅ Just Completed
-- ✅ Improved text contrast (success alerts, adoption contact email)
-- ✅ Redesigned masthead buttons (white normal, teal hover)
-- ✅ Increased global font sizes (2px bump across all sizes)
-- ✅ Updated admin status dropdown (removed "Adopted", renamed "Alumni")
-- ✅ Fixed missing component exports (Spinner, CenteredSpinner, Skeleton)
-- ✅ Investigated auth persistence, scraper time display, VFV count discrepancy
-
-### 🔍 Action Items from Last Session
-1. **Deploy latest changes** from commit `33d43c9`
-2. **Run scraper cleanup** to resolve VFV count discrepancy (72 vs 51)
-3. **Gather requirements** for "more formal" homepage design
-4. **Clarify button color** reversion request (which buttons, which pages)
+**Last Updated:** February 12, 2026, 9:00 PM EST  
+**Project Deadline:** March 6, 2026 (22 days remaining)  
+**Current Sprint:** Sprint 1 Complete → Sprint 2 Starting Feb 13  
+**Project Status:** 85% Complete, On Track
 
 ---
 
-## ✅ Completed (Historical)
+## ⚡ IMMEDIATE ACTIONS (Next 48 Hours)
 
-### Phase 1: Theme System & Base Components
-- ✅ Enhanced theme system with extended color palette
-- ✅ 50+ styled base components
-- ✅ Responsive grid and layout components
-- ✅ Form components with validation-ready styling
+### Post-Migration Verification (Feb 13, 2026)
+**Owner:** Lead Developer  
+**Priority:** CRITICAL  
+**Effort:** 2-3 hours
 
-### Phase 2: Page Migrations
-- ✅ All 7 main pages migrated (100%)
-- ✅ HomePage with gradient hero and mission section
-- ✅ CatsPage with enhanced filters and results
-- ✅ AlumniPage with success story celebrations
-- ✅ CatDetailPage with sticky sidebar and status alerts
-- ✅ AdoptionPage with step-by-step process
-- ✅ AlumniDetailPage with journey timeline
-- ✅ 16,000+ words of migration documentation
+#### Tasks:
 
-### Phase 3: Interactive Components
-- ✅ Toast notification system
-- ✅ Modal dialog component with ConfirmModal variant
-- ✅ Tooltip component with multiple placements
-- ✅ 5,000+ words of Phase 3 documentation
+1. **New Workspace Setup** (30 min)
+   - [ ] Clone repository: `git clone https://github.com/ray-vazquez/kelseys-cats.git`
+   - [ ] Install backend dependencies: `cd backend && npm install`
+   - [ ] Install frontend dependencies: `cd frontend && npm install`
+   - [ ] Copy `.env` files from old workspace or create new:
+     - `backend/.env` (DB_URL, JWT_SECRET, PORT)
+     - `frontend/.env` (VITE_API_URL)
+   - [ ] Verify MySQL is running and database exists
+   - [ ] Run any pending migrations (if applicable)
 
-### Phase 4: UI Polish (Recent)
-- ✅ Text contrast improvements (alerts, links)
-- ✅ Custom masthead button styling
-- ✅ Global font size optimization
-- ✅ Admin workflow simplification (status options)
-- ✅ Loading component exports fixed
+   **Definition of Done:** Both servers start without errors
 
 ---
 
-## 🎯 Priority Roadmap
+2. **Smoke Test All Recent Fixes** (60-90 min)
+   - [ ] **AdminCatsPage:** Navigate to `/admin/cats`
+     - Verify cats list loads (fix for `data.items.map` error)
+     - Test pagination (LIMIT/OFFSET fix from Feb 12)
+     - Test status filters (Available, Pending, Hold)
+     - Test soft delete (Delete button moves to Deleted Cats)
+   - [ ] **Deleted Cats Page:** Navigate to `/admin/deleted-cats`
+     - Verify deleted cats appear
+     - Test "Restore" button
+     - Test "Delete Forever" button with confirmation modal
+     - Verify hard delete removes from list
+   - [ ] **HomePage:** Navigate to `/`
+     - Verify featured cats display (fix for `featuredCats.map` error)
+     - Verify "Featured Foster" vs "At Partner Home" badges
+     - Test "Learn More" buttons
+   - [ ] **CatsPage:** Navigate to `/cats`
+     - Verify card layout alignment (CardBody flexbox fix)
+     - Verify "View Details" buttons aligned at bottom
+     - Test filters (Senior cats, Partner fosters toggle)
+     - Test pagination
 
-### 🔥 Priority 1: Immediate Actions
-
-#### 1.1 VFV Scraper Cleanup 🧹 **IMMEDIATE**
-**Issue:** Database shows 72 cats, Adopt-a-Pet shows 51 on VFV profile
-
-**Action Required:**
-- [ ] Access scraper control panel at `/admin/scraper`
-- [ ] Click "Cleanup Only" button
-- [ ] Removes partner foster cats not updated in 7+ days
-- [ ] Should align database count with Adopt-a-Pet
-
-**Files to use:**
-- `frontend/src/pages/AdminScraperPage.jsx`
-- Backend cleanup function already implemented
-
-**Expected outcome:** Database count matches Adopt-a-Pet (or close to it)
-
-**Estimated effort:** 5 minutes (just run the cleanup)
-
----
-
-#### 1.2 Homepage Design Requirements 📋 **NEEDS CLARIFICATION**
-**Issue:** User mentioned wanting a "more formal" homepage
-
-**Action Required:**
-- [ ] Schedule design review session
-- [ ] Clarify what "formal" means in context:
-  - More professional language/copy?
-  - More structured layout?
-  - Different visual hierarchy?
-  - Additional sections (mission, team, etc.)?
-  - Less playful imagery/tone?
-- [ ] Gather specific examples or references
-- [ ] Create mockup or wireframe for approval
-
-**Current state:** Clean, modern design with gradient hero, featured cats grid, mission section
-
-**Considerations:**
-- Current design is already quite professional
-- May need content changes vs. style changes
-- Consider audience: potential adopters want warmth + credibility
-
-**Estimated effort:** TBD after requirements gathered
+   **Definition of Done:** All pages load, no console errors, all buttons functional
 
 ---
 
-#### 1.3 Button Color Clarification 🎨 **NEEDS CLARIFICATION**
-**Issue:** User mentioned reverting "View Details / View on Adopt-a-Pet" buttons back to green background/white text
+3. **Database Integrity Check** (30 min)
+   - [ ] Run query to check soft-deleted cats: `SELECT COUNT(*) FROM cats WHERE deleted_at IS NOT NULL;`
+   - [ ] Verify foreign key constraints working:
+     ```sql
+     SELECT TABLE_NAME, CONSTRAINT_NAME, CONSTRAINT_TYPE 
+     FROM information_schema.TABLE_CONSTRAINTS 
+     WHERE TABLE_SCHEMA = 'kelseys_cats';
+     ```
+   - [ ] Test cascade delete manually:
+     - Create test cat with tags and images
+     - Hard delete test cat
+     - Verify tags and images removed automatically
+   - [ ] Run scraper cleanup to sync Adopt-a-Pet counts:
+     - Navigate to `/admin/scraper`
+     - Click "Cleanup Only" button
+     - Verify count decreases from 72 to ~51
 
-**Action Required:**
-- [ ] Clarify which buttons are being referenced:
-  - CatsPage cat cards?
-  - CatDetailPage?
-  - Homepage featured cats?
-  - All of the above?
-- [ ] Current state: Primary variant (green background, dark text)
-- [ ] Requested state: Green background, white text
-- [ ] Verify this doesn't conflict with accessibility standards
-
-**Files affected (depending on scope):**
-- `frontend/src/pages/CatsPage.jsx`
-- `frontend/src/pages/HomePage.jsx`
-- Or potentially `frontend/src/components/Common/StyledComponents.js` (Button component)
-
-**Estimated effort:** 30 minutes - 1 hour (depending on scope)
-
----
-
-### ⭐ Priority 2: High-Value Features
-
-#### 2.1 Adoption Interest Form **HIGH VALUE**
-**Description:** Visitor contact form for adoption inquiries
-
-**User story:** As a potential adopter, I want to express interest in a cat so that Kelsey can contact me with next steps.
-
-**Features:**
-- Form fields:
-  - First name (required)
-  - Last name (required)
-  - Email address (required, validated)
-  - Phone number (required, formatted)
-  - Best time to contact (dropdown: Morning, Afternoon, Evening, Anytime)
-  - Optional: Message/comments field
-- Integration: Associated with specific cat if coming from detail page
-- Validation: Client-side and server-side
-- Success feedback: Toast notification + confirmation message
-- Error handling: Clear error messages for failed submissions
-
-**Implementation options:**
-1. **Modal on Cat Detail Page** (Recommended)
-   - "I'm Interested in Adopting" button on each cat
-   - Opens modal with pre-filled cat information
-   - Better user flow (stays on same page)
-
-2. **Standalone Contact Page**
-   - `/adoption/contact` route
-   - Dropdown to select which cat (optional)
-   - Could also serve general inquiries
-
-3. **Both** (Most flexible)
-   - Modal for specific cat interest
-   - Standalone page for general inquiries
-
-**Technical requirements:**
-- Frontend: Form component with validation
-- Backend: POST `/api/adoption-inquiries` endpoint
-- Email notification to admin
-- Optional: Store in database for tracking
-- Integrate Toast component for feedback
-- Use existing Form components from Phase 1
-
-**Estimated effort:** 4-6 hours
+   **Definition of Done:** Database constraints verified, scraper synced
 
 ---
 
-#### 2.2 Temperament Tags System **MEDIUM VALUE**
-**Description:** Predefined tags for cat personalities to improve browsing and filtering
+4. **Git Hygiene** (15 min)
+   - [ ] Pull latest changes: `git pull origin main`
+   - [ ] Verify last commit is `bd307fd` (query fix + HomePage fix)
+   - [ ] Create new branch for Sprint 2 work: `git checkout -b sprint-2/adoption-form`
+   - [ ] Review commit history to understand recent changes:
+     ```bash
+     git log --oneline -10
+     ```
 
-**User story:** As a visitor, I want to filter cats by personality traits so I can find one that matches my lifestyle.
-
-**Features:**
-- **Predefined tags:**
-  - Energy level: Playful, Calm, Energetic, Lazy
-  - Social: Friendly, Shy, Independent, Cuddly
-  - Special traits: Talkative, Quiet, Adventurous, Lap cat
-- Visual tag component (similar to Badge)
-- Filterable on CatsPage
-- Display on cat detail pages
-- Admin can assign multiple tags per cat
-
-**Implementation:**
-1. **Database:** Add `temperament_tags` field (JSON array)
-2. **Frontend components:**
-   - `TemperamentTag` - Visual display component
-   - `TemperamentFilter` - Multi-select filter UI
-3. **Admin:** Tag selector in edit form
-4. **CatsPage:** Filter by tags
-5. **CatDetailPage:** Display tags prominently
-
-**Design considerations:**
-- Use existing Badge component as base
-- Different colors per category
-- Icon support (🎾 for Playful, 😴 for Calm, etc.)
-
-**Technical requirements:**
-- Backend: Update cat schema to include tags array
-- Frontend: Tag selection component (checkbox group or multi-select)
-- API: Filter endpoint to support tag queries
-- Migration: Add tags field to existing cats
-
-**Estimated effort:** 3-5 hours
+   **Definition of Done:** On latest code, new branch created, history reviewed
 
 ---
 
-#### 2.3 Enhanced Bio Section for Cat Details **ALREADY ADDED** ✅
-**Description:** Rich bio section for detailed cat stories
+## 📅 WEEKLY PRIORITIES
 
-**Status:** Bio field already exists in database and admin form!
-- ✅ Database has `bio` field (TEXT)
-- ✅ Admin form has bio textarea
-- ✅ Validation and save working
+### Week 1: Feb 13-19 (Sprint 2) - Core Features
+**Sprint Goal:** Complete adoption interest form and verify all existing functionality
 
-**Remaining work:**
-- [ ] Add bio display to CatDetailPage (if not already visible)
-- [ ] Style bio section appropriately
-- [ ] Consider character limit indicator in admin form
+#### Monday-Tuesday (Feb 13-14) - Adoption Form Backend
+**Owner:** Backend Developer  
+**Effort:** 4-5 hours
 
-**Estimated effort:** 1-2 hours (just display styling)
+- [ ] **Database Schema** (1 hour)
+  - Create `adoption_inquiries` table:
+    ```sql
+    CREATE TABLE adoption_inquiries (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      cat_id INT NOT NULL,
+      first_name VARCHAR(100) NOT NULL,
+      last_name VARCHAR(100) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      phone VARCHAR(20) NOT NULL,
+      preferred_contact_time ENUM('morning', 'afternoon', 'evening', 'anytime') DEFAULT 'anytime',
+      message TEXT,
+      status ENUM('new', 'contacted', 'archived') DEFAULT 'new',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (cat_id) REFERENCES cats(id) ON DELETE CASCADE
+    );
+    ```
+  - Create migration file in `backend/migrations/`
+  - Run migration
 
----
+- [ ] **API Endpoint** (2 hours)
+  - Create `backend/src/controllers/adoptionInquiry.controller.js`
+  - Implement `POST /api/adoption-inquiries`
+    - Validate required fields
+    - Validate email format
+    - Validate phone format (basic)
+    - Insert into database
+    - Return success response
+  - Add route to `backend/src/routes/index.js`
+  - Test with Postman/curl
 
-### 🔧 Priority 3: Polish & Enhancements
+- [ ] **Email Notification** (2 hours)
+  - Install nodemailer: `npm install nodemailer`
+  - Create `backend/src/services/emailService.js`
+  - Configure SMTP settings (use Gmail or SendGrid)
+  - Create email template for admin notification:
+    - Subject: "New Adoption Inquiry: {cat_name}"
+    - Body: Include all form fields, link to cat
+  - Test email sending
+  - Add error handling (log but don't fail if email fails)
 
-#### 3.1 Navigation Active States
-**Description:** Highlight current page in navigation
-
-**Features:**
-- Active link styling (different color, underline, or background)
-- Visual indicator of current page
-- Smooth transitions
-
-**Estimated effort:** 1-2 hours
-
----
-
-#### 3.2 Image Optimization
-**Description:** Optimize cat images for faster loading
-
-**Features:**
-- Lazy loading for images
-- Responsive image sizes
-- WebP format support
-- Blur placeholder while loading
-
-**Estimated effort:** 2-3 hours
-
----
-
-#### 3.3 Search Functionality
-**Description:** Search cats by name or characteristics
-
-**Features:**
-- Search input on CatsPage
-- Real-time filtering
-- Search by: name, breed, color, age
-- Clear search button
-- "No results" state
-
-**Estimated effort:** 3-4 hours
+**Definition of Done:** API endpoint works, emails send successfully, data persists in DB
 
 ---
 
-#### 3.4 Breadcrumb Navigation
-**Description:** Show navigation path for better orientation
+#### Wednesday-Thursday (Feb 15-16) - Adoption Form Frontend
+**Owner:** Frontend Developer  
+**Effort:** 4-5 hours
 
-**Features:**
-- Display on detail pages
-- Clickable path segments
-- Example: Home > Cats > Fluffy
+- [ ] **Form Component** (2 hours)
+  - Create `frontend/src/components/AdoptionInquiryModal.jsx`
+  - Use existing Modal component from Phase 3
+  - Form fields with validation:
+    - First name (required, min 2 chars)
+    - Last name (required, min 2 chars)
+    - Email (required, email format)
+    - Phone (required, phone format)
+    - Preferred contact time (dropdown)
+    - Message (optional, max 500 chars)
+  - Client-side validation with error messages
+  - Loading state during submission
+  - Success/error handling with toast notifications
 
-**Estimated effort:** 2-3 hours
+- [ ] **Integration with CatDetailPage** (1 hour)
+  - Add "I'm Interested in Adopting {name}" button
+  - Button triggers modal
+  - Pre-fill cat_id in form
+  - Display cat name/photo in modal header
 
----
+- [ ] **API Integration** (1 hour)
+  - Create `frontend/src/api/adoptionApi.js`
+  - `submitAdoptionInquiry(data)` function
+  - Handle success: Show toast, close modal, maybe redirect
+  - Handle errors: Show error toast, keep modal open
 
-#### 3.5 Image Gallery/Lightbox
-**Description:** View multiple cat photos in full size
+- [ ] **Testing** (1 hour)
+  - Test all validation rules
+  - Test successful submission
+  - Test error scenarios (network error, server error)
+  - Test on mobile viewport
+  - Cross-browser test (Chrome, Firefox, Safari)
 
-**Features:**
-- Multiple images per cat
-- Click to view full size
-- Navigate between images
-- Close with escape or click outside
-- Uses Modal component from Phase 3
-
-**Estimated effort:** 3-4 hours
-
----
-
-### 🚀 Priority 4: Future Enhancements
-
-#### 4.1 Admin Dashboard
-**Description:** Overview of cats, inquiries, and analytics
-
-**Features:**
-- Statistics (total cats, available, adopted, pending)
-- Recent inquiries
-- Quick actions
-- Charts showing adoption trends
-
-**Estimated effort:** 6-8 hours
-
----
-
-#### 4.2 Email Notifications
-**Description:** Automated emails for various events
-
-**Features:**
-- Adoption inquiry received (to admin)
-- Inquiry confirmation (to visitor)
-- Status updates (optional)
-- Weekly digest of new cats (optional)
-
-**Estimated effort:** 4-6 hours
+**Definition of Done:** Form works end-to-end, validations working, emails received
 
 ---
 
-#### 4.3 Social Sharing
-**Description:** Share cat profiles on social media
+#### Friday (Feb 16) - Sprint Review & Planning
+**Owner:** Team  
+**Effort:** 2-3 hours
 
-**Features:**
-- Share buttons (Facebook, Twitter, Email)
-- Open Graph meta tags
-- Preview cards with cat image
+- [ ] **Demo Adoption Form** (30 min)
+  - Walk through user flow
+  - Submit test inquiry
+  - Verify email received
+  - Show validation working
 
-**Estimated effort:** 2-3 hours
+- [ ] **Retrospective** (30 min)
+  - What went well?
+  - What didn't go well?
+  - What can we improve in Sprint 3?
+  - Update estimates if needed
 
----
+- [ ] **Sprint 3 Planning** (1 hour)
+  - Review BACKLOG.md
+  - Commit to Sprint 3 scope (see below)
+  - Assign tasks
+  - Identify any blockers
 
-#### 4.4 Favorites/Saved Cats
-**Description:** Visitors can save cats they're interested in
+- [ ] **Documentation** (30 min)
+  - Update this file with actual hours spent
+  - Document any issues encountered
+  - Update BACKLOG.md if scope changed
 
-**Features:**
-- Heart icon to favorite
-- Local storage or user account
-- View saved cats page
-- Compare saved cats
-
-**Estimated effort:** 4-5 hours
-
----
-
-#### 4.5 Advanced Filtering
-**Description:** More sophisticated cat filtering
-
-**Features:**
-- Multi-criteria filtering
-- Age range slider
-- Good with: kids/cats/dogs checkboxes
-- Special needs toggle
-- Filter persistence (URL params)
-
-**Estimated effort:** 4-6 hours
+**Definition of Done:** Sprint 2 complete, Sprint 3 planned, team aligned
 
 ---
 
-#### 4.6 Calendar Integration
-**Description:** Schedule meet & greet appointments
+### Week 2: Feb 20-26 (Sprint 3) - Polish & Deployment Prep
+**Sprint Goal:** UI polish, deployment preparation, content population
 
-**Features:**
-- Available time slots
-- Book appointment
-- Email confirmation
-- Calendar sync (Google, Outlook)
+#### Monday-Tuesday (Feb 20-21) - UI/UX Polish
+**Owner:** Frontend Developer  
+**Effort:** 6-7 hours
 
-**Estimated effort:** 8-12 hours
+- [ ] **Navigation Active States** (1.5 hours)
+  - Update `Navbar.jsx` to highlight current page
+  - Use `useLocation()` from react-router
+  - Add active styling (border-bottom or background)
+  - Test on all pages
 
----
+- [ ] **Image Lazy Loading** (2 hours)
+  - Install `react-lazy-load-image-component` or use native lazy loading
+  - Update `CardImage` component
+  - Add blur-up placeholder
+  - Test with slow network throttling
 
-## 📋 Recommended Implementation Order
+- [ ] **Button Loading States** (1.5 hours)
+  - Add loading prop to Button component
+  - Show spinner during async operations
+  - Disable button during loading
+  - Apply to all forms (cat edit, adoption inquiry, login)
 
-### Sprint 1 (Immediate) - Clarifications & Quick Fixes
-1. **Run VFV scraper cleanup** (Priority 1.1) - 5 minutes
-2. **Gather homepage design requirements** (Priority 1.2) - 1-2 hours
-3. **Clarify button color request** (Priority 1.3) - 30 minutes
-4. **Implement button color changes** (if confirmed) - 30-60 minutes
+- [ ] **404 Page** (1 hour)
+  - Create `frontend/src/pages/NotFoundPage.jsx`
+  - Friendly message with link to homepage
+  - Update router to catch unmatched routes
 
-**Total Sprint 1:** 2-4 hours
-
----
-
-### Sprint 2 (Week 1) - High Value Features
-5. **Implement adoption interest form** (Priority 2.1) - 4-6 hours
-   - Start with modal version
-   - Add to CatDetailPage
-   - Backend endpoint
-   - Email notification
-
-6. **Add temperament tags system** (Priority 2.2) - 3-5 hours
-   - Database schema update
-   - Admin tag selector
-   - Display on cat pages
-   - Filter functionality
-
-**Total Sprint 2:** 7-11 hours
+**Definition of Done:** All polish items implemented and tested
 
 ---
 
-### Sprint 3 (Week 2) - Polish
-7. **Navigation active states** (Priority 3.1) - 1-2 hours
-8. **Image optimization** (Priority 3.2) - 2-3 hours
-9. **Search functionality** (Priority 3.3) - 3-4 hours
-10. **Display bio field on detail pages** (Priority 2.3) - 1-2 hours
+#### Wednesday (Feb 22) - Deployment Configuration
+**Owner:** DevOps/Lead Developer  
+**Effort:** 4-5 hours
 
-**Total Sprint 3:** 7-11 hours
+- [ ] **Choose Hosting Platform** (1 hour)
+  - Decision: Vercel (recommended for Next.js-like apps) or VPS
+  - Create account if needed
+  - Review pricing (should be free tier eligible)
 
----
+- [ ] **Environment Setup** (2 hours)
+  - Create production `.env` files
+  - Set up production MySQL database (PlanetScale, Railway, or VPS)
+  - Configure CORS for production domain
+  - Set up email service (SendGrid free tier)
+  - Document all credentials securely
 
-### Sprint 4+ - Future Enhancements
-- Choose from Priority 3 & 4 items based on user feedback and priorities
+- [ ] **Build Configuration** (1 hour)
+  - Verify `npm run build` works for frontend
+  - Verify backend builds/runs in production mode
+  - Update package.json scripts if needed
+  - Test production build locally
 
----
+- [ ] **CI/CD Setup** (1 hour - OPTIONAL)
+  - Create `.github/workflows/deploy.yml`
+  - Automated deployment on push to main
+  - Or manual deployment instructions
 
-## 🎯 Quick Wins (< 2 hours each)
-
-These can be done anytime for quick improvements:
-
-- [ ] Add loading states to buttons during form submissions
-- [ ] Add "Back to top" button on long pages
-- [ ] Add print styles for cat profiles
-- [ ] Add meta tags for SEO
-- [ ] Add favicon
-- [ ] Add 404 page
-- [ ] Add footer with contact info
-- [ ] Add "Last updated" timestamp to cat profiles
-- [x] Fix success alert text contrast (completed Feb 9)
-- [x] Fix adoption contact email contrast (completed Feb 9)
-- [x] Update masthead buttons (completed Feb 9)
-- [x] Increase global font sizes (completed Feb 9)
-- [x] Simplify admin status options (completed Feb 9)
+**Definition of Done:** Deployment config ready, credentials documented
 
 ---
 
-## 📊 Impact vs. Effort Matrix
+#### Thursday-Friday (Feb 23-24) - Content Population
+**Owner:** Content Owner (Kelsey) + Developer Support  
+**Effort:** 4-6 hours
+
+- [ ] **Cat Data Entry** (3-4 hours)
+  - Upload at least 10 cat profiles:
+    - High-quality photos
+    - Complete bios (2-3 paragraphs)
+    - All fields filled (age, breed, temperament, etc.)
+    - Accurate status (available, pending, adopted)
+  - Mark 2-3 as featured for homepage
+  - Add tags/badges (special needs, senior, bonded pairs)
+
+- [ ] **Static Content Review** (1-2 hours)
+  - Review adoption process page copy
+  - Verify contact information (email, phone)
+  - Check for typos/consistency
+  - Update mission statement if needed
+  - Add any additional pages (About Us, FAQ, etc.)
+
+**Definition of Done:** Site has real content, ready for public viewing
+
+---
+
+### Week 3: Feb 27 - March 6 (Sprint 4) - Testing & Launch
+**Sprint Goal:** Comprehensive testing, deployment, go-live
+
+#### Monday-Tuesday (Feb 27-28) - Testing & Bug Fixes
+**Owner:** QA/Developer  
+**Effort:** 8-10 hours
+
+- [ ] **Functional Testing** (4 hours)
+  - Test all user flows:
+    - [ ] Browse cats (filters, pagination, search if implemented)
+    - [ ] View cat details
+    - [ ] Submit adoption inquiry
+    - [ ] Admin login
+    - [ ] Admin CRUD operations (create, edit, delete, restore)
+    - [ ] CSV import/export
+    - [ ] Scraper controls
+  - Document any bugs found
+  - Prioritize bugs (P0=blocking, P1=important, P2=nice to fix)
+
+- [ ] **Cross-Browser Testing** (2 hours)
+  - Test on Chrome, Firefox, Safari, Edge
+  - Test on mobile devices (iOS Safari, Android Chrome)
+  - Document any browser-specific issues
+  - Fix critical issues
+
+- [ ] **Performance Testing** (1 hour)
+  - Test page load times (should be < 3 sec desktop, < 5 sec mobile)
+  - Test with 50+ cats in database
+  - Check for memory leaks (long browsing session)
+  - Optimize if needed
+
+- [ ] **Accessibility Testing** (1 hour)
+  - Keyboard navigation (tab through all interactive elements)
+  - Screen reader test (basic)
+  - Color contrast check (WCAG AA compliance)
+  - Fix any critical a11y issues
+
+**Definition of Done:** All P0/P1 bugs fixed, testing documented
+
+---
+
+#### Wednesday (Feb 29) - First Deployment Attempt
+**Owner:** DevOps/Lead Developer  
+**Effort:** 3-4 hours
+
+- [ ] **Deploy to Staging/Production** (2 hours)
+  - Run production build
+  - Deploy frontend to hosting platform
+  - Deploy backend to hosting platform (or VPS)
+  - Configure database connection
+  - Run database migrations on production DB
+  - Configure environment variables
+
+- [ ] **Smoke Test Production** (1 hour)
+  - Visit production URL
+  - Test all critical paths:
+    - [ ] Homepage loads
+    - [ ] Cats page loads with data
+    - [ ] Cat detail page works
+    - [ ] Adoption form submits and sends email
+    - [ ] Admin login works
+    - [ ] Admin can edit a cat
+  - Check browser console for errors
+  - Check server logs for errors
+
+- [ ] **DNS/Domain Configuration** (30 min - OPTIONAL)
+  - Point custom domain to hosting platform
+  - Configure SSL certificate
+  - Test HTTPS working
+
+**Definition of Done:** Application accessible at production URL, critical paths working
+
+---
+
+#### Thursday-Friday (March 1-2) - Bug Fixes & Polish
+**Owner:** Developer  
+**Effort:** 4-6 hours
+
+- [ ] **Fix Production Issues** (2-4 hours)
+  - Address any bugs found during production smoke test
+  - Fix any deployment-specific issues (CORS, env vars, etc.)
+  - Re-deploy if needed
+  - Re-test after fixes
+
+- [ ] **Final Polish** (2 hours)
+  - Review all pages one more time
+  - Fix any typos or visual inconsistencies
+  - Optimize any slow-loading pages
+  - Add any last-minute nice-to-haves from BACKLOG (if time permits)
+
+**Definition of Done:** All known issues fixed, application polished
+
+---
+
+#### Monday-Tuesday (March 4-5) - Final Testing & Buffer
+**Owner:** Team  
+**Effort:** 4-6 hours
+
+- [ ] **Final QA Pass** (2-3 hours)
+  - Complete regression test (all features)
+  - Verify all content populated correctly
+  - Test email notifications with real addresses
+  - Verify scraper running on schedule
+  - Check for any console errors or warnings
+
+- [ ] **Code Freeze** (1 hour)
+  - No new features after 5 PM on March 4
+  - Only critical bug fixes allowed March 5-6
+  - Create backup branch: `git checkout -b pre-launch-backup`
+  - Tag release: `git tag v1.0.0`
+
+- [ ] **Launch Preparation** (1-2 hours)
+  - Prepare handoff documentation for Kelsey
+  - Create admin user guide (optional)
+  - Document any known minor issues
+  - Prepare demo script for March 19
+
+**Definition of Done:** Application ready for launch, no P0/P1 bugs
+
+---
+
+#### Wednesday (March 6) - LAUNCH DAY 🚀
+**Owner:** Lead Developer  
+**Effort:** 2-3 hours
+
+- [ ] **Final Smoke Test** (30 min)
+  - Test all critical paths one more time
+  - Verify production database has latest content
+  - Check that scraper ran successfully
+  - Verify email notifications working
+
+- [ ] **Go-Live** (1 hour)
+  - Share production URL with stakeholders (internal only)
+  - Monitor error logs for first hour
+  - Be available for any urgent issues
+  - Send test adoption inquiry to verify end-to-end
+
+- [ ] **Celebration & Handoff Planning** (30 min)
+  - Celebrate completion! 🎉
+  - Schedule March 19 handoff meeting with Kelsey
+  - Plan demo presentation
+  - Document any post-launch support needed
+
+**Definition of Done:** Application live and stable, ready for March 19 birthday reveal! 🎂
+
+---
+
+## 🔗 Dependencies & Blockers
+
+### External Dependencies
+
+| Dependency | Required By | Owner | Status | Risk |
+|------------|-------------|-------|--------|------|
+| **Content from Kelsey** | Feb 24 | Kelsey | Not Started | Medium |
+| **Hosting Platform Account** | Feb 22 | Lead Dev | Not Started | Low |
+| **Production Database** | Feb 22 | Lead Dev | Not Started | Low |
+| **Email Service API Key** | Feb 22 | Lead Dev | Not Started | Low |
+| **Custom Domain** (optional) | Feb 29 | Kelsey | N/A | None |
+
+### Internal Blockers
+
+| Blocker | Blocking What | Mitigation |
+|---------|---------------|------------|
+| Adoption form not done | Content population (can't test real inquiries) | Proceed with dummy data, update later |
+| Deployment config not done | Testing on production | Use staging environment or local testing |
+| Bugs in testing | Launch | 4-day buffer (Mar 2-5) for fixes |
+
+### Critical Path
 
 ```
-High Impact │  [Scraper Cleanup]     [Adoption Form]
-Low Effort  │  [Active Nav]          [Button Colors]
-            │  [Bio Display]
-            │
-            │  [Temperament Tags]    [Homepage Redesign]
-High Impact │  [Search]              [Admin Dashboard]
-High Effort │  [Email System]        [Calendar]
-            │
-            └─────────────────────────────────────────
-              Low Effort             High Effort
+Post-Migration Verification (Feb 13)
+        ↓
+Adoption Form Backend (Feb 13-14)
+        ↓
+Adoption Form Frontend (Feb 15-16)
+        ↓
+Deployment Configuration (Feb 22)
+        ↓
+Content Population (Feb 23-24)
+        ↓
+First Deployment (Feb 29)
+        ↓
+Bug Fixes (Mar 1-2)
+        ↓
+Final Testing (Mar 4-5)
+        ↓
+LAUNCH (Mar 6)
 ```
 
----
-
-## 📝 Notes
-
-- All estimations are approximate and may vary
-- Backend work is included in effort estimates
-- Testing time is included
-- Documentation updates are included
-- Priority can shift based on user feedback or business needs
-- **Recent changes** (Feb 9-10) focused on UI polish and admin workflow
-- **Next focus** should be clarifications, then high-value features
+**Any delay in deployment configuration or content population will compress testing time!**
 
 ---
 
-## 🔗 Related Documentation
+## 👤 Owner Assignments
 
-- [Executive Handoff](./EXECUTIVE_HANDOFF.md) - Latest session summary (Feb 9-10)
-- [Phase 1+2 Summary](./PHASE_1_2_SUMMARY.md) - Component library overview
-- [Phase 3 Guide](./PHASE_3_GUIDE.md) - Interactive components usage
-- [Migration Complete](./MIGRATION_COMPLETE.md) - What's been accomplished
-- [UI Polish Guide](./UI_POLISH_GUIDE.md) - Complete component reference
+| Owner | Responsibilities | Time Commitment |
+|-------|------------------|----------------|
+| **Lead Developer** | All technical work, deployment, testing | 40-50 hours (Feb 13-Mar 6) |
+| **Kelsey (Content Owner)** | Content creation, review, final approval | 6-10 hours (Feb 20-24) |
+| **QA Tester** (optional) | Testing support, bug documentation | 10-15 hours (Feb 27-Mar 2) |
+| **DevOps** (optional) | Deployment assistance, infrastructure | 4-6 hours (Feb 22-29) |
 
 ---
 
-**Questions or want to adjust priorities?** This roadmap is flexible and can be adapted based on your needs!
+## ✅ Definition of Done (By Task Type)
 
-**Last Session Commits:**
-- `c836cd8` - Font sizes, buttons, text colors
-- `42772df` - Adoption contact, status options
-- `33d43c9` - Loading component exports
+### Feature Development
+- [ ] Code written and tested locally
+- [ ] No console errors or warnings
+- [ ] Responsive (mobile, tablet, desktop)
+- [ ] Cross-browser compatible (Chrome, Firefox, Safari)
+- [ ] Committed to Git with descriptive message
+- [ ] Deployed to staging/production
+- [ ] Tested on deployed environment
+
+### Bug Fixes
+- [ ] Root cause identified
+- [ ] Fix implemented and tested
+- [ ] Regression test passed (didn't break other features)
+- [ ] Committed with issue reference
+- [ ] Verified on production
+
+### Content Updates
+- [ ] Content written/provided by Kelsey
+- [ ] No typos or grammatical errors
+- [ ] All placeholders replaced
+- [ ] Images optimized and uploaded
+- [ ] Verified on live site
+
+### Deployment Tasks
+- [ ] Configuration documented
+- [ ] Credentials stored securely
+- [ ] Smoke test passed
+- [ ] Rollback plan documented
+- [ ] Team notified of changes
+
+---
+
+## 📊 Effort Tracking
+
+### Sprint 2 (Feb 13-19) - Estimated vs. Actual
+
+| Task | Estimated | Actual | Notes |
+|------|-----------|--------|-------|
+| Post-Migration Setup | 2-3 hours | ___ hours | |
+| Adoption Form Backend | 4-5 hours | ___ hours | |
+| Adoption Form Frontend | 4-5 hours | ___ hours | |
+| Sprint Review & Planning | 2-3 hours | ___ hours | |
+| **Total Sprint 2** | **12-16 hours** | **___ hours** | |
+
+### Sprint 3 (Feb 20-26) - Estimated vs. Actual
+
+| Task | Estimated | Actual | Notes |
+|------|-----------|--------|-------|
+| UI/UX Polish | 6-7 hours | ___ hours | |
+| Deployment Config | 4-5 hours | ___ hours | |
+| Content Population | 4-6 hours | ___ hours | |
+| **Total Sprint 3** | **14-18 hours** | **___ hours** | |
+
+### Sprint 4 (Feb 27 - Mar 6) - Estimated vs. Actual
+
+| Task | Estimated | Actual | Notes |
+|------|-----------|--------|-------|
+| Testing & Bug Fixes | 8-10 hours | ___ hours | |
+| First Deployment | 3-4 hours | ___ hours | |
+| Production Bug Fixes | 4-6 hours | ___ hours | |
+| Final QA & Buffer | 4-6 hours | ___ hours | |
+| Launch Day | 2-3 hours | ___ hours | |
+| **Total Sprint 4** | **21-29 hours** | **___ hours** | |
+
+### **Grand Total: 47-63 hours remaining**
+
+---
+
+## 🚨 Escalation Protocol
+
+If any of these occur, escalate immediately:
+
+1. **Critical bug discovered** (P0 - blocks core functionality)
+   - Stop current work
+   - Document bug thoroughly
+   - Fix immediately or find workaround
+   - Re-test completely
+
+2. **Timeline at risk** (any task taking 2x estimated time)
+   - Re-evaluate scope
+   - Consider cutting nice-to-have features
+   - Communicate delay risk
+   - Adjust sprint plan
+
+3. **External dependency delayed** (content, credentials, etc.)
+   - Notify stakeholders immediately
+   - Work on parallel tasks
+   - Set hard deadline for delivery
+   - Prepare fallback plan
+
+4. **Production outage or critical failure**
+   - Rollback to last working version
+   - Investigate root cause
+   - Fix and re-deploy
+   - Post-mortem documentation
+
+---
+
+## 🎯 Success Criteria Reminder
+
+By March 6, 2026:
+- ✅ Application deployed and accessible
+- ✅ All 7 public pages working
+- ✅ Admin panel fully functional
+- ✅ Adoption interest form working end-to-end
+- ✅ At least 10 cats with complete profiles
+- ✅ No P0/P1 bugs
+- ✅ Mobile responsive
+- ✅ Cross-browser compatible
+- ✅ Email notifications working
+- ✅ Ready for March 19 birthday reveal! 🎂
+
+---
+
+## 📞 Questions or Issues?
+
+- Review [BACKLOG.md](./BACKLOG.md) for scope clarification
+- Check [SPRINT_SCHEDULE.md](./SPRINT_SCHEDULE.md) for timeline
+- See [EXECUTIVE_HANDOFF_SUMMARY.md](./EXECUTIVE_HANDOFF_SUMMARY.md) for big picture
+
+---
+
+**Let's ship this! 22 days to go! 🚀**
