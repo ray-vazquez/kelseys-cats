@@ -287,8 +287,8 @@ export default function AdminCatsPage() {
       await http.delete(`/cats/${deleteModal.cat.id}`);
       
       addToast({
-        title: 'Cat Deleted',
-        message: `${deleteModal.cat.name} has been removed successfully`,
+        title: 'Cat Moved to Deleted',
+        message: `${deleteModal.cat.name} has been moved to Deleted Cats. You can restore it from there.`,
         variant: 'info',
         duration: 5000
       });
@@ -530,7 +530,7 @@ export default function AdminCatsPage() {
         onClose={closeDeleteModal}
         onConfirm={confirmDelete}
         title="Delete Cat"
-        message={deleteModal.cat ? `Are you sure you want to delete ${deleteModal.cat.name}? This action cannot be undone.` : ''}
+        message={deleteModal.cat ? `Are you sure you want to delete "${deleteModal.cat.name}"? This will move the cat to Deleted Cats. You may restore it later from the Deleted Cats page.` : ''}
         confirmText="Delete"
         cancelText="Cancel"
         variant="danger"

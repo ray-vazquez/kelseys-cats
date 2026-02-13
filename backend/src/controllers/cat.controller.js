@@ -101,6 +101,18 @@ export async function deleteCat(req, res, next) {
   }
 }
 
+export async function hardDeleteCat(req, res, next) {
+  try {
+    const deleted = await CatService.hardDeleteCat(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Cat not found" });
+    }
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function adoptCat(req, res, next) {
   try {
     const cat = await CatService.markAdopted(
