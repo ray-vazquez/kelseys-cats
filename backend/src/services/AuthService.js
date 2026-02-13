@@ -5,8 +5,19 @@ import { env } from "../config/env.js";
 
 export class AuthService {
   static async login(email, password) {
+    // Validate inputs
+    if (!email || !password) {
+      return null;
+    }
+
     const user = await AdminUserModel.findByEmail(email);
     if (!user) return null;
+
+    // Validate password_hash exists
+    if (!user.password_hash) {
+      console.error(`User ${email} has no password_hash in database`);
+      return null;
+    }
 
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) return null;
