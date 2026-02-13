@@ -11,11 +11,13 @@ const pool = mysql.createPool({
 export async function query(sql, params = []) {
   const safeParams = Array.isArray(params) ? params : [params];
 
-  // TEMP: log params
+  // TEMP: log params for debugging
   console.log('QUERY SQL:', sql);
   console.log('QUERY PARAMS:', safeParams);
-  const [rows] = await pool.execute(sql, safeParams);
-  return rows;
+  
+  // IMPORTANT: Return [rows, fields] tuple, NOT just rows
+  // All model code does: const [rows] = await query(...)
+  return pool.execute(sql, safeParams);
 }
 
 export { pool };
