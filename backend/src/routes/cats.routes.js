@@ -6,6 +6,7 @@ import {
   createCat,
   updateCat,
   deleteCat,
+  hardDeleteCat,
   adoptCat,
   listDeletedCats,
   restoreCat,
@@ -42,6 +43,9 @@ router.post("/:id/adopt", requireAuth, requireAdmin, adoptCat);
 // Soft delete management (admin only)
 router.get("/deleted/list", requireAuth, requireAdmin, listDeletedCats);
 router.post("/:id/restore", requireAuth, requireAdmin, restoreCat);
+
+// Hard delete - permanently remove cat and all associations (admin only)
+router.delete("/:id/permanent", requireAuth, requireAdmin, hardDeleteCat);
 
 // CSV import
 router.post(

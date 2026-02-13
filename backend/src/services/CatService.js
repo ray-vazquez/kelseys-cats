@@ -128,6 +128,17 @@ export class CatService {
   }
 
   /**
+   * Permanently delete a cat and all its associations.
+   * This removes the cat record completely and cascades to:
+   * - cat_tags (via FK constraint)
+   * - cat_images (via FK constraint)
+   */
+  static async hardDeleteCat(id) {
+    const deleted = await CatModel.hardDelete(id);
+    return deleted;
+  }
+
+  /**
    * Mark a cat as adopted and move to alumni.
    */
   static async markAdopted(id, adoptiondate, adoptionstory) {
