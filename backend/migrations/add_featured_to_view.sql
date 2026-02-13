@@ -1,8 +1,8 @@
 -- Migration: Add featured column to all_available_cats view
 -- Purpose: Include featured flag from cats table so homepage can filter spotlighted cats
--- Date: 2026-02-12
+-- Date: 2026-02-13 (Updated with correct column names)
 
--- Drop and recreate view with featured column
+-- Drop and recreate view with correct schema
 DROP VIEW IF EXISTS all_available_cats;
 
 CREATE VIEW all_available_cats AS
@@ -13,15 +13,14 @@ SELECT
   c.name,
   c.age_years,
   c.breed,
-  c.gender,
+  c.sex,
   c.main_image_url,
-  c.description,
   c.temperament,
   c.is_senior,
   c.is_special_needs,
   c.bonded_pair_id,
   c.adoptapet_url,
-  c.featured,  -- ADD THIS LINE: Include featured flag for homepage spotlight
+  c.featured,  -- Include featured flag for homepage spotlight
   
   -- Extract Adopt-a-Pet ID from URL for deduplication
   CASE 
@@ -52,10 +51,9 @@ SELECT
   v.name,
   v.age_years,
   v.breed,
-  v.gender,
+  v.gender as sex,  -- Map gender to sex for consistency
   v.main_image_url,
-  v.description,
-  v.age_text as temperament,  -- Map age_text to temperament for consistency
+  v.description as temperament,  -- Map description to temperament
   
   -- Calculate is_senior from age_text (VFV cats may not have this flag)
   CASE WHEN v.age_text = 'Senior' THEN TRUE ELSE FALSE END as is_senior,
@@ -63,9 +61,9 @@ SELECT
   NULL as is_special_needs,
   NULL as bonded_pair_id,
   
-  v.adoptapet_url,
+  v.petfinder_url as adoptapet_url,
   0 as featured,  -- Partner fosters are never featured on homepage
-  v.adoptapet_id,
+  v.petfinder_id as adoptapet_id,
   
   -- Badge information
   'partner_foster' as source,
@@ -85,5 +83,5 @@ WHERE NOT EXISTS (
   WHERE c.status = 'available'
   AND c.deleted_at IS NULL 
   AND c.adoptapet_url IS NOT NULL
-  AND SUBSTRING_INDEX(SUBSTRING_INDEX(c.adoptapet_url, '/pet/', -1), '-', 1) = v.adoptapet_id
+  AND SUBSTRING_INDEX(SUBSTRING_INDEX(c.adoptapet_url, '/pet/', -1), '-', 1) = v.petfinder_id
 );
