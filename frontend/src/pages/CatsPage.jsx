@@ -8,7 +8,6 @@ import {
   Grid,
   Card,
   CardImage,
-  CardBody,
   CardTitle,
   ButtonLink,
   Badge,
@@ -44,6 +43,14 @@ const ResultsCount = styled.p`
   color: ${({ theme }) => theme.colors.text.secondary};
   margin-bottom: ${({ theme }) => theme.spacing[6]};
   text-align: center;
+`;
+
+// FIXED: CardBody with flex: 1 to push button to bottom
+const CardBody = styled.div`
+  padding: ${({ theme }) => theme.spacing[6]};
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 `;
 
 const CardFooter = styled.div`
@@ -298,7 +305,7 @@ export default function CatsPage() {
                         · {cat.breed || "Mixed breed"}
                       </TextMuted>
                       
-                      {/* FIXED: Only render CardFooter if there are badges to show */}
+                      {/* Only render CardFooter if there are badges to show */}
                       {(cat.is_special_needs === 1 || cat.is_senior === 1 || cat.bonded_pair_id) && (
                         <CardFooter>
                           {cat.is_special_needs === 1 && (
@@ -312,6 +319,9 @@ export default function CatsPage() {
                           )}
                         </CardFooter>
                       )}
+                      
+                      {/* FIXED: Spacer to push button to bottom */}
+                      <div style={{ flex: 1 }} />
                       
                       <div style={{ marginTop: "1rem" }}>
                         {cat.source === 'featured_foster' ? (

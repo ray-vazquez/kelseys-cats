@@ -17,7 +17,8 @@ import { query } from '../lib/db.js';
 export async function getAllAvailableCats(req, res) {
   try {
     // Query the unified view (handles deduplication automatically)
-    const allCats = await query(
+    // Note: query() returns [rows, fields], so we destructure [rows]
+    const [allCats] = await query(
       `SELECT * FROM all_available_cats ORDER BY name ASC`
     );
     
@@ -104,7 +105,7 @@ export async function scrapePartnerFosters(req, res) {
  */
 export async function getPartnerFostersInfo(req, res) {
   try {
-    const counts = await query(
+    const [counts] = await query(
       `SELECT 
         COUNT(*) as total,
         MAX(updated_at) as last_updated,
