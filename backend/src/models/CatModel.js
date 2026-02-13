@@ -92,10 +92,14 @@ export class CatModel {
     const [countRows] = await query(countSql, params);
     const total = countRows[0]?.total ?? 0;
 
-    // Fetch paginated items
-    const offset = (page - 1) * limit;
-    const sql = `SELECT * FROM cats ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
-    const [rows] = await query(sql, [...params, limit, offset]);
+    // Sanitize limit and offset for inline use (avoid ER_WRONG_ARGUMENTS)
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? Number(limit) : 12;
+    const safePage = Number.isFinite(page) && page > 0 ? Number(page) : 1;
+    const safeOffset = (safePage - 1) * safeLimit;
+
+    // Fetch paginated items - inline LIMIT/OFFSET instead of bound params
+    const sql = `SELECT * FROM cats ${where} ORDER BY created_at DESC LIMIT ${safeLimit} OFFSET ${safeOffset}`;
+    const [rows] = await query(sql, params);
 
     return {
       items: rows,
