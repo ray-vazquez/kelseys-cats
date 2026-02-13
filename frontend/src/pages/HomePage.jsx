@@ -146,20 +146,16 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    params.set("status", "available");
-    params.set("featured", "true");  // Request only featured cats from API
-    params.set("page", "1");
-    params.set("limit", "12");  // Increased limit to show more featured cats
-
     setLoading(true);
     http
-      .get(`/cats?${params.toString()}`)
+      .get('/cats/all-available')
       .then((res) => {
-        const body = res.data;
-        const items = Array.isArray(body) ? body : body.items || [];
-        // No need to filter anymore - API returns only featured cats
-        setFeaturedCats(items);
+        // Extract only featured foster cats for homepage spotlight
+        // Filter to only show cats with featured=1
+        const featured = (res.data.featured_foster_cats || [])
+          .filter(cat => cat.featured === 1)
+          .slice(0, 12); // Show up to 12 featured cats
+        setFeaturedCats(featured);
       })
       .catch((err) => {
         console.error("Failed to load featured cats", err);
