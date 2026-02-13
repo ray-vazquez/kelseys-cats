@@ -14,7 +14,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables
+// Load environment variables from backend/.env
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 async function updateAdminPassword() {
@@ -48,13 +48,12 @@ async function updateAdminPassword() {
     console.log('✅ Password hash generated');
 
     console.log('\n📡 Connecting to database...');
-    connection = await mysql.createConnection({
-      host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'kelseys_cats',
-      port: process.env.DB_PORT || 3306
-    });
+    
+    // Use DB_URL connection string (matches backend/src/config/env.js)
+    const dbUrl = process.env.DB_URL || 'mysql://root:root@localhost:3306/kelseys_cats';
+    console.log(`   Connection: ${dbUrl.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')}`);
+    
+    connection = await mysql.createConnection(dbUrl);
     console.log('✅ Connected to database');
 
     // Check if user exists
@@ -66,7 +65,7 @@ async function updateAdminPassword() {
 
     if (users.length === 0) {
       console.error(`❌ User with email ${email} not found`);
-      console.log('\n💡 To create a new admin user, run:');
+      console.log('\n💡 To create a new admin user, run this SQL:');
       console.log(`   INSERT INTO admin_users (email, password_hash, role) VALUES ('${email}', '${passwordHash}', 'admin');`);
       process.exit(1);
     }
@@ -91,13 +90,18 @@ async function updateAdminPassword() {
     console.log(`   Email: ${email}`);
     console.log(`   Password: ${password}`);
     console.log('\n⚠️  Make sure to store this password securely!');
+    console.log('\n🔄 Restart your backend server to apply changes');
 
   } catch (error) {
     console.error('\n❌ Error:', error.message);
     if (error.code === 'ECONNREFUSED') {
       console.error('\n💡 Database connection refused. Make sure:');
       console.error('   - MySQL is running');
-      console.error('   - .env file has correct DB_HOST, DB_USER, DB_PASSWORD, DB_NAME');
+      console.error('   - backend/.env has correct DB_URL');
+      console.error('   - Format: mysql://user:password@host:port/database');
+      console.error(`   - Example: mysql://root:root@localhost:3306/kelseys_cats`);
+    } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+      console.error('\n💡 Access denied. Check your database credentials in backend/.env');
     }
     process.exit(1);
   } finally {
