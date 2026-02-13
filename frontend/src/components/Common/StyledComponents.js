@@ -70,8 +70,10 @@ export const Section = styled.section`
 /* ========== CARD COMPONENTS ========== */
 
 export const Card = styled.div`
-  display: flex;
-  flex-direction: column;
+  ${({ $flexColumn }) => $flexColumn && css`
+    display: flex;
+    flex-direction: column;
+  `}
   background: ${({ theme }) => theme.colors.white};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   box-shadow: ${({ theme }) => theme.shadows.sm};
