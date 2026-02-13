@@ -280,7 +280,7 @@ export default function CatsPage() {
             <>
               <Grid $cols={3} $mdCols={2}>
                 {paginatedCats.map((cat) => (
-                  <Card key={`${cat.source}-${cat.id}`} $hover style={{ position: 'relative' }}>
+                  <Card key={`${cat.source}-${cat.id}`} $flexColumn $hover style={{ position: 'relative' }}>
                     {/* Source Badge */}
                     <SourceBadge 
                       $variant={cat.source === 'featured_foster' ? 'success' : 'info'}
