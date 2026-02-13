@@ -9,13 +9,9 @@ import mysql from 'mysql2/promise';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-// Load environment variables
-dotenv.config({ path: join(__dirname, '..', '.env') });
 
 // Colors for terminal output
 const colors = {
@@ -40,7 +36,7 @@ async function runMigrations() {
   log('Kelsey\'s Cats - Database Migration Runner', 'yellow');
   log('=========================================\n', 'yellow');
 
-  // Get database connection string from environment
+  // Get database connection string from environment or use default
   const dbUrl = process.env.DB_URL || 'mysql://root:root@localhost:3306/kelseys_cats';
   
   log(`Database: ${dbUrl.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')}`, 'yellow');
@@ -125,13 +121,13 @@ async function runMigrations() {
     if (error.code === 'ECONNREFUSED') {
       log('  Database connection refused. Make sure:', 'red');
       log('  - MySQL is running', 'red');
-      log('  - DB_URL in .env is correct', 'red');
+      log('  - DB_URL environment variable is set correctly', 'red');
       log(`  - Format: mysql://user:password@host:port/database\n`, 'red');
     } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
-      log('  Access denied. Check your database credentials in .env\n', 'red');
+      log('  Access denied. Check your database credentials\n', 'red');
     } else if (error.code === 'ER_BAD_DB_ERROR') {
       log('  Database does not exist. Create it first:', 'red');
-      log('  mysql -u root -p -e "CREATE DATABASE kelseys_cats"\n', 'red');
+      log('  CREATE DATABASE kelseys_cats;\n', 'red');
     } else {
       log(`  ${error.message}\n`, 'red');
     }
