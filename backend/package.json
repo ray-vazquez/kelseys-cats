@@ -7,7 +7,10 @@
     "dev": "node server.js",
     "start": "node server.js",
     "hash-password": "node hash.js",
-    "curl": "sh curl.sh"
+    "curl": "sh curl.sh",
+    "migrate": "bash scripts/run-migrations.sh",
+    "migrate:list": "ls -la migrations/",
+    "migrate:manual": "echo 'Run manually: mysql -u root -p kelseys_cats < backend/migrations/<filename>.sql'"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
