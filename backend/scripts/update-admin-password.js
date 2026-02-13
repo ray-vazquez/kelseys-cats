@@ -1,28 +1,22 @@
 #!/usr/bin/env node
 /**
  * Script to update admin user password
- * Usage: node backend/scripts/update-admin-password.js <email> <password>
- * Example: node backend/scripts/update-admin-password.js kelsey@example.org MySecurePassword123
+ * Usage: node scripts/update-admin-password.js <email> <password>
+ * Example: node scripts/update-admin-password.js kelsey@example.org MySecurePassword123
+ * 
+ * Note: Make sure to set DB_URL environment variable or it will use default:
+ * DB_URL=mysql://root:root@localhost:3306/kelseys_cats
  */
 
 import bcrypt from 'bcrypt';
 import mysql from 'mysql2/promise';
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load environment variables from backend/.env
-dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 async function updateAdminPassword() {
   const args = process.argv.slice(2);
   
   if (args.length !== 2) {
-    console.error('❌ Usage: node backend/scripts/update-admin-password.js <email> <password>');
-    console.error('   Example: node backend/scripts/update-admin-password.js kelsey@example.org MySecurePassword123');
+    console.error('❌ Usage: node scripts/update-admin-password.js <email> <password>');
+    console.error('   Example: node scripts/update-admin-password.js kelsey@example.org MySecurePassword123');
     process.exit(1);
   }
 
@@ -49,7 +43,7 @@ async function updateAdminPassword() {
 
     console.log('\n📡 Connecting to database...');
     
-    // Use DB_URL connection string (matches backend/src/config/env.js)
+    // Use DB_URL from environment or default
     const dbUrl = process.env.DB_URL || 'mysql://root:root@localhost:3306/kelseys_cats';
     console.log(`   Connection: ${dbUrl.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')}`);
     
@@ -97,11 +91,11 @@ async function updateAdminPassword() {
     if (error.code === 'ECONNREFUSED') {
       console.error('\n💡 Database connection refused. Make sure:');
       console.error('   - MySQL is running');
-      console.error('   - backend/.env has correct DB_URL');
+      console.error('   - DB_URL environment variable is set correctly');
       console.error('   - Format: mysql://user:password@host:port/database');
       console.error(`   - Example: mysql://root:root@localhost:3306/kelseys_cats`);
     } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
-      console.error('\n💡 Access denied. Check your database credentials in backend/.env');
+      console.error('\n💡 Access denied. Check your database credentials');
     }
     process.exit(1);
   } finally {
