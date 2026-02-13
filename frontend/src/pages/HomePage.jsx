@@ -213,7 +213,7 @@ export default function HomePage() {
           ) : (
             <Grid $cols={3} $mdCols={2}>
               {featuredCats.map((cat) => (
-                <Card key={cat.id} $hover>
+                <Card key={cat.id} $hover $flexColumn>
                   {cat.main_image_url && (
                     <CardImage
                       src={cat.main_image_url}
