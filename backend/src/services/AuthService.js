@@ -4,18 +4,18 @@ import { AdminUserModel } from "../models/AdminUserModel.js";
 import { env } from "../config/env.js";
 
 export class AuthService {
-  static async login(email, password) {
+  static async login(usernameOrEmail, password) {
     // Validate inputs
-    if (!email || !password) {
+    if (!usernameOrEmail || !password) {
       return null;
     }
 
-    const user = await AdminUserModel.findByEmail(email);
+    const user = await AdminUserModel.findByEmail(usernameOrEmail);
     if (!user) return null;
 
     // Validate password_hash exists
     if (!user.password_hash) {
-      console.error(`User ${email} has no password_hash in database`);
+      console.error(`User ${usernameOrEmail} has no password_hash in database`);
       return null;
     }
 
@@ -24,7 +24,14 @@ export class AuthService {
 
     const payload = { sub: user.id, role: user.role };
     const token = jwt.sign(payload, env.JWT_SECRET, { expiresIn: "8h" });
-    return { token, user: { id: user.id, email: user.email, role: user.role } };
+    return { 
+      token, 
+      user: { 
+        id: user.id, 
+        username: user.username, 
+        role: user.role 
+      } 
+    };
   }
 
   static verifyToken(token) {
