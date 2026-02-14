@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image Upload Test - Kelsey's Cats</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 40px; 
+      max-width: 700px; 
+      margin: 0 auto;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #333;
+      margin-top: 0;
+    }
+    h3 {
+      color: #666;
+      border-bottom: 2px solid #4CAF50;
+      padding-bottom: 10px;
+    }
+    input, button { 
+      display: block; 
+      margin: 10px 0; 
+      padding: 12px; 
+      font-size: 14px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    #result { 
+      background: #f9f9f9; 
+      padding: 15px; 
+      margin-top: 20px; 
+      white-space: pre-wrap;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+    .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+    .info { background: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+    img.preview {
+      max-width: 100%;
+      margin-top: 15px;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .step {
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🐈 Kelsey's Cats - Image Upload Test</h2>
+    <p>Test the Cloudinary image upload endpoint</p>
+    
+    <div class="step">
+      <h3>Step 1: Login</h3>
+      <input type="text" id="username" placeholder="Username" value="admin">
+      <input type="password" id="password" placeholder="Password">
+      <button onclick="login()">Login</button>
+    </div>
+    
+    <div class="step">
+      <h3>Step 2: Upload Cat Image</h3>
+      <input type="file" id="imageFile" accept="image/jpeg,image/jpg,image/png">
+      <button id="uploadBtn" onclick="uploadImage()" disabled>Upload Image</button>
+    </div>
+    
+    <div id="result" class="info">Ready to test. Please login first.</div>
+  </div>
+
+  <script>
+    let token = '';
+    const apiUrl = 'http://localhost:3000';
+
+    async function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const resultDiv = document.getElementById('result');
+      
+      if (!username || !password) {
+        resultDiv.className = 'error';
+        resultDiv.textContent = '❌ Please enter both username and password';
+        return;
+      }
+      
+      resultDiv.className = 'info';
+      resultDiv.textContent = '⏳ Logging in...';
+      
+      try {
+        const response = await fetch(`${apiUrl}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.token) {
+          token = data.token;
+          resultDiv.className = 'success';
+          resultDiv.textContent = 
+            '✅ Login successful!\n\n' +
+            'Username: ' + (data.user?.username || username) + '\n' +
+            'Role: ' + (data.user?.role || 'admin') + '\n' +
+            'Token: ' + token.substring(0, 30) + '...';
+          
+          // Enable upload button
+          document.getElementById('uploadBtn').disabled = false;
+        } else {
+          resultDiv.className = 'error';
+          resultDiv.textContent = '❌ Login failed:\n\n' + JSON.stringify(data, null, 2);
+        }
+      } catch (error) {
+        resultDiv.className = 'error';
+        resultDiv.textContent = '❌ Network Error:\n\n' + error.message + '\n\nMake sure the backend is running on ' + apiUrl;
+      }
+    }
+
+    async function uploadImage() {
+      const resultDiv = document.getElementById('result');
+      
+      if (!token) {
+        resultDiv.className = 'error';
+        resultDiv.textContent = '❌ Please login first!';
+        return;
+      }
+      
+      const fileInput = document.getElementById('imageFile');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        resultDiv.className = 'error';
+        resultDiv.textContent = '❌ Please select an image file!';
+        return;
+      }
+      
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
+        resultDiv.className = 'error';
+        resultDiv.textContent = '❌ Only JPG and PNG files are allowed!\nYou selected: ' + file.type;
+        return;
+      }
+      
+      // Validate file size (10MB)
+      const maxSize = 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        resultDiv.className = 'error';
+        resultDiv.textContent = '❌ File size must be less than 10MB!\nYour file: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB';
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      resultDiv.className = 'info';
+      resultDiv.textContent = '⏳ Uploading to Cloudinary...\n\nFile: ' + file.name + '\nSize: ' + (file.size / 1024).toFixed(2) + 'KB';
+      
+      try {
+        const response = await fetch(`${apiUrl}/api/upload/image`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          resultDiv.className = 'success';
+          resultDiv.innerHTML = 
+            '✅ Upload successful!\n\n' +
+            '📁 Filename: ' + data.filename + '\n' +
+            '📐 Dimensions: ' + data.width + 'x' + data.height + '\n' +
+            '📄 Format: ' + data.format + '\n' +
+            '🔗 Public ID: ' + data.publicId + '\n\n' +
+            '🌐 URL: ' + data.url + '\n\n' +
+            '⚡ Optimized URL: ' + data.optimizedUrl + '\n\n' +
+            '<strong>Preview:</strong>';
+          
+          const img = document.createElement('img');
+          img.src = data.url;
+          img.className = 'preview';
+          img.alt = 'Uploaded image';
+          resultDiv.appendChild(img);
+        } else {
+          resultDiv.className = 'error';
+          resultDiv.textContent = '❌ Upload failed:\n\n' + JSON.stringify(data, null, 2);
+        }
+      } catch (error) {
+        resultDiv.className = 'error';
+        resultDiv.textContent = '❌ Upload Error:\n\n' + error.message + '\n\nCheck if backend is running and Cloudinary credentials are set.';
+      }
+    }
+    
+    // Allow Enter key for login
+    document.getElementById('username').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') login();
+    });
+    document.getElementById('password').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') login();
+    });
+  </script>
+</body>
+</html>
