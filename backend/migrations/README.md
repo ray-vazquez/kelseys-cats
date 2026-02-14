@@ -1,180 +1,102 @@
 # Database Migrations
 
-This directory contains SQL migration files for the Kelsey's Cats database.
+## Current Migration Files
 
-## Quick Start
+This folder contains **clean, safe migrations** that are tracked and won't run multiple times.
 
-### Automated Migration Runner (Recommended)
+### Active Migrations
+
+1. **01_create_base_schema.sql** - Creates all core tables (cats, users, tags, alumni)
+2. **create_vfv_cats_table.sql** - Creates Voice for the Voiceless partner cats table
+3. **create_all_available_cats_view.sql** - Creates unified view of all available cats
+
+### Supporting Files
+
+- **TEMPLATE.sql** - Template for creating new migrations
+- **MIGRATION_GUIDE.md** - Detailed guide for creating migrations
+
+## Running Migrations
+
+### Safe Migration Runner (RECOMMENDED)
 
 ```bash
-cd backend
+# Run all pending migrations
 npm run migrate
+
+# This uses scripts/run-migrations-safe.js which:
+# ✅ Tracks which migrations have run
+# ✅ Only runs new migrations
+# ✅ Won't break your database
 ```
 
-This will:
-- Prompt for your MySQL password
-- Run all migrations in the correct order
-- Verify the database view was created successfully
-- Show statistics about available cats
-
-### Manual Migration
-
-If you prefer to run migrations manually:
+### Other Migration Commands
 
 ```bash
-# From project root
-mysql -u root -p kelseys_cats < backend/migrations/create_vfv_cats_table.sql
-mysql -u root -p kelseys_cats < backend/migrations/add_featured_to_view.sql
+# Reset migration tracking (if needed)
+npm run migrate:reset
+
+# List all users
+npm run list-users
+
+# Create admin user
+npm run create-admin
 ```
 
-### List Available Migrations
+## Fresh Database Setup
+
+If you need to start completely fresh:
 
 ```bash
-npm run migrate:list
+# WARNING: This drops ALL tables and data!
+mysql -u root -p kelseys_cats < scripts/fresh-start.sql
+node scripts/create-admin.js
 ```
 
-## Migration Files
+## Migration Tracking
 
-### Core Schema
+Migrations are tracked in the `schema_migrations` table. Once a migration runs successfully, it won't run again.
 
-1. **`create_vfv_cats_table.sql`**
-   - Creates `vfv_cats` table for Voice for the Voiceless partner foster cats
-   - Stores scraped Petfinder data for faster queries
-   - Required before creating the unified view
+### Check Migration Status
 
-2. **`add_featured_to_view.sql`** ⭐ **Latest Version**
-   - Creates `all_available_cats` view that unifies foster cats and partner cats
-   - Includes `featured` column for homepage spotlight filtering
-   - Automatically deduplicates cats that appear in both sources
-   - Maps column names for consistency (gender→sex, description→temperament)
-
-### Historical Migrations
-
-3. **`create_all_available_cats_view.sql`** (Superseded by #2)
-   - Original view creation without `featured` column
-   - Do not run this - use `add_featured_to_view.sql` instead
-
-4. **`add_adoptapet_url.sql`**
-   - Adds `adoptapet_url` column to `cats` table
-   - Allows linking to Adopt-a-Pet listings
-
-5. **`add_adoptapet_id_to_vfv_cats.sql`**
-   - Adds `adoptapet_id` column to `vfv_cats` for deduplication
-
-6. **`add_additional_images_column.sql`**
-   - Adds `additional_images` JSON column to `cats` table
-   - Stores multiple image URLs per cat
-
-## Database Schema Overview
-
-### Tables
-
-- **`cats`** - Kelsey's featured foster cats
-  - Columns: id, name, age_years, sex, breed, temperament, featured, status, etc.
-  - `featured = 1` cats appear on homepage spotlight
-  - `status = 'available'` for adoptable cats
-  - Soft-delete support via `deleted_at`
-
-- **`vfv_cats`** - Voice for the Voiceless partner foster cats
-  - Scraped from Petfinder API
-  - Stored locally for faster queries
-  - Auto-updated via scraper cron job
-
-### Views
-
-- **`all_available_cats`** - Unified query of both tables
-  - Combines `cats` (featured fosters) + `vfv_cats` (partner fosters)
-  - Automatically deduplicates by `adoptapet_id`
-  - Adds `source` field: `'featured_foster'` or `'partner_foster'`
-  - Used by `/api/cats/all-available` endpoint
-
-## Column Mapping
-
-The view normalizes column names across tables:
-
-| View Column     | cats table      | vfv_cats table  |
-|-----------------|-----------------|------------------|
-| sex             | sex             | gender          |
-| temperament     | temperament     | description     |
-| adoptapet_url   | adoptapet_url   | petfinder_url   |
-| adoptapet_id    | (derived)       | petfinder_id    |
-
-## Verification
-
-After running migrations, verify the view exists:
-
-```sql
-USE kelseys_cats;
-
--- Check view exists
-SHOW TABLES LIKE 'all_available_cats';
-
--- View structure
-DESCRIBE all_available_cats;
-
--- Count by source
-SELECT source, COUNT(*) as count 
-FROM all_available_cats 
-GROUP BY source;
-
--- Check featured cats (should be 12)
-SELECT id, name, featured, source 
-FROM all_available_cats 
-WHERE featured = 1;
+```bash
+node scripts/run-migrations-safe.js
 ```
+
+This will show:
+- ✅ Applied migrations (already run)
+- ⏳ Pending migrations (will be run)
+
+## Creating New Migrations
+
+1. Copy `TEMPLATE.sql`
+2. Name it descriptively: `add_feature_name.sql`
+3. Write your migration SQL
+4. Run `npm run migrate`
+
+## What Was Cleaned Up
+
+The following old/unsafe migrations were removed:
+- ❌ `00_cleanup_view.sql` - Dropped view every time (dangerous)
+- ❌ `add_additional_images_column.sql` - Already in base schema
+- ❌ `add_adoptapet_id_to_vfv_cats.sql` - Already in vfv_cats table
+- ❌ `add_adoptapet_url.sql` - Already in base schema
+- ❌ `add_featured_to_view.sql` - Superseded by create_all_available_cats_view
+- ❌ `add_vfv_to_view.sql` - Superseded by create_all_available_cats_view
+
+## Notes
+
+- ✅ All migrations are MySQL-compatible
+- ✅ No Petfinder references (uses Adopt-a-Pet)
+- ✅ Safe to run multiple times (idempotent where possible)
+- ✅ Tracked in `schema_migrations` table
 
 ## Troubleshooting
 
-### "Table doesn't exist" errors
+If a migration fails:
 
-1. **Run migrations**: `npm run migrate`
-2. **Restart backend**: `npm run dev`
-3. **Check database**: Verify `all_available_cats` view exists
+1. Check the error message
+2. Fix the migration file
+3. Run `npm run migrate:reset` to mark it as not applied
+4. Run `npm run migrate` again
 
-### "Column not found" errors
-
-Make sure you're running the **latest** `add_featured_to_view.sql`, not the old `create_all_available_cats_view.sql`.
-
-### Migration runner fails
-
-**On Windows with Git Bash:**
-```bash
-bash backend/scripts/run-migrations.sh
-```
-
-**Manual alternative:**
-```bash
-mysql -u root -p kelseys_cats < backend/migrations/create_vfv_cats_table.sql
-mysql -u root -p kelseys_cats < backend/migrations/add_featured_to_view.sql
-```
-
-## Development Notes
-
-### Adding New Migrations
-
-1. Create SQL file in `backend/migrations/`
-2. Use descriptive naming: `add_feature_name.sql` or `modify_table_name.sql`
-3. Include `-- Migration:` comment header with purpose and date
-4. Add to `run-migrations.sh` MIGRATIONS array
-5. Test on local database before committing
-
-### Schema Changes
-
-If you modify the `cats` or `vfv_cats` table structure:
-
-1. Update the corresponding table migration
-2. **Recreate the view** in `add_featured_to_view.sql`
-3. Update this README with column mapping changes
-4. Test that `/api/cats/all-available` still works
-
-## Additional Scripts
-
-- **`backend/scripts/update-admin-password.js`** - Reset admin user password
-- **`backend/scripts/run-migrations.sh`** - Migration runner (used by `npm run migrate`)
-
-## Support
-
-For migration issues, check:
-1. MySQL is running: `mysql -u root -p -e "SELECT 1"`
-2. Database exists: `mysql -u root -p -e "SHOW DATABASES LIKE 'kelseys_cats'"`
-3. Correct credentials in `.env`: `DB_URL=mysql://user:pass@localhost:3306/kelseys_cats`
+Or use the fresh start script if needed.
