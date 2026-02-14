@@ -18,7 +18,17 @@ const __dirname = dirname(__filename);
 
 const app = express();
 
-app.use(helmet());
+// Configure Helmet with relaxed CSP for test page
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "script-src": ["'self'", "'unsafe-inline'"],
+      "img-src": ["'self'", "data:", "https:"],
+    },
+  },
+}));
+
 app.use(cors({ origin: env.FRONTEND_ORIGIN, credentials: true }));
 app.use(express.json());
 
