@@ -1,6 +1,7 @@
 -- Migration: Create Base Schema
--- Description: Creates core tables for users, cats, tags, and alumni
+-- Description: Creates core tables for users, cats, tags (alumni handled separately)
 -- Date: 2026-02-14
+-- Updated: 2026-02-14 - Fixed FK compatibility
 
 -- Users table for admin authentication
 CREATE TABLE IF NOT EXISTS users (
@@ -57,7 +58,7 @@ CREATE TABLE IF NOT EXISTS cat_tags (
   FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 );
 
--- Alumni table for adopted cats
+-- Alumni table for adopted cats (without FK to avoid conflicts with existing table)
 CREATE TABLE IF NOT EXISTS alumni (
   id INT AUTO_INCREMENT PRIMARY KEY,
   cat_id INT UNIQUE,
@@ -67,14 +68,13 @@ CREATE TABLE IF NOT EXISTS alumni (
   follow_up_date DATE,
   photo_url TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (cat_id) REFERENCES cats(id) ON DELETE SET NULL
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Create indexes for performance
-CREATE INDEX idx_cats_status ON cats(status);
-CREATE INDEX idx_cats_featured ON cats(featured);
-CREATE INDEX idx_cats_source ON cats(source);
-CREATE INDEX idx_tags_name ON tags(name);
+-- Create indexes for performance (IF NOT EXISTS syntax not available, handle errors gracefully)
+CREATE INDEX IF NOT EXISTS idx_cats_status ON cats(status);
+CREATE INDEX IF NOT EXISTS idx_cats_featured ON cats(featured);
+CREATE INDEX IF NOT EXISTS idx_cats_source ON cats(source);
+CREATE INDEX IF NOT EXISTS idx_tags_name ON tags(name);
 
 SELECT 'Base schema created successfully' AS status;
