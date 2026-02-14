@@ -8,12 +8,20 @@
     "start": "node server.js",
     "hash-password": "node hash.js",
     "curl": "sh curl.sh",
-    "migrate": "node scripts/run-migrations.js",
-    "migrate:bash": "bash scripts/run-migrations.sh",
-    "migrate:list": "ls -la migrations/",
     "update": "npm run stop && git pull origin main && npm run start",
     "update:dev": "npm run stop && git pull origin main && npm run dev",
-    "stop": "npx kill-port 5001 || echo 'No process running'"
+    "stop": "npx kill-port 5001 || echo 'No process running'",
+    
+    "migrate": "node scripts/run-migrations.js",
+    "migrate:all": "node scripts/run-migrations.js",
+    "migrate:bash": "bash scripts/run-migrations.sh",
+    "migrate:list": "ls -la migrations/",
+    
+    "migrate:vfv-table": "node scripts/migrations/run-single-migration.js create_vfv_cats_table.sql",
+    "migrate:view": "node scripts/migrations/run-single-migration.js add_featured_to_view.sql",
+    "migrate:adoptapet-url": "node scripts/migrations/run-single-migration.js add_adoptapet_url.sql",
+    "migrate:adoptapet-id": "node scripts/migrations/run-single-migration.js add_adoptapet_id_to_vfv_cats.sql",
+    "migrate:additional-images": "node scripts/migrations/run-single-migration.js add_additional_images_column.sql"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
