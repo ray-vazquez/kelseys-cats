@@ -1,6 +1,7 @@
 -- Migration: Create all_available_cats view
 -- Purpose: Unified view of foster cats with proper badge distinction
 -- Date: 2026-02-07
+-- Updated: 2026-02-14 - Fixed to use actual column names
 
 -- Drop view if exists (for updates)
 DROP VIEW IF EXISTS all_available_cats;
@@ -12,14 +13,14 @@ CREATE VIEW all_available_cats AS
 SELECT 
   c.id,
   c.name,
-  c.age_years,
+  NULL as age_years,
   c.breed,
-  c.gender,
+  c.sex as gender,
   c.main_image_url,
-  c.description,
-  c.is_senior,
-  c.is_special_needs,
-  c.bonded_pair_id,
+  NULL as description,
+  FALSE as is_senior,
+  FALSE as is_special_needs,
+  NULL as bonded_pair_id,
   c.adoptapet_url,
   
   -- Extract Adopt-a-Pet ID from URL for deduplication
@@ -54,7 +55,7 @@ SELECT
   v.main_image_url,
   v.description,
   
-  -- Calculate is_senior from age_text (VFV cats may not have this flag)
+  -- Calculate is_senior from age_text
   CASE WHEN v.age_text = 'Senior' THEN TRUE ELSE FALSE END as is_senior,
   
   NULL as is_special_needs,
@@ -76,7 +77,8 @@ SELECT
 FROM vfv_cats v
 
 -- Deduplicate: Exclude partner fosters that match Kelsey's cats by adoptapet_id
-WHERE NOT EXISTS (
+WHERE v.adoptapet_id IS NOT NULL
+AND NOT EXISTS (
   SELECT 1 FROM cats c 
   WHERE c.status = 'available' 
   AND c.adoptapet_url IS NOT NULL
