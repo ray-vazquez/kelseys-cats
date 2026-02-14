@@ -1,7 +1,7 @@
 -- Migration: Add VFV cats to all_available_cats view
 -- Purpose: Extend the view to include Voice for the Voiceless partner foster cats
 -- Date: 2026-02-13
--- Updated: 2026-02-14 - Fixed to use sex column from cats table
+-- Updated: 2026-02-14 - Removed description column reference
 -- Prerequisites: create_vfv_cats_table.sql must be run first
 
 DROP VIEW IF EXISTS all_available_cats;
@@ -16,7 +16,7 @@ SELECT
   c.breed,
   c.sex,
   c.main_image_url,
-  c.description as temperament,
+  NULL as temperament,
   FALSE as is_senior,
   FALSE as is_special_needs,
   NULL as bonded_pair_id,
