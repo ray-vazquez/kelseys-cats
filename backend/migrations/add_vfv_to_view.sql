@@ -1,18 +1,24 @@
 -- Migration: Add VFV cats to all_available_cats view
 -- Purpose: Extend the view to include Voice for the Voiceless partner foster cats
 -- Date: 2026-02-13
--- Updated: 2026-02-14 - Removed Petfinder references, using adoptapet_id
+-- Updated: 2026-02-14 - Fixed to use age_years from cats table
 -- Prerequisites: create_vfv_cats_table.sql must be run first
 
 DROP VIEW IF EXISTS all_available_cats;
 
 CREATE VIEW all_available_cats AS
 
--- Kelsey's foster cats (Featured Fosters)
+-- Kelsey's foster cats (Featured Fosters)  
 SELECT 
   c.id,
   c.name,
-  CAST(SUBSTRING_INDEX(c.age, ' ', 1) AS DECIMAL(3,1)) as age_years,
+  -- Check if age_years column exists in cats table, use it
+  (SELECT age_years FROM (SELECT 1) t WHERE EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = DATABASE() 
+    AND table_name = 'cats' 
+    AND column_name = 'age_years'
+  )) as age_years,
   c.breed,
   c.gender as sex,
   c.main_image_url,
