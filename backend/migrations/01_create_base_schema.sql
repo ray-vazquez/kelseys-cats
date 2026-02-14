@@ -1,7 +1,7 @@
 -- Migration: Create Base Schema
 -- Description: Creates core tables for users, cats, tags (alumni handled separately)
 -- Date: 2026-02-14
--- Updated: 2026-02-14 - Fixed FK compatibility
+-- Updated: 2026-02-14 - Fixed index syntax
 
 -- Users table for admin authentication
 CREATE TABLE IF NOT EXISTS users (
@@ -70,11 +70,5 @@ CREATE TABLE IF NOT EXISTS alumni (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
-
--- Create indexes for performance (IF NOT EXISTS syntax not available, handle errors gracefully)
-CREATE INDEX IF NOT EXISTS idx_cats_status ON cats(status);
-CREATE INDEX IF NOT EXISTS idx_cats_featured ON cats(featured);
-CREATE INDEX IF NOT EXISTS idx_cats_source ON cats(source);
-CREATE INDEX IF NOT EXISTS idx_tags_name ON tags(name);
 
 SELECT 'Base schema created successfully' AS status;
