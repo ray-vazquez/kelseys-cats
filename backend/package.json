@@ -10,7 +10,10 @@
     "curl": "sh curl.sh",
     "migrate": "node scripts/run-migrations.js",
     "migrate:bash": "bash scripts/run-migrations.sh",
-    "migrate:list": "ls -la migrations/"
+    "migrate:list": "ls -la migrations/",
+    "update": "npm run stop && git pull origin main && npm run start",
+    "update:dev": "npm run stop && git pull origin main && npm run dev",
+    "stop": "npx kill-port 5001 || echo 'No process running'"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -25,5 +28,8 @@
     "mysql2": "^3.9.0",
     "node-cron": "^3.0.3",
     "puppeteer": "^22.0.0"
+  },
+  "devDependencies": {
+    "kill-port": "^2.0.1"
   }
 }
