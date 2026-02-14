@@ -27,8 +27,9 @@ function log(message, color = 'reset') {
 
 // Migration files to run in order
 const MIGRATIONS = [
-  'create_vfv_cats_table.sql',
-  'add_featured_to_view.sql'
+  '00_cleanup_view.sql',        // Clean up old view first
+  'create_vfv_cats_table.sql',  // Create/update table
+  'add_featured_to_view.sql'    // Create new view
 ];
 
 async function runMigrations() {
