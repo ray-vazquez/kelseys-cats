@@ -10,7 +10,7 @@ export async function uploadCatImages(req, res, next) {
     const catId = req.params.id;
     
     // Check if cat exists
-    const cat = await CatService.getCatById(catId);
+    const cat = await CatService.getCatWithTags(catId);
     if (!cat) {
       return res.status(404).json({ error: "Cat not found" });
     }
@@ -59,7 +59,7 @@ export async function uploadCatImages(req, res, next) {
  */
 export async function getCatImages(req, res, next) {
   try {
-    const cat = await CatService.getCatById(req.params.id);
+    const cat = await CatService.getCatWithTags(req.params.id);
     if (!cat) {
       return res.status(404).json({ error: "Cat not found" });
     }
@@ -92,7 +92,7 @@ export async function deleteCatImage(req, res, next) {
     const { id, index } = req.params;
     const imageIndex = parseInt(index, 10);
 
-    const cat = await CatService.getCatById(id);
+    const cat = await CatService.getCatWithTags(id);
     if (!cat) {
       return res.status(404).json({ error: "Cat not found" });
     }
