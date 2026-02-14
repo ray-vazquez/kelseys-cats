@@ -45,9 +45,12 @@ async function runMigrations() {
   let connection;
 
   try {
-    // Connect to database
+    // Connect to database with multipleStatements enabled
     log('Testing database connection...', 'yellow');
-    connection = await mysql.createConnection(dbUrl);
+    connection = await mysql.createConnection({
+      uri: dbUrl,
+      multipleStatements: true  // Allow multiple SQL statements
+    });
     log('✓ Connected successfully\n', 'green');
 
     log('Running migrations...\n', 'yellow');
@@ -60,19 +63,18 @@ async function runMigrations() {
         log(`→ Applying: ${migrationFile}`, 'yellow');
         
         // Read migration file
-        const sql = readFileSync(filePath, 'utf8');
+        let sql = readFileSync(filePath, 'utf8');
         
-        // Split by semicolons and filter out empty statements
-        const statements = sql
-          .split(';')
-          .map(s => s.trim())
-          .filter(s => s.length > 0 && !s.startsWith('--'));
+        // Remove comments
+        sql = sql
+          .split('\n')
+          .filter(line => !line.trim().startsWith('--'))
+          .join('\n');
         
-        // Execute each statement
-        for (const statement of statements) {
-          if (statement) {
-            await connection.query(statement);
-          }
+        // Execute the entire migration file as a single query
+        // This handles complex SQL with DELIMITER, PREPARE, EXECUTE, etc.
+        if (sql.trim()) {
+          await connection.query(sql);
         }
         
         log(`✓ Successfully applied: ${migrationFile}\n`, 'green');
@@ -82,6 +84,7 @@ async function runMigrations() {
         } else {
           log(`✗ Failed to apply: ${migrationFile}`, 'red');
           log(`  Error: ${error.message}\n`, 'red');
+          // Continue with next migration instead of failing completely
         }
       }
     }
