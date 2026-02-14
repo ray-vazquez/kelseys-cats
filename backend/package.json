@@ -4,15 +4,14 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
+    "dev": "node server.js",
     "start": "node server.js",
     "stop": "npx kill-port 5001 || echo 'No process running'",
     "update": "npm run stop && git pull origin main && npm run start",
-    
     "migrate": "node scripts/run-migrations.js",
     "migrate:all": "node scripts/run-migrations.js",
     "migrate:bash": "bash scripts/run-migrations.sh",
     "migrate:list": "ls -la migrations/",
-    
     "migrate:vfv-table": "node scripts/migrations/run-single-migration.js create_vfv_cats_table.sql",
     "migrate:view": "node scripts/migrations/run-single-migration.js add_featured_to_view.sql",
     "migrate:vfv-integration": "node scripts/migrations/run-single-migration.js add_vfv_to_view.sql",

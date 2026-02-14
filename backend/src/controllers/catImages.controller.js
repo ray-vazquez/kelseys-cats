@@ -8,7 +8,7 @@ import { CatService } from "../services/CatService.js";
 export async function uploadCatImages(req, res, next) {
   try {
     const catId = req.params.id;
-    
+
     // Check if cat exists
     const cat = await CatService.getCatWithTags(catId);
     if (!cat) {
@@ -22,8 +22,8 @@ export async function uploadCatImages(req, res, next) {
 
     // Convert uploaded files to base64 or URLs (depending on your storage strategy)
     // For now, we'll store as data URLs in JSON
-    const imageUrls = req.files.map(file => {
-      const base64 = file.buffer.toString('base64');
+    const imageUrls = req.files.map((file) => {
+      const base64 = file.buffer.toString("base64");
       return `data:${file.mimetype};base64,${base64}`;
     });
 
@@ -31,12 +31,13 @@ export async function uploadCatImages(req, res, next) {
     let existingImages = [];
     try {
       if (cat.additional_images) {
-        existingImages = typeof cat.additional_images === 'string' 
-          ? JSON.parse(cat.additional_images)
-          : cat.additional_images;
+        existingImages =
+          typeof cat.additional_images === "string"
+            ? JSON.parse(cat.additional_images)
+            : cat.additional_images;
       }
     } catch (e) {
-      console.error('Failed to parse existing images:', e);
+      console.error("Failed to parse existing images:", e);
       existingImages = [];
     }
 
@@ -45,13 +46,13 @@ export async function uploadCatImages(req, res, next) {
 
     // Update cat with new images
     const updated = await CatService.updateCat(catId, {
-      additional_images: JSON.stringify(allImages)
+      additional_images: JSON.stringify(allImages),
     });
 
     res.json({
       message: `${imageUrls.length} image(s) uploaded successfully`,
       totalImages: allImages.length,
-      images: allImages
+      images: allImages,
     });
   } catch (err) {
     next(err);
@@ -69,20 +70,17 @@ export async function getCatImages(req, res, next) {
       return res.status(404).json({ error: "Cat not found" });
     }
 
-    console.log('getCatImages - Raw additional_images:', cat.additional_images);
-    console.log('getCatImages - Type:', typeof cat.additional_images);
-
     let images = [];
     if (cat.additional_images) {
       try {
         // Handle both string and already-parsed array
-        images = typeof cat.additional_images === 'string' 
-          ? JSON.parse(cat.additional_images)
-          : cat.additional_images;
-        
-        console.log('getCatImages - Parsed images:', images);
+        images =
+          typeof cat.additional_images === "string"
+            ? JSON.parse(cat.additional_images)
+            : cat.additional_images;
+
       } catch (e) {
-        console.error('Failed to parse additional_images:', e);
+        console.error("Failed to parse additional_images:", e);
         images = [];
       }
     }
@@ -92,7 +90,7 @@ export async function getCatImages(req, res, next) {
       catName: cat.name,
       mainImage: cat.main_image_url,
       additionalImages: images,
-      count: images.length
+      count: images.length,
     });
   } catch (err) {
     next(err);
@@ -116,9 +114,10 @@ export async function deleteCatImage(req, res, next) {
     let images = [];
     try {
       if (cat.additional_images) {
-        images = typeof cat.additional_images === 'string'
-          ? JSON.parse(cat.additional_images)
-          : cat.additional_images;
+        images =
+          typeof cat.additional_images === "string"
+            ? JSON.parse(cat.additional_images)
+            : cat.additional_images;
       }
     } catch (e) {
       return res.status(400).json({ error: "Invalid images data" });
@@ -133,12 +132,12 @@ export async function deleteCatImage(req, res, next) {
 
     // Update cat
     await CatService.updateCat(id, {
-      additional_images: JSON.stringify(images)
+      additional_images: JSON.stringify(images),
     });
 
     res.json({
       message: "Image deleted successfully",
-      remainingImages: images.length
+      remainingImages: images.length,
     });
   } catch (err) {
     next(err);
