@@ -40,5 +40,43 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+-- Add petfinder_url column if it doesn't exist (for existing tables)
+SET @column_exists = (
+  SELECT COUNT(*) 
+  FROM INFORMATION_SCHEMA.COLUMNS 
+  WHERE TABLE_SCHEMA = DATABASE() 
+  AND TABLE_NAME = 'vfv_cats' 
+  AND COLUMN_NAME = 'petfinder_url'
+);
+
+SET @sql = IF(
+  @column_exists = 0,
+  'ALTER TABLE vfv_cats ADD COLUMN petfinder_url TEXT AFTER main_image_url',
+  'SELECT "petfinder_url column already exists" AS message'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Add description column if it doesn't exist (for existing tables)
+SET @column_exists = (
+  SELECT COUNT(*) 
+  FROM INFORMATION_SCHEMA.COLUMNS 
+  WHERE TABLE_SCHEMA = DATABASE() 
+  AND TABLE_NAME = 'vfv_cats' 
+  AND COLUMN_NAME = 'description'
+);
+
+SET @sql = IF(
+  @column_exists = 0,
+  'ALTER TABLE vfv_cats ADD COLUMN description TEXT AFTER petfinder_url',
+  'SELECT "description column already exists" AS message'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
 -- Add table comment
 ALTER TABLE vfv_cats COMMENT = 'Voice for the Voiceless shelter cats (scraped from Petfinder)';
