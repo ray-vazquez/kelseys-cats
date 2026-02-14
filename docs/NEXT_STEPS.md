@@ -1,635 +1,772 @@
-# 🚀 Kelsey's Cats - Next Steps & Action Plan
+# Next Steps - Kelsey's Cats Launch Sprint
 
-**Last Updated:** February 12, 2026, 9:00 PM EST  
-**Project Deadline:** March 6, 2026 (22 days remaining)  
-**Current Sprint:** Sprint 1 Complete → Sprint 2 Starting Feb 13  
-**Project Status:** 85% Complete, On Track
-
----
-
-## ⚡ IMMEDIATE ACTIONS (Next 48 Hours)
-
-### Post-Migration Verification (Feb 13, 2026)
-**Owner:** Lead Developer  
-**Priority:** CRITICAL  
-**Effort:** 2-3 hours
-
-#### Tasks:
-
-1. **New Workspace Setup** (30 min)
-   - [ ] Clone repository: `git clone https://github.com/ray-vazquez/kelseys-cats.git`
-   - [ ] Install backend dependencies: `cd backend && npm install`
-   - [ ] Install frontend dependencies: `cd frontend && npm install`
-   - [ ] Copy `.env` files from old workspace or create new:
-     - `backend/.env` (DB_URL, JWT_SECRET, PORT)
-     - `frontend/.env` (VITE_API_URL)
-   - [ ] Verify MySQL is running and database exists
-   - [ ] Run any pending migrations (if applicable)
-
-   **Definition of Done:** Both servers start without errors
+**Launch Date:** March 6, 2026  
+**Days Remaining:** 20  
+**Team:** Developer (You) + Admin (Kelsey)
 
 ---
 
-2. **Smoke Test All Recent Fixes** (60-90 min)
-   - [ ] **AdminCatsPage:** Navigate to `/admin/cats`
-     - Verify cats list loads (fix for `data.items.map` error)
-     - Test pagination (LIMIT/OFFSET fix from Feb 12)
-     - Test status filters (Available, Pending, Hold)
-     - Test soft delete (Delete button moves to Deleted Cats)
-   - [ ] **Deleted Cats Page:** Navigate to `/admin/deleted-cats`
-     - Verify deleted cats appear
-     - Test "Restore" button
-     - Test "Delete Forever" button with confirmation modal
-     - Verify hard delete removes from list
-   - [ ] **HomePage:** Navigate to `/`
-     - Verify featured cats display (fix for `featuredCats.map` error)
-     - Verify "Featured Foster" vs "At Partner Home" badges
-     - Test "Learn More" buttons
-   - [ ] **CatsPage:** Navigate to `/cats`
-     - Verify card layout alignment (CardBody flexbox fix)
-     - Verify "View Details" buttons aligned at bottom
-     - Test filters (Senior cats, Partner fosters toggle)
-     - Test pagination
+## Quick Navigation
 
-   **Definition of Done:** All pages load, no console errors, all buttons functional
+- [Week 1: Core Features](#week-1-core-features-feb-14-20)
+- [Week 2: Content & Testing](#week-2-content--testing-feb-21-27)
+- [Week 3: Launch Prep](#week-3-launch-prep-feb-28--mar-6)
+- [Communication Protocol](#communication-protocol)
+- [Rollback Procedures](#rollback-procedures)
 
 ---
 
-3. **Database Integrity Check** (30 min)
-   - [ ] Run query to check soft-deleted cats: `SELECT COUNT(*) FROM cats WHERE deleted_at IS NOT NULL;`
-   - [ ] Verify foreign key constraints working:
-     ```sql
-     SELECT TABLE_NAME, CONSTRAINT_NAME, CONSTRAINT_TYPE 
-     FROM information_schema.TABLE_CONSTRAINTS 
-     WHERE TABLE_SCHEMA = 'kelseys_cats';
-     ```
-   - [ ] Test cascade delete manually:
-     - Create test cat with tags and images
-     - Hard delete test cat
-     - Verify tags and images removed automatically
-   - [ ] Run scraper cleanup to sync Adopt-a-Pet counts:
-     - Navigate to `/admin/scraper`
-     - Click "Cleanup Only" button
-     - Verify count decreases from 72 to ~51
+## 📅 Week 1: Core Features (Feb 14-20)
 
-   **Definition of Done:** Database constraints verified, scraper synced
+### Day 1: Saturday, February 14, 2026 ✅ TODAY
 
----
+#### 👨‍💻 Developer Tasks (6-8 hours)
+**Priority:** Image upload implementation
 
-4. **Git Hygiene** (15 min)
-   - [ ] Pull latest changes: `git pull origin main`
-   - [ ] Verify last commit is `bd307fd` (query fix + HomePage fix)
-   - [ ] Create new branch for Sprint 2 work: `git checkout -b sprint-2/adoption-form`
-   - [ ] Review commit history to understand recent changes:
-     ```bash
-     git log --oneline -10
-     ```
+**Morning (9am-12pm):**
+- [ ] **DECISION POINT:** Choose image hosting provider
+  - Option A: ImgBB (simpler, zero config)
+  - Option B: Cloudinary (more features, better docs)
+  - ⚠️ Make decision by 10am
 
-   **Definition of Done:** On latest code, new branch created, history reviewed
+- [ ] Create account with chosen provider
+- [ ] Get API credentials
+- [ ] Install npm packages:
+  ```bash
+  cd backend
+  npm install multer axios
+  ```
 
----
+**Afternoon (1pm-5pm):**
+- [ ] Create backend upload endpoint: `POST /api/upload/image`
+  - File validation (type, size)
+  - Upload to chosen service
+  - Return URL in response
+  - Error handling
 
-## 📅 WEEKLY PRIORITIES
+- [ ] Test upload endpoint with Postman/curl
+  ```bash
+  curl -X POST -F "image=@test.jpg" http://localhost:4000/api/upload/image
+  ```
 
-### Week 1: Feb 13-19 (Sprint 2) - Core Features
-**Sprint Goal:** Complete adoption interest form and verify all existing functionality
+**Evening (6pm-8pm):**
+- [ ] Start frontend file picker component
+- [ ] Add drag-drop support (optional, nice-to-have)
+- [ ] Commit progress to GitHub
 
-#### Monday-Tuesday (Feb 13-14) - Adoption Form Backend
-**Owner:** Backend Developer  
-**Effort:** 4-5 hours
+**Blockers to Watch:**
+- API key approval delays (some services require verification)
+- File size limits on free tiers
 
-- [ ] **Database Schema** (1 hour)
-  - Create `adoption_inquiries` table:
-    ```sql
-    CREATE TABLE adoption_inquiries (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      cat_id INT NOT NULL,
-      first_name VARCHAR(100) NOT NULL,
-      last_name VARCHAR(100) NOT NULL,
-      email VARCHAR(255) NOT NULL,
-      phone VARCHAR(20) NOT NULL,
-      preferred_contact_time ENUM('morning', 'afternoon', 'evening', 'anytime') DEFAULT 'anytime',
-      message TEXT,
-      status ENUM('new', 'contacted', 'archived') DEFAULT 'new',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (cat_id) REFERENCES cats(id) ON DELETE CASCADE
-    );
-    ```
-  - Create migration file in `backend/migrations/`
-  - Run migration
-
-- [ ] **API Endpoint** (2 hours)
-  - Create `backend/src/controllers/adoptionInquiry.controller.js`
-  - Implement `POST /api/adoption-inquiries`
-    - Validate required fields
-    - Validate email format
-    - Validate phone format (basic)
-    - Insert into database
-    - Return success response
-  - Add route to `backend/src/routes/index.js`
-  - Test with Postman/curl
-
-- [ ] **Email Notification** (2 hours)
-  - Install nodemailer: `npm install nodemailer`
-  - Create `backend/src/services/emailService.js`
-  - Configure SMTP settings (use Gmail or SendGrid)
-  - Create email template for admin notification:
-    - Subject: "New Adoption Inquiry: {cat_name}"
-    - Body: Include all form fields, link to cat
-  - Test email sending
-  - Add error handling (log but don't fail if email fails)
-
-**Definition of Done:** API endpoint works, emails send successfully, data persists in DB
+**Output:** Backend upload endpoint working
 
 ---
 
-#### Wednesday-Thursday (Feb 15-16) - Adoption Form Frontend
-**Owner:** Frontend Developer  
-**Effort:** 4-5 hours
+### Day 2: Sunday, February 15, 2026
 
-- [ ] **Form Component** (2 hours)
-  - Create `frontend/src/components/AdoptionInquiryModal.jsx`
-  - Use existing Modal component from Phase 3
-  - Form fields with validation:
-    - First name (required, min 2 chars)
-    - Last name (required, min 2 chars)
-    - Email (required, email format)
-    - Phone (required, phone format)
-    - Preferred contact time (dropdown)
-    - Message (optional, max 500 chars)
-  - Client-side validation with error messages
-  - Loading state during submission
-  - Success/error handling with toast notifications
+#### 👨‍💻 Developer Tasks (6-8 hours)
 
-- [ ] **Integration with CatDetailPage** (1 hour)
-  - Add "I'm Interested in Adopting {name}" button
-  - Button triggers modal
-  - Pre-fill cat_id in form
-  - Display cat name/photo in modal header
+**Morning (9am-12pm):**
+- [ ] Complete frontend file picker integration
+  - Add to `AdminCatEditPage.jsx`
+  - Preview uploaded image before submit
+  - Progress indicator during upload
+  - Auto-insert URL into form field
 
-- [ ] **API Integration** (1 hour)
-  - Create `frontend/src/api/adoptionApi.js`
-  - `submitAdoptionInquiry(data)` function
-  - Handle success: Show toast, close modal, maybe redirect
-  - Handle errors: Show error toast, keep modal open
+- [ ] Add file validation on frontend
+  - Max size: 10MB
+  - Accepted types: JPG, PNG, WEBP
+  - Clear error messages
 
-- [ ] **Testing** (1 hour)
-  - Test all validation rules
-  - Test successful submission
-  - Test error scenarios (network error, server error)
-  - Test on mobile viewport
-  - Cross-browser test (Chrome, Firefox, Safari)
+**Afternoon (1pm-5pm):**
+- [ ] Test full upload flow:
+  - Main image upload
+  - Additional images upload
+  - Multiple images in one session
+  - Error scenarios (network failure, too large, wrong type)
 
-**Definition of Done:** Form works end-to-end, validations working, emails received
+- [ ] Deploy to development/staging
+- [ ] Write quick documentation for Kelsey
 
----
+#### 👩‍💼 Kelsey Tasks (2-3 hours)
 
-#### Friday (Feb 16) - Sprint Review & Planning
-**Owner:** Team  
-**Effort:** 2-3 hours
+**Afternoon/Evening:**
+- [ ] Test image upload with 5 different cat photos
+- [ ] Try to break it (wrong formats, huge files)
+- [ ] Document any confusing parts
+- [ ] **CHECKPOINT:** Report findings to developer by 7pm
 
-- [ ] **Demo Adoption Form** (30 min)
-  - Walk through user flow
-  - Submit test inquiry
-  - Verify email received
-  - Show validation working
+**Issue Reporting Template:**
+```markdown
+What I tried: [describe action]
+What happened: [describe result]
+What I expected: [describe expected behavior]
+Screenshot: [if applicable]
+```
 
-- [ ] **Retrospective** (30 min)
-  - What went well?
-  - What didn't go well?
-  - What can we improve in Sprint 3?
-  - Update estimates if needed
-
-- [ ] **Sprint 3 Planning** (1 hour)
-  - Review BACKLOG.md
-  - Commit to Sprint 3 scope (see below)
-  - Assign tasks
-  - Identify any blockers
-
-- [ ] **Documentation** (30 min)
-  - Update this file with actual hours spent
-  - Document any issues encountered
-  - Update BACKLOG.md if scope changed
-
-**Definition of Done:** Sprint 2 complete, Sprint 3 planned, team aligned
+**Output:** Working image upload tested by both users
 
 ---
 
-### Week 2: Feb 20-26 (Sprint 3) - Polish & Deployment Prep
-**Sprint Goal:** UI polish, deployment preparation, content population
+### Day 3: Monday, February 16, 2026
 
-#### Monday-Tuesday (Feb 20-21) - UI/UX Polish
-**Owner:** Frontend Developer  
-**Effort:** 6-7 hours
+#### 👨‍💻 Developer Tasks (6-8 hours)
 
-- [ ] **Navigation Active States** (1.5 hours)
-  - Update `Navbar.jsx` to highlight current page
-  - Use `useLocation()` from react-router
-  - Add active styling (border-bottom or background)
-  - Test on all pages
+**Morning (9am-12pm):**
+- [ ] Fix any issues from Kelsey's testing
+- [ ] Polish UX based on feedback
+- [ ] Add loading states
+- [ ] Merge image upload feature to main branch
 
-- [ ] **Image Lazy Loading** (2 hours)
-  - Install `react-lazy-load-image-component` or use native lazy loading
-  - Update `CardImage` component
-  - Add blur-up placeholder
-  - Test with slow network throttling
+**Afternoon (1pm-5pm):**
+- [ ] **CRITICAL DECISION:** Choose hosting providers
+  - Frontend: Vercel vs Netlify
+  - Backend: Railway vs Render
+  - Database: PlanetScale vs Railway Postgres
+  - ⚠️ Make decisions by 2pm
 
-- [ ] **Button Loading States** (1.5 hours)
-  - Add loading prop to Button component
-  - Show spinner during async operations
-  - Disable button during loading
-  - Apply to all forms (cat edit, adoption inquiry, login)
+- [ ] Create hosting accounts (all three services)
+- [ ] Wait for account approvals (can take 24 hours)
 
-- [ ] **404 Page** (1 hour)
-  - Create `frontend/src/pages/NotFoundPage.jsx`
-  - Friendly message with link to homepage
-  - Update router to catch unmatched routes
+**Evening (6pm-8pm):**
+- [ ] Prepare production environment variables
+- [ ] Document deployment configuration
+- [ ] Create production build locally to test
 
-**Definition of Done:** All polish items implemented and tested
+**Dependency Alert:**
+⚠️ Hosting approval delays could push deployment to Tuesday. Have backup providers ready.
+
+**Output:** Image upload complete; hosting accounts created
 
 ---
 
-#### Wednesday (Feb 22) - Deployment Configuration
-**Owner:** DevOps/Lead Developer  
-**Effort:** 4-5 hours
+### Day 4: Tuesday, February 17, 2026
 
-- [ ] **Choose Hosting Platform** (1 hour)
-  - Decision: Vercel (recommended for Next.js-like apps) or VPS
-  - Create account if needed
-  - Review pricing (should be free tier eligible)
+#### 👨‍💻 Developer Tasks (8-10 hours)
+**Priority:** Production deployment
 
-- [ ] **Environment Setup** (2 hours)
-  - Create production `.env` files
-  - Set up production MySQL database (PlanetScale, Railway, or VPS)
-  - Configure CORS for production domain
-  - Set up email service (SendGrid free tier)
-  - Document all credentials securely
+**Morning (9am-12pm):**
+- [ ] Provision production database
+  - Create database instance
+  - Note connection string
+  - Configure access controls
 
-- [ ] **Build Configuration** (1 hour)
-  - Verify `npm run build` works for frontend
-  - Verify backend builds/runs in production mode
-  - Update package.json scripts if needed
-  - Test production build locally
+- [ ] Run database migration
+  ```bash
+  # Test migration locally first
+  npm run migrate:prod:dry-run
+  
+  # If successful, run for real
+  npm run migrate:prod
+  ```
 
-- [ ] **CI/CD Setup** (1 hour - OPTIONAL)
-  - Create `.github/workflows/deploy.yml`
-  - Automated deployment on push to main
-  - Or manual deployment instructions
+- [ ] Seed initial admin users
+  ```sql
+  INSERT INTO users (username, password_hash, role) VALUES
+  ('ray', '<hash>', 'super_admin'),
+  ('kelsey', '<hash>', 'admin');
+  ```
 
-**Definition of Done:** Deployment config ready, credentials documented
+**Afternoon (1pm-5pm):**
+- [ ] Deploy backend to Railway/Render
+  - Connect GitHub repository
+  - Set environment variables
+  - Configure start command
+  - Set health check endpoint: `/api/health`
 
----
+- [ ] Test backend deployment
+  ```bash
+  curl https://api.kelseys-cats.com/api/health
+  # Expected: {"status":"ok","timestamp":"..."}
+  ```
 
-#### Thursday-Friday (Feb 23-24) - Content Population
-**Owner:** Content Owner (Kelsey) + Developer Support  
-**Effort:** 4-6 hours
-
-- [ ] **Cat Data Entry** (3-4 hours)
-  - Upload at least 10 cat profiles:
-    - High-quality photos
-    - Complete bios (2-3 paragraphs)
-    - All fields filled (age, breed, temperament, etc.)
-    - Accurate status (available, pending, adopted)
-  - Mark 2-3 as featured for homepage
-  - Add tags/badges (special needs, senior, bonded pairs)
-
-- [ ] **Static Content Review** (1-2 hours)
-  - Review adoption process page copy
-  - Verify contact information (email, phone)
-  - Check for typos/consistency
-  - Update mission statement if needed
-  - Add any additional pages (About Us, FAQ, etc.)
-
-**Definition of Done:** Site has real content, ready for public viewing
-
----
-
-### Week 3: Feb 27 - March 6 (Sprint 4) - Testing & Launch
-**Sprint Goal:** Comprehensive testing, deployment, go-live
-
-#### Monday-Tuesday (Feb 27-28) - Testing & Bug Fixes
-**Owner:** QA/Developer  
-**Effort:** 8-10 hours
-
-- [ ] **Functional Testing** (4 hours)
-  - Test all user flows:
-    - [ ] Browse cats (filters, pagination, search if implemented)
-    - [ ] View cat details
-    - [ ] Submit adoption inquiry
-    - [ ] Admin login
-    - [ ] Admin CRUD operations (create, edit, delete, restore)
-    - [ ] CSV import/export
-    - [ ] Scraper controls
-  - Document any bugs found
-  - Prioritize bugs (P0=blocking, P1=important, P2=nice to fix)
-
-- [ ] **Cross-Browser Testing** (2 hours)
-  - Test on Chrome, Firefox, Safari, Edge
-  - Test on mobile devices (iOS Safari, Android Chrome)
-  - Document any browser-specific issues
-  - Fix critical issues
-
-- [ ] **Performance Testing** (1 hour)
-  - Test page load times (should be < 3 sec desktop, < 5 sec mobile)
-  - Test with 50+ cats in database
-  - Check for memory leaks (long browsing session)
-  - Optimize if needed
-
-- [ ] **Accessibility Testing** (1 hour)
-  - Keyboard navigation (tab through all interactive elements)
-  - Screen reader test (basic)
-  - Color contrast check (WCAG AA compliance)
-  - Fix any critical a11y issues
-
-**Definition of Done:** All P0/P1 bugs fixed, testing documented
-
----
-
-#### Wednesday (Feb 29) - First Deployment Attempt
-**Owner:** DevOps/Lead Developer  
-**Effort:** 3-4 hours
-
-- [ ] **Deploy to Staging/Production** (2 hours)
-  - Run production build
-  - Deploy frontend to hosting platform
-  - Deploy backend to hosting platform (or VPS)
-  - Configure database connection
-  - Run database migrations on production DB
+**Evening (6pm-9pm):**
+- [ ] Deploy frontend to Vercel/Netlify
+  - Connect GitHub repository
+  - Set build command: `npm run build`
+  - Set output directory: `dist`
   - Configure environment variables
 
-- [ ] **Smoke Test Production** (1 hour)
-  - Visit production URL
-  - Test all critical paths:
-    - [ ] Homepage loads
-    - [ ] Cats page loads with data
-    - [ ] Cat detail page works
-    - [ ] Adoption form submits and sends email
-    - [ ] Admin login works
-    - [ ] Admin can edit a cat
-  - Check browser console for errors
-  - Check server logs for errors
+- [ ] Test frontend deployment
+- [ ] Verify API calls work (check CORS)
 
-- [ ] **DNS/Domain Configuration** (30 min - OPTIONAL)
-  - Point custom domain to hosting platform
-  - Configure SSL certificate
-  - Test HTTPS working
+**Blockers to Watch:**
+- Build failures (dependency issues)
+- CORS misconfiguration
+- Environment variables missing
 
-**Definition of Done:** Application accessible at production URL, critical paths working
+**Output:** Application deployed to production URLs (without custom domain)
 
 ---
 
-#### Thursday-Friday (March 1-2) - Bug Fixes & Polish
-**Owner:** Developer  
-**Effort:** 4-6 hours
+### Day 5: Wednesday, February 18, 2026
 
-- [ ] **Fix Production Issues** (2-4 hours)
-  - Address any bugs found during production smoke test
-  - Fix any deployment-specific issues (CORS, env vars, etc.)
-  - Re-deploy if needed
-  - Re-test after fixes
+#### 👨‍💻 Developer Tasks (4-6 hours)
 
-- [ ] **Final Polish** (2 hours)
-  - Review all pages one more time
-  - Fix any typos or visual inconsistencies
-  - Optimize any slow-loading pages
-  - Add any last-minute nice-to-haves from BACKLOG (if time permits)
+**Morning (9am-12pm):**
+- [ ] **DECISION POINT:** Domain setup
+  - If domain exists: Configure DNS
+  - If no domain: Purchase domain (~$15)
+  - Set A/CNAME records
+  - ⚠️ DNS propagation takes 24-48 hours - do this early!
 
-**Definition of Done:** All known issues fixed, application polished
+- [ ] Configure SSL certificates (auto via hosting)
+- [ ] Test HTTPS access
 
----
+**Afternoon (1pm-5pm):**
+- [ ] Production smoke tests
+  - [ ] Homepage loads
+  - [ ] Admin login works
+  - [ ] Can add test cat
+  - [ ] Image upload works in production
+  - [ ] Can edit cat
+  - [ ] Can delete cat
+  - [ ] Public pages display correctly
 
-#### Monday-Tuesday (March 4-5) - Final Testing & Buffer
-**Owner:** Team  
-**Effort:** 4-6 hours
+- [ ] Fix any production-only issues
 
-- [ ] **Final QA Pass** (2-3 hours)
-  - Complete regression test (all features)
-  - Verify all content populated correctly
-  - Test email notifications with real addresses
-  - Verify scraper running on schedule
-  - Check for any console errors or warnings
+#### 👩‍💼 Kelsey Tasks (2 hours)
 
-- [ ] **Code Freeze** (1 hour)
-  - No new features after 5 PM on March 4
-  - Only critical bug fixes allowed March 5-6
-  - Create backup branch: `git checkout -b pre-launch-backup`
-  - Tag release: `git tag v1.0.0`
+**Afternoon:**
+- [ ] Log in to production admin panel
+- [ ] Add 2 test cats with images
+- [ ] Edit one test cat
+- [ ] View public pages
+- [ ] **CHECKPOINT:** Confirm everything works by 5pm
 
-- [ ] **Launch Preparation** (1-2 hours)
-  - Prepare handoff documentation for Kelsey
-  - Create admin user guide (optional)
-  - Document any known minor issues
-  - Prepare demo script for March 19
-
-**Definition of Done:** Application ready for launch, no P0/P1 bugs
+**Output:** Production environment stable and tested
 
 ---
 
-#### Wednesday (March 6) - LAUNCH DAY 🚀
-**Owner:** Lead Developer  
-**Effort:** 2-3 hours
+### Day 6: Thursday, February 19, 2026
 
-- [ ] **Final Smoke Test** (30 min)
-  - Test all critical paths one more time
-  - Verify production database has latest content
-  - Check that scraper ran successfully
-  - Verify email notifications working
+#### 👨‍💻 Developer Tasks (4-6 hours)
 
-- [ ] **Go-Live** (1 hour)
-  - Share production URL with stakeholders (internal only)
-  - Monitor error logs for first hour
-  - Be available for any urgent issues
-  - Send test adoption inquiry to verify end-to-end
+**Morning (9am-12pm):**
+- [ ] Fix any issues from Kelsey's production testing
+- [ ] Verify DNS propagation (check custom domain)
+- [ ] Configure production monitoring (uptime checks)
 
-- [ ] **Celebration & Handoff Planning** (30 min)
-  - Celebrate completion! 🎉
-  - Schedule March 19 handoff meeting with Kelsey
-  - Plan demo presentation
-  - Document any post-launch support needed
+**Afternoon (1pm-5pm):**
+- [ ] Create admin training documentation
+  - How to add a cat (step-by-step with screenshots)
+  - How to upload images
+  - How to edit cats
+  - How to mark as adopted
+  - How to feature cats
 
-**Definition of Done:** Application live and stable, ready for March 19 birthday reveal! 🎂
+- [ ] Set up rollback procedure
+  - Document how to revert deployment
+  - Test rollback process
+
+#### 👩‍💼 Kelsey Tasks (3 hours)
+
+**Afternoon:**
+- [ ] Review admin documentation
+- [ ] Practice adding/editing/deleting cats
+- [ ] Ask questions about anything unclear
+- [ ] **CHECKPOINT:** Confirm ready to start content population by end of day
+
+**Output:** Production stable; Kelsey trained; ready for content
 
 ---
 
-## 🔗 Dependencies & Blockers
+### Day 7: Friday, February 20, 2026
 
-### External Dependencies
+#### 👨‍💻 Developer Tasks (4 hours)
 
-| Dependency | Required By | Owner | Status | Risk |
-|------------|-------------|-------|--------|------|
-| **Content from Kelsey** | Feb 24 | Kelsey | Not Started | Medium |
-| **Hosting Platform Account** | Feb 22 | Lead Dev | Not Started | Low |
-| **Production Database** | Feb 22 | Lead Dev | Not Started | Low |
-| **Email Service API Key** | Feb 22 | Lead Dev | Not Started | Low |
-| **Custom Domain** (optional) | Feb 29 | Kelsey | N/A | None |
+**Morning (9am-12pm):**
+- [ ] Final bug fixes from Week 1 testing
+- [ ] Code cleanup (remove debug logs)
+- [ ] Commit and deploy any pending fixes
 
-### Internal Blockers
+**Afternoon (1pm-3pm):**
+- [ ] Week 1 retrospective
+- [ ] Update project status
+- [ ] Plan for Week 2
 
-| Blocker | Blocking What | Mitigation |
-|---------|---------------|------------|
-| Adoption form not done | Content population (can't test real inquiries) | Proceed with dummy data, update later |
-| Deployment config not done | Testing on production | Use staging environment or local testing |
-| Bugs in testing | Launch | 4-day buffer (Mar 2-5) for fixes |
+#### 👩‍💼 Kelsey Tasks (3-4 hours)
 
-### Critical Path
+**All Day:**
+- [ ] Add first 3-4 cats to production
+- [ ] Gather photos for remaining cats
+- [ ] Draft bios for next batch
 
+**End of Day Review:**
+- [ ] Developer: All Week 1 tasks complete?
+- [ ] Kelsey: Ready for full content sprint?
+
+**🎯 Week 1 Milestone Gate:**
+- ✅ Image upload working in production
+- ✅ Application deployed and stable
+- ✅ Kelsey trained and productive
+- ✅ No critical bugs
+- ✅ First cats added successfully
+
+**If any gate criteria fails:** Extend Week 1, adjust Week 2 timeline
+
+---
+
+## 📅 Week 2: Content & Testing (Feb 21-27)
+
+### Day 8: Saturday, February 21, 2026
+
+#### 👩‍💼 Kelsey Tasks (5-6 hours) ⭐ PRIMARY FOCUS
+
+**Content Sprint Begins:**
+- [ ] Add 4-5 cats with complete profiles
+  - Each cat: name, age, sex, breed, bio, temperament
+  - Main image + 2-4 additional images
+  - Tags (good with kids/cats/dogs, special needs, senior)
+  - Status (available/pending)
+
+- [ ] Review yesterday's cats for typos/improvements
+
+**Target:** 7-8 total cats in system by end of day
+
+#### 👨‍💻 Developer Tasks (2-3 hours)
+
+**On-Call for Support:**
+- [ ] Monitor for issues Kelsey reports
+- [ ] Quick fixes only if needed
+- [ ] Otherwise: personal time / rest
+
+---
+
+### Day 9: Sunday, February 22, 2026
+
+#### 👩‍💼 Kelsey Tasks (5-6 hours)
+
+- [ ] Add 4-5 more cats
+- [ ] Review and improve previous entries
+- [ ] Proofread all bios
+
+**Target:** 12-13 total cats in system
+
+#### 👨‍💻 Developer Tasks (2-3 hours)
+
+- [ ] Check site performance with real content
+- [ ] Fix any issues discovered
+- [ ] Verify image loading times acceptable
+
+**Mid-Sprint Checkpoint:**
+- How many cats completed? (Target: 12+)
+- Any recurring issues?
+- Content velocity on track?
+- Need to adjust timeline?
+
+---
+
+### Day 10: Monday, February 23, 2026
+
+#### 👩‍💼 Kelsey Tasks (5-6 hours)
+
+- [ ] Add remaining cats (target: complete all)
+- [ ] Select featured cats (3-5 cats for homepage)
+- [ ] Verify adoption information page content
+
+**Target:** All cats added to system
+
+#### 👨‍💻 Developer Tasks (3-4 hours)
+
+- [ ] Full site testing with complete content
+  - [ ] Homepage featured cats display
+  - [ ] Current Cats page pagination (if applicable)
+  - [ ] Alumni page (if any alumni)
+  - [ ] Image galleries on all cats
+  - [ ] Mobile responsive with real content
+
+---
+
+### Day 11: Tuesday, February 24, 2026
+
+#### 👩‍💼 Kelsey Tasks (4 hours)
+
+- [ ] Content review and edits
+- [ ] Fix typos and improve bios
+- [ ] Ensure image quality consistent
+- [ ] Verify all cats have correct status
+
+#### 👨‍💻 Developer Tasks (4 hours)
+
+- [ ] Accessibility check
+  - [ ] Alt text on all images
+  - [ ] Keyboard navigation works
+  - [ ] Screen reader friendly
+
+- [ ] SEO basics
+  - [ ] Page titles descriptive
+  - [ ] Meta descriptions set
+  - [ ] Open Graph tags for social sharing
+
+---
+
+### Day 12: Wednesday, February 25, 2026
+
+#### 👨‍💻 + 👩‍💼 Joint Testing (6 hours total)
+
+**Full Site Testing Session:**
+
+**Morning (9am-12pm):**
+- [ ] Both test all public pages on desktop
+- [ ] Test all admin functions
+- [ ] Create bug list
+
+**Afternoon (1pm-5pm):**
+- [ ] Developer fixes bugs
+- [ ] Kelsey re-tests after each fix
+- [ ] Document any workarounds needed
+
+**Test Checklist:**
+- [ ] Homepage loads in < 3 seconds
+- [ ] All navigation links work
+- [ ] Image galleries work on all cats
+- [ ] Modal opens/closes smoothly
+- [ ] Admin can log in/out
+- [ ] Forms validate correctly
+- [ ] No JavaScript console errors
+- [ ] Mobile Safari (iPhone)
+- [ ] Mobile Chrome (Android)
+- [ ] Desktop Chrome
+- [ ] Desktop Safari/Firefox
+
+---
+
+### Day 13: Thursday, February 26, 2026
+
+#### 👨‍💻 Developer Tasks (4-6 hours)
+
+**Critical Bugs Only:**
+- [ ] Fix any remaining high-priority bugs
+- [ ] Performance optimization if needed
+- [ ] Final code review
+
+#### 👩‍💼 Kelsey Tasks (3 hours)
+
+- [ ] Final content polish
+- [ ] Verify contact information correct
+- [ ] Test adoption information page
+- [ ] Add any last-minute cat updates
+
+**End of Day:** 
+- [ ] **CHECKPOINT:** All critical bugs resolved?
+- [ ] **CHECKPOINT:** Content complete and approved?
+
+---
+
+### Day 14: Friday, February 27, 2026
+
+#### 👨‍💻 Developer Tasks (4 hours)
+
+- [ ] Final deployment to production
+- [ ] Verify all changes live
+- [ ] Backup production database
+- [ ] Document rollback procedure
+
+#### 👩‍💼 Kelsey Tasks (2 hours)
+
+- [ ] Final walkthrough of production site
+- [ ] Confirm all content looks correct
+- [ ] **CHECKPOINT:** Approve for launch
+
+**🎯 Week 2 Milestone Gate:**
+- ✅ All cats added with complete profiles
+- ✅ All critical bugs fixed
+- ✅ Site tested on desktop and mobile
+- ✅ Both users approve quality
+- ✅ Production stable
+
+**If any gate criteria fails:** Use Week 3 buffer time to resolve
+
+---
+
+## 📅 Week 3: Launch Prep (Feb 28 - Mar 6)
+
+### Day 15: Saturday, February 28, 2026
+
+#### Both Team Members (2-3 hours)
+
+**Buffer Day for Unexpected Issues:**
+- [ ] Address any remaining concerns
+- [ ] Practice launch day procedures
+- [ ] Review launch checklist
+
+**If no issues:** Personal time / rest before launch week
+
+---
+
+### Day 16: Sunday, March 1, 2026
+
+#### 👨‍💻 Developer Tasks (2 hours)
+
+**FEATURE FREEZE at 12pm (noon)**
+- [ ] No new features after this point
+- [ ] Bug fixes only
+- [ ] Final code freeze at 6pm
+
+#### 👩‍💼 Kelsey Tasks (2 hours)
+
+**CONTENT FREEZE at 6pm**
+- [ ] No content changes after 6pm
+- [ ] Exception: critical typos only
+
+---
+
+### Day 17: Monday, March 2, 2026
+
+#### Both Team Members (4 hours)
+
+**Final QA Testing:**
+
+**Morning (9am-12pm):**
+- [ ] Complete launch checklist (see below)
+- [ ] Test every feature one last time
+- [ ] Document any minor issues (not blocking)
+
+**Afternoon (1pm-3pm):**
+- [ ] Developer: Fix show-stoppers only
+- [ ] Kelsey: Re-test after fixes
+
+**End of Day Decision:**
+- [ ] **GO/NO-GO for launch:** If YES, proceed. If NO, delay launch and fix blockers.
+
+---
+
+### Day 18: Tuesday, March 3, 2026
+
+#### 👨‍💻 Developer Tasks (2-3 hours)
+
+- [ ] Fix only show-stopper bugs (if any)
+- [ ] Monitor production logs
+- [ ] Ensure backups current
+
+#### 👩‍💼 Kelsey Tasks (1 hour)
+
+- [ ] Final content review
+- [ ] Prepare launch announcement (social media, email)
+
+---
+
+### Day 19: Wednesday, March 4, 2026
+
+#### Both Team Members (2 hours)
+
+**Pre-Launch Day:**
+- [ ] No changes to production
+- [ ] Verify site accessible
+- [ ] Confirm launch plan
+- [ ] Rest / mental preparation
+
+---
+
+### Day 20: Thursday, March 5, 2026
+
+#### Both Team Members (3 hours)
+
+**Launch Eve:**
+- [ ] Final smoke test (15 minutes)
+- [ ] Review launch checklist
+- [ ] Confirm both available tomorrow
+- [ ] Get good rest for launch day
+
+---
+
+### 🚀 LAUNCH DAY: Friday, March 6, 2026
+
+#### Morning: Launch (9am-12pm)
+
+**Developer:**
+- [ ] Final production health check
+- [ ] Monitor logs in real-time
+- [ ] Be ready for immediate fixes
+
+**Kelsey:**
+- [ ] Post launch announcement
+- [ ] Share on social media
+- [ ] Monitor for user feedback
+
+#### Afternoon: Monitor (12pm-6pm)
+
+**Both:**
+- [ ] Watch for issues
+- [ ] Respond to user questions
+- [ ] Document any bugs for post-launch
+- [ ] Celebrate! 🎉
+
+#### Evening: Retrospective (6pm-7pm)
+
+- [ ] Review launch day
+- [ ] Plan post-launch fixes (if any)
+- [ ] Schedule first post-launch sprint
+
+---
+
+## Communication Protocol
+
+### Daily Check-ins
+**Time:** 9am daily  
+**Duration:** 10-15 minutes  
+**Format:** Text/call
+
+**Agenda:**
+- What did you complete yesterday?
+- What are you working on today?
+- Any blockers?
+
+### Issue Reporting
+
+**For Kelsey:**
+```markdown
+**Issue:** [Brief description]
+**Steps:** How to reproduce
+**Expected:** What should happen
+**Actual:** What actually happened
+**Screenshot:** [if applicable]
+**Urgency:** High / Medium / Low
 ```
-Post-Migration Verification (Feb 13)
-        ↓
-Adoption Form Backend (Feb 13-14)
-        ↓
-Adoption Form Frontend (Feb 15-16)
-        ↓
-Deployment Configuration (Feb 22)
-        ↓
-Content Population (Feb 23-24)
-        ↓
-First Deployment (Feb 29)
-        ↓
-Bug Fixes (Mar 1-2)
-        ↓
-Final Testing (Mar 4-5)
-        ↓
-LAUNCH (Mar 6)
+
+**For Developer:**
+Respond within:
+- High urgency: 1-2 hours
+- Medium urgency: Same day
+- Low urgency: Next day
+
+### Escalation Path
+
+**Level 1:** Daily check-in  
+**Level 2:** Immediate text/call (critical bugs)  
+**Level 3:** Emergency meeting (launch blockers)
+
+### Decision-Making Authority
+
+**Developer Decides:**
+- Technical implementation details
+- Hosting providers
+- Bug fix priorities
+- Code structure
+
+**Kelsey Decides:**
+- Content (cat bios, descriptions)
+- Which cats to feature
+- Adoption process wording
+- Final content approval
+
+**Joint Decisions:**
+- Launch go/no-go
+- Feature priority (if conflicts)
+- Timeline adjustments
+
+---
+
+## Rollback Procedures
+
+### When to Rollback
+- Critical bug in production
+- Data corruption
+- Site completely down > 15 minutes
+- Security vulnerability discovered
+
+### Rollback Steps
+
+#### Frontend Rollback (Vercel/Netlify)
+```bash
+# In hosting dashboard:
+1. Navigate to Deployments
+2. Find previous stable deployment
+3. Click "Rollback" or "Promote to Production"
+4. Verify site loads correctly
 ```
 
-**Any delay in deployment configuration or content population will compress testing time!**
+#### Backend Rollback (Railway/Render)
+```bash
+# In hosting dashboard:
+1. Navigate to Deployments
+2. Revert to previous commit
+3. Or: manually deploy previous Git SHA
+4. Verify API health check passes
+```
+
+#### Database Rollback
+```bash
+# From backup:
+1. Stop backend application
+2. Restore from most recent backup
+3. Verify data integrity
+4. Restart backend
+5. Test critical flows
+```
+
+**Time to Rollback:** Target < 10 minutes
+
+### Post-Rollback Actions
+1. Notify Kelsey immediately
+2. Document what went wrong
+3. Fix issue in development
+4. Test fix thoroughly
+5. Re-deploy when ready
 
 ---
 
-## 👤 Owner Assignments
+## Risk Checkpoints
 
-| Owner | Responsibilities | Time Commitment |
-|-------|------------------|----------------|
-| **Lead Developer** | All technical work, deployment, testing | 40-50 hours (Feb 13-Mar 6) |
-| **Kelsey (Content Owner)** | Content creation, review, final approval | 6-10 hours (Feb 20-24) |
-| **QA Tester** (optional) | Testing support, bug documentation | 10-15 hours (Feb 27-Mar 2) |
-| **DevOps** (optional) | Deployment assistance, infrastructure | 4-6 hours (Feb 22-29) |
+### Week 1 Risks
+| Checkpoint | Risk | If Occurs |
+|------------|------|----------|
+| Feb 14 | Image upload provider approval delay | Use alternative provider |
+| Feb 16 | Hosting account approval delay | Start with free hosting, upgrade later |
+| Feb 18 | DNS propagation slow | Use hosting subdomain for launch |
+| Feb 19 | Critical production bug | Delay content sprint, fix first |
 
----
+### Week 2 Risks
+| Checkpoint | Risk | If Occurs |
+|------------|------|----------|
+| Feb 23 | Content creation slower than expected | Reduce cat count for launch, add more post-launch |
+| Feb 25 | Critical bug found late | Use Week 3 buffer to fix |
+| Feb 27 | Kelsey unavailable | Developer can add placeholder content |
 
-## ✅ Definition of Done (By Task Type)
-
-### Feature Development
-- [ ] Code written and tested locally
-- [ ] No console errors or warnings
-- [ ] Responsive (mobile, tablet, desktop)
-- [ ] Cross-browser compatible (Chrome, Firefox, Safari)
-- [ ] Committed to Git with descriptive message
-- [ ] Deployed to staging/production
-- [ ] Tested on deployed environment
-
-### Bug Fixes
-- [ ] Root cause identified
-- [ ] Fix implemented and tested
-- [ ] Regression test passed (didn't break other features)
-- [ ] Committed with issue reference
-- [ ] Verified on production
-
-### Content Updates
-- [ ] Content written/provided by Kelsey
-- [ ] No typos or grammatical errors
-- [ ] All placeholders replaced
-- [ ] Images optimized and uploaded
-- [ ] Verified on live site
-
-### Deployment Tasks
-- [ ] Configuration documented
-- [ ] Credentials stored securely
-- [ ] Smoke test passed
-- [ ] Rollback plan documented
-- [ ] Team notified of changes
+### Week 3 Risks
+| Checkpoint | Risk | If Occurs |
+|------------|------|----------|
+| Mar 2 | Show-stopper bug discovered | Delay launch 24-48 hours |
+| Mar 5 | Production instability | Emergency stabilization sprint |
 
 ---
 
-## 📊 Effort Tracking
+## Success Metrics
 
-### Sprint 2 (Feb 13-19) - Estimated vs. Actual
+### Launch Day Success Criteria
+- [ ] Site accessible at production URL
+- [ ] No 500 errors
+- [ ] All cats display correctly
+- [ ] Admin panel functional
+- [ ] Mobile responsive
+- [ ] Page load times < 3 seconds
+- [ ] No JavaScript console errors
+- [ ] Both users can complete all workflows
 
-| Task | Estimated | Actual | Notes |
-|------|-----------|--------|-------|
-| Post-Migration Setup | 2-3 hours | ___ hours | |
-| Adoption Form Backend | 4-5 hours | ___ hours | |
-| Adoption Form Frontend | 4-5 hours | ___ hours | |
-| Sprint Review & Planning | 2-3 hours | ___ hours | |
-| **Total Sprint 2** | **12-16 hours** | **___ hours** | |
-
-### Sprint 3 (Feb 20-26) - Estimated vs. Actual
-
-| Task | Estimated | Actual | Notes |
-|------|-----------|--------|-------|
-| UI/UX Polish | 6-7 hours | ___ hours | |
-| Deployment Config | 4-5 hours | ___ hours | |
-| Content Population | 4-6 hours | ___ hours | |
-| **Total Sprint 3** | **14-18 hours** | **___ hours** | |
-
-### Sprint 4 (Feb 27 - Mar 6) - Estimated vs. Actual
-
-| Task | Estimated | Actual | Notes |
-|------|-----------|--------|-------|
-| Testing & Bug Fixes | 8-10 hours | ___ hours | |
-| First Deployment | 3-4 hours | ___ hours | |
-| Production Bug Fixes | 4-6 hours | ___ hours | |
-| Final QA & Buffer | 4-6 hours | ___ hours | |
-| Launch Day | 2-3 hours | ___ hours | |
-| **Total Sprint 4** | **21-29 hours** | **___ hours** | |
-
-### **Grand Total: 47-63 hours remaining**
+### Week 1 Post-Launch
+- Monitor uptime (target: 99%+)
+- Track any user-reported bugs
+- Measure page load times
+- Review server logs for errors
 
 ---
 
-## 🚨 Escalation Protocol
+## Emergency Contacts
 
-If any of these occur, escalate immediately:
+**Developer:** [Your phone/email]  
+**Kelsey:** [Kelsey's phone/email]  
 
-1. **Critical bug discovered** (P0 - blocks core functionality)
-   - Stop current work
-   - Document bug thoroughly
-   - Fix immediately or find workaround
-   - Re-test completely
+**Hosting Support:**
+- Vercel: support@vercel.com
+- Railway: help@railway.app
+- Render: support@render.com
 
-2. **Timeline at risk** (any task taking 2x estimated time)
-   - Re-evaluate scope
-   - Consider cutting nice-to-have features
-   - Communicate delay risk
-   - Adjust sprint plan
-
-3. **External dependency delayed** (content, credentials, etc.)
-   - Notify stakeholders immediately
-   - Work on parallel tasks
-   - Set hard deadline for delivery
-   - Prepare fallback plan
-
-4. **Production outage or critical failure**
-   - Rollback to last working version
-   - Investigate root cause
-   - Fix and re-deploy
-   - Post-mortem documentation
+**Image Hosting Support:**
+- Cloudinary: support@cloudinary.com
+- ImgBB: support@imgbb.com
 
 ---
 
-## 🎯 Success Criteria Reminder
-
-By March 6, 2026:
-- ✅ Application deployed and accessible
-- ✅ All 7 public pages working
-- ✅ Admin panel fully functional
-- ✅ Adoption interest form working end-to-end
-- ✅ At least 10 cats with complete profiles
-- ✅ No P0/P1 bugs
-- ✅ Mobile responsive
-- ✅ Cross-browser compatible
-- ✅ Email notifications working
-- ✅ Ready for March 19 birthday reveal! 🎂
-
----
-
-## 📞 Questions or Issues?
-
-- Review [BACKLOG.md](./BACKLOG.md) for scope clarification
-- Check [SPRINT_SCHEDULE.md](./SPRINT_SCHEDULE.md) for timeline
-- See [EXECUTIVE_HANDOFF_SUMMARY.md](./EXECUTIVE_HANDOFF_SUMMARY.md) for big picture
-
----
-
-**Let's ship this! 22 days to go! 🚀**
+**Last Updated:** February 14, 2026  
+**Next Review:** Daily during sprint
