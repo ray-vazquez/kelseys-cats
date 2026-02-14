@@ -4,13 +4,9 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "dev": "node server.js",
     "start": "node server.js",
-    "hash-password": "node hash.js",
-    "curl": "sh curl.sh",
-    "update": "npm run stop && git pull origin main && npm run start",
-    "update:dev": "npm run stop && git pull origin main && npm run dev",
     "stop": "npx kill-port 5001 || echo 'No process running'",
+    "update": "npm run stop && git pull origin main && npm run start",
     
     "migrate": "node scripts/run-migrations.js",
     "migrate:all": "node scripts/run-migrations.js",
