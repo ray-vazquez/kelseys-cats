@@ -1,9 +1,30 @@
 import { createConnection } from 'mysql2/promise';
 import bcrypt from 'bcrypt';
 import readline from 'readline';
-import { config } from 'dotenv';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env manually
+function loadEnv() {
+  try {
+    const envPath = join(__dirname, '..', '.env');
+    const envFile = readFileSync(envPath, 'utf8');
+    envFile.split('\n').forEach(line => {
+      const [key, ...valueParts] = line.split('=');
+      if (key && valueParts.length) {
+        process.env[key.trim()] = valueParts.join('=').trim();
+      }
+    });
+  } catch (error) {
+    console.log('⚠️  No .env file found, using environment variables');
+  }
+}
+
+loadEnv();
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -18,7 +39,16 @@ async function createAdmin() {
   let connection;
   
   try {
+    if (!process.env.DB_URL) {
+      console.error('❌ DB_URL not found in .env file');
+      console.log('\nExample .env entry:');
+      console.log('DB_URL=mysql://user:password@localhost:3306/kelseys_cats\n');
+      rl.close();
+      return;
+    }
+
     // Connect to database
+    console.log('🔌 Connecting to database...');
     connection = await createConnection(process.env.DB_URL);
     console.log('✅ Connected to database\n');
     
@@ -73,10 +103,16 @@ async function createAdmin() {
     console.log('\n📋 Login credentials:');
     console.log(`   Username: ${username}`);
     console.log(`   Password: ${password}`);
-    console.log('\n💡 Use these to login at http://localhost:3000/api/auth/login');
+    console.log('\n💡 Use these to login at:');
+    console.log('   - Test page: file:///path/to/backend/test-upload.html');
+    console.log('   - API: http://localhost:3000/api/auth/login\n');
     
   } catch (error) {
     console.error('❌ Error:', error.message);
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      console.log('\n💡 Tip: Run migrations first:');
+      console.log('   npm run migrate\n');
+    }
   } finally {
     rl.close();
     if (connection) await connection.end();
