@@ -8,17 +8,11 @@
     "start": "node server.js",
     "stop": "npx kill-port 5001 || echo 'No process running'",
     "update": "npm run stop && git pull origin main && npm run start",
-    "migrate": "node scripts/run-migrations.js",
-    "migrate:all": "node scripts/run-migrations.js",
-    "migrate:bash": "bash scripts/run-migrations.sh",
-    "migrate:list": "ls -la migrations/",
-    "migrate:vfv-table": "node scripts/migrations/run-single-migration.js create_vfv_cats_table.sql",
-    "migrate:view": "node scripts/migrations/run-single-migration.js add_featured_to_view.sql",
-    "migrate:vfv-integration": "node scripts/migrations/run-single-migration.js add_vfv_to_view.sql",
-    "migrate:adoptapet-url": "node scripts/migrations/run-single-migration.js add_adoptapet_url.sql",
-    "migrate:adoptapet-id": "node scripts/migrations/run-single-migration.js add_adoptapet_id_to_vfv_cats.sql",
-    "migrate:additional-images": "node scripts/migrations/run-single-migration.js add_additional_images_column.sql",
-    "create-admin": "node scripts/create-admin.js"
+    "migrate": "node scripts/run-migrations-safe.js",
+    "migrate:reset": "node scripts/reset-migration-tracking.js",
+    "migrate:fresh": "echo '⚠️  This will DROP ALL TABLES and recreate them!' && read -p 'Type YES to continue: ' confirm && [ \"$confirm\" = \"YES\" ] && mysql -u root -p kelseys_cats < scripts/fresh-start.sql && node scripts/create-admin.js",
+    "create-admin": "node scripts/create-admin.js",
+    "list-users": "node scripts/list-users.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
