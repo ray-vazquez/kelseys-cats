@@ -157,7 +157,7 @@ export class CatService {
   static _mapPayloadToModel(payload) {
     if (!payload) return {};
 
-    return {
+    const mapped = {
       name: payload.name,
       age_years: payload.age_years ?? payload.ageyears ?? null,
       sex: payload.sex,
@@ -174,13 +174,22 @@ export class CatService {
         (payload.issenior !== undefined ? (payload.issenior ? 1 : 0) : undefined),
       status: payload.status,
       main_image_url: payload.main_image_url ?? payload.mainimageurl,
-      additional_images: payload.additional_images ?? payload.additionalimages ?? [],
       featured:
         payload.featured !== undefined ? (payload.featured ? 1 : 0) : undefined,
       bonded_pair_id: payload.bonded_pair_id ?? payload.bondedpairid,
       adoption_date: payload.adoption_date ?? payload.adoptiondate,
       adoption_story: payload.adoption_story ?? payload.adoptionstory,
     };
+
+    // Handle additional_images - preserve the value as-is (string or array)
+    // Don't default to empty array if not provided
+    if (payload.additional_images !== undefined) {
+      mapped.additional_images = payload.additional_images;
+    } else if (payload.additionalimages !== undefined) {
+      mapped.additional_images = payload.additionalimages;
+    }
+
+    return mapped;
   }
 
   static async exportAllCatsToCsv() {
