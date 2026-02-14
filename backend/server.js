@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { env } from './src/config/env.js';
 import catsRouter from './src/routes/cats.routes.js';
 import alumniRouter from './src/routes/alumni.routes.js';
@@ -11,11 +13,19 @@ import { errorHandler } from './src/middleware/error.middleware.js';
 import { loginRateLimiter } from './src/middleware/rateLimit.middleware.js';
 import { initCronJobs } from './src/services/cronService.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const app = express();
 
 app.use(helmet());
 app.use(cors({ origin: env.FRONTEND_ORIGIN, credentials: true }));
 app.use(express.json());
+
+// Serve test page
+app.get('/test-upload.html', (req, res) => {
+  res.sendFile(join(__dirname, 'test-upload.html'));
+});
 
 // Public routes
 app.use('/api/auth', loginRateLimiter, authRouter);
@@ -33,6 +43,7 @@ app.listen(env.PORT, () => {
   console.log(`🚀 API listening on port ${env.PORT}`);
   console.log(`🐈 Cats API ready!`);
   console.log(`🌍 CORS enabled for: ${env.FRONTEND_ORIGIN}`);
+  console.log(`🧪 Test page: http://localhost:${env.PORT}/test-upload.html`);
   
   // Initialize cron jobs for automated scraping
   initCronJobs();
