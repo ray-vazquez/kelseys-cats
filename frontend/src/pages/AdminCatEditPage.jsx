@@ -257,6 +257,20 @@ export default function AdminCatEditPage({ mode }) {
       http.get(`/cats/${id}`)
         .then((res) => {
           const cat = res.data;
+          
+          // Parse additional_images if it's a JSON string
+          let parsedImages = [];
+          if (cat.additional_images) {
+            try {
+              parsedImages = typeof cat.additional_images === 'string' 
+                ? JSON.parse(cat.additional_images)
+                : cat.additional_images;
+            } catch (e) {
+              console.error('Failed to parse additional_images:', e);
+              parsedImages = [];
+            }
+          }
+          
           setFormData({
             name: cat.name || '',
             age_years: cat.age_years ?? '',
@@ -272,7 +286,7 @@ export default function AdminCatEditPage({ mode }) {
             is_senior: cat.is_senior || false,
             status: cat.status || 'available',
             main_image_url: cat.main_image_url || '',
-            additional_images: cat.additional_images || [],
+            additional_images: parsedImages,
             featured: cat.featured || false
           });
           setLoadingData(false);
@@ -387,6 +401,10 @@ export default function AdminCatEditPage({ mode }) {
     for (const [key, value] of Object.entries(data)) {
       if (value === '') {
         cleaned[key] = null;
+      }
+      else if (key === 'additional_images') {
+        // Convert array to JSON string for backend
+        cleaned[key] = JSON.stringify(value);
       }
       else if (typeof value === 'boolean') {
         cleaned[key] = value;
