@@ -5,6 +5,7 @@ import catsRouter from './src/routes/cats.routes.js';
 import alumniRouter from './src/routes/alumni.routes.js';
 import authRouter from './src/routes/auth.routes.js';
 import scraperRouter from './src/routes/scraper.routes.js';
+import uploadRouter from './src/routes/upload.routes.js';
 import { errorHandler } from './src/middleware/error.middleware.js';
 import { loginRateLimiter } from './src/middleware/rateLimit.middleware.js';
 import { initCronJobs } from './src/services/cronService.js';
@@ -21,6 +22,7 @@ app.use('/api/cats', catsRouter);
 app.use('/api/alumni', alumniRouter);
 
 // Admin routes
+app.use('/api/upload', uploadRouter);
 app.use('/api/admin/scrape', scraperRouter);
 
 // Error handler (must be last)
