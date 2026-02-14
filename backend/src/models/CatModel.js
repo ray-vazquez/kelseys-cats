@@ -137,8 +137,8 @@ export class CatModel {
         name, age_years, sex, breed, temperament,
         good_with_kids, good_with_cats, good_with_dogs,
         medical_notes, is_special_needs, is_senior, status,
-        main_image_url, featured, bonded_pair_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        main_image_url, additional_images, featured, bonded_pair_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
@@ -155,6 +155,7 @@ export class CatModel {
       data.is_senior ? 1 : 0,
       data.status ?? "available",
       data.main_image_url ?? null,
+      data.additional_images ?? null,
       data.featured ? 1 : 0,
       data.bonded_pair_id ?? null,
     ];
@@ -184,6 +185,7 @@ export class CatModel {
       "is_senior",
       "status",
       "main_image_url",
+      "additional_images",  // CRITICAL FIX: Added this!
       "featured",
       "bonded_pair_id",
       "adoption_date",
