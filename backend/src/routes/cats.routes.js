@@ -12,6 +12,11 @@ import {
   restoreCat,
 } from "../controllers/cat.controller.js";
 import {
+  uploadCatImages,
+  getCatImages,
+  deleteCatImage,
+} from "../controllers/catImages.controller.js";
+import {
   importPreview,
   importConfirm,
 } from "../controllers/catsImport.controller.js";
@@ -22,7 +27,7 @@ import {
   getPartnerFostersInfo
 } from "../controllers/shelterCats.controller.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.middleware.js";
-import { uploadCsv } from "../middleware/upload.middleware.js";
+import { uploadCsv, uploadCatImages as uploadImagesMiddleware } from "../middleware/upload.middleware.js";
 import { exportCatsCsv } from "../controllers/catsExport.controller.js";
 
 const router = express.Router();
@@ -33,12 +38,17 @@ router.get("/all-available", getAllAvailableCats); // Featured + Partner fosters
 router.get("/partner-fosters", getPartnerFostersOnly); // Only partner fosters
 router.get("/partner-fosters-info", getPartnerFostersInfo); // Partner foster database info
 router.get("/:id", getCat);
+router.get("/:id/images", getCatImages); // Get additional images
 
 // Admin routes
 router.post("/", requireAuth, requireAdmin, createCat);
 router.put("/:id", requireAuth, requireAdmin, updateCat);
 router.delete("/:id", requireAuth, requireAdmin, deleteCat);
 router.post("/:id/adopt", requireAuth, requireAdmin, adoptCat);
+
+// Image management (admin only)
+router.post("/:id/images", requireAuth, requireAdmin, uploadImagesMiddleware, uploadCatImages);
+router.delete("/:id/images/:index", requireAuth, requireAdmin, deleteCatImage);
 
 // Soft delete management (admin only)
 router.get("/deleted/list", requireAuth, requireAdmin, listDeletedCats);
