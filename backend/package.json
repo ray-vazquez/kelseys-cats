@@ -17,7 +17,8 @@
     "migrate:vfv-integration": "node scripts/migrations/run-single-migration.js add_vfv_to_view.sql",
     "migrate:adoptapet-url": "node scripts/migrations/run-single-migration.js add_adoptapet_url.sql",
     "migrate:adoptapet-id": "node scripts/migrations/run-single-migration.js add_adoptapet_id_to_vfv_cats.sql",
-    "migrate:additional-images": "node scripts/migrations/run-single-migration.js add_additional_images_column.sql"
+    "migrate:additional-images": "node scripts/migrations/run-single-migration.js add_additional_images_column.sql",
+    "create-admin": "node scripts/create-admin.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -25,6 +26,7 @@
     "cors": "^2.8.5",
     "csv-parse": "^6.1.0",
     "csv-stringify": "^6.6.0",
+    "dotenv": "^16.4.7",
     "express": "^4.19.2",
     "express-rate-limit": "^7.0.0",
     "helmet": "^7.0.0",
