@@ -203,9 +203,20 @@ export default function CatDetailPage() {
   if (cat.main_image_url) {
     catImages.push(cat.main_image_url);
   }
-  // Add additional images if they exist
-  if (cat.additional_images && Array.isArray(cat.additional_images)) {
-    catImages.push(...cat.additional_images);
+  
+  // Parse additional_images if it's a JSON string
+  if (cat.additional_images) {
+    try {
+      const additionalImages = typeof cat.additional_images === 'string'
+        ? JSON.parse(cat.additional_images)
+        : cat.additional_images;
+      
+      if (Array.isArray(additionalImages)) {
+        catImages.push(...additionalImages);
+      }
+    } catch (e) {
+      console.error('Failed to parse additional_images:', e);
+    }
   }
 
   return (
