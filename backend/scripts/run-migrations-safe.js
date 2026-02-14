@@ -43,7 +43,7 @@ async function runMigrations() {
     log('\u2705 Connected to database\n', 'green');
 
     // Step 1: Create migrations tracking table
-    log('📝 Creating migration tracking table...', 'yellow');
+    log('\ud83d\udcdd Creating migration tracking table...', 'yellow');
     await connection.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -51,7 +51,7 @@ async function runMigrations() {
         applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    log('✅ Migration tracking ready\n', 'green');
+    log('\u2705 Migration tracking ready\n', 'green');
 
     // Step 2: Get list of applied migrations
     const [appliedRows] = await connection.query(
@@ -60,7 +60,7 @@ async function runMigrations() {
     const appliedMigrations = new Set(appliedRows.map(r => r.migration_name));
 
     if (appliedMigrations.size > 0) {
-      log('📊 Previously applied migrations:', 'blue');
+      log('\ud83d\udcca Previously applied migrations:', 'blue');
       appliedMigrations.forEach(m => log(`   - ${m}`, 'blue'));
       console.log('');
     }
@@ -72,9 +72,9 @@ async function runMigrations() {
       .filter(f => !f.includes('TEMPLATE'))
       .sort();
 
-    log('📂 Available migration files:', 'yellow');
+    log('\ud83d\udcc2 Available migration files:', 'yellow');
     allFiles.forEach(f => {
-      const status = appliedMigrations.has(f) ? '✅ Applied' : '⏳ Pending';
+      const status = appliedMigrations.has(f) ? '\u2705 Applied' : '\u23f3 Pending';
       log(`   ${status} - ${f}`, appliedMigrations.has(f) ? 'green' : 'yellow');
     });
     console.log('');
@@ -83,15 +83,15 @@ async function runMigrations() {
     const pendingMigrations = allFiles.filter(f => !appliedMigrations.has(f));
 
     if (pendingMigrations.length === 0) {
-      log('✅ All migrations up to date!\n', 'green');
+      log('\u2705 All migrations up to date!\n', 'green');
     } else {
-      log(`🚀 Running ${pendingMigrations.length} pending migration(s)...\n`, 'blue');
+      log(`\ud83d\ude80 Running ${pendingMigrations.length} pending migration(s)...\n`, 'blue');
 
       for (const migrationFile of pendingMigrations) {
         const filePath = join(migrationsDir, migrationFile);
         
         try {
-          log(`➡️  Applying: ${migrationFile}`, 'yellow');
+          log(`\u27a1\ufe0f  Applying: ${migrationFile}`, 'yellow');
           
           // Read and clean SQL
           let sql = readFileSync(filePath, 'utf8');
@@ -110,29 +110,49 @@ async function runMigrations() {
             [migrationFile]
           );
           
-          log(`✅ Successfully applied: ${migrationFile}\n`, 'green');
+          log(`\u2705 Successfully applied: ${migrationFile}\n`, 'green');
         } catch (error) {
-          log(`❌ Failed to apply: ${migrationFile}`, 'red');
+          // Handle common safe-to-ignore errors
+          const errorMsg = error.message.toLowerCase();
+          
+          if (errorMsg.includes('duplicate column') || 
+              errorMsg.includes('duplicate key') ||
+              errorMsg.includes('already exists')) {
+            log(`\u26a0\ufe0f  Skipping (already applied): ${migrationFile}`, 'yellow');
+            log(`   Reason: ${error.message}\n`, 'yellow');
+            
+            // Mark as applied anyway since the change already exists
+            try {
+              await connection.query(
+                'INSERT IGNORE INTO schema_migrations (migration_name) VALUES (?)',
+                [migrationFile]
+              );
+            } catch (e) {
+              // Ignore if already tracked
+            }
+            continue;
+          }
+          
+          // For other errors, stop
+          log(`\u274c Failed to apply: ${migrationFile}`, 'red');
           log(`   Error: ${error.message}\n`, 'red');
           
-          // Ask user if they want to continue
-          log('🚨 Migration failed! This might cause issues.', 'red');
+          log('\ud83d\udea8 Migration failed! This might cause issues.', 'red');
           log('   You can:', 'yellow');
           log('   1. Fix the migration file and run again', 'yellow');
-          log('   2. Skip this migration (risky)\n', 'yellow');
+          log('   2. Skip this migration manually\n', 'yellow');
           
-          // For now, stop on error
           process.exit(1);
         }
       }
     }
 
     // Step 5: Verify database state
-    log('\n🔍 Verifying database state...', 'blue');
+    log('\n\ud83d\udd0d Verifying database state...', 'blue');
     
     // Check tables
     const [tables] = await connection.query('SHOW TABLES');
-    log(`\n📋 Tables: ${tables.length}`, 'yellow');
+    log(`\n\ud83d\udccb Tables: ${tables.length}`, 'yellow');
     tables.forEach(row => {
       const tableName = Object.values(row)[0];
       log(`   - ${tableName}`, 'green');
@@ -143,7 +163,7 @@ async function runMigrations() {
       "SHOW FULL TABLES WHERE Table_type = 'VIEW'"
     );
     if (views.length > 0) {
-      log(`\n👁️  Views: ${views.length}`, 'yellow');
+      log(`\n\ud83d\udc41\ufe0f  Views: ${views.length}`, 'yellow');
       views.forEach(row => {
         const viewName = Object.values(row)[0];
         log(`   - ${viewName}`, 'green');
@@ -151,11 +171,11 @@ async function runMigrations() {
     }
 
     log('\n=========================================', 'green');
-    log('✅ Migration complete!', 'green');
+    log('\u2705 Migration complete!', 'green');
     log('=========================================\n', 'green');
 
   } catch (error) {
-    log('\n❌ Migration Error:', 'red');
+    log('\n\u274c Migration Error:', 'red');
     log(`   ${error.message}\n`, 'red');
     process.exit(1);
   } finally {
