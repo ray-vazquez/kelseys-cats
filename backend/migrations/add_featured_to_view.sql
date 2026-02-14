@@ -1,6 +1,6 @@
 -- Migration: Add featured column to all_available_cats view
 -- Purpose: Include featured flag from cats table so homepage can filter spotlighted cats
--- Date: 2026-02-13 (Updated with correct column names)
+-- Date: 2026-02-13 (Updated 2026-02-13 - removed petfinder_url dependency)
 
 -- Drop and recreate view with correct schema
 DROP VIEW IF EXISTS all_available_cats;
@@ -61,7 +61,7 @@ SELECT
   NULL as is_special_needs,
   NULL as bonded_pair_id,
   
-  v.petfinder_url as adoptapet_url,
+  NULL as adoptapet_url,  -- VFV cats don't have adoptapet URLs
   0 as featured,  -- Partner fosters are never featured on homepage
   v.petfinder_id as adoptapet_id,
   
