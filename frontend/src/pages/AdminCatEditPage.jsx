@@ -1,9 +1,10 @@
-// AdminCatEditPage with Multiple Images Support
+// AdminCatEditPage with Cloudinary Integration
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { Container, Card, CardBody, FormGroup, Label, Input, Textarea, Select, Button, Alert } from '../components/Common/StyledComponents.js';
 import { Toast } from '../components/Common/Toast.jsx';
+import ImageUploader from '../components/Admin/ImageUploader.jsx';
 import http from '../api/http.js';
 
 const PageWrapper = styled.div`
@@ -221,6 +222,29 @@ const NameErrorText = styled.span`
   display: block;
 `;
 
+const SectionDivider = styled.div`
+  margin-top: ${({ theme }) => theme.spacing[4]};
+  padding-top: ${({ theme }) => theme.spacing[4]};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
+const OrDivider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[3]};
+  margin: ${({ theme }) => theme.spacing[3]} 0;
+  color: ${({ theme }) => theme.colors.text.tertiary};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: ${({ theme }) => theme.colors.border};
+  }
+`;
+
 export default function AdminCatEditPage({ mode }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -356,6 +380,45 @@ export default function AdminCatEditPage({ mode }) {
     
     if (error) setError(null);
   }
+
+  // Handle main image upload
+  const handleMainImageUpload = (uploadData) => {
+    setFormData(prev => ({
+      ...prev,
+      main_image_url: uploadData.url
+    }));
+    
+    addToast({
+      title: 'Main Image Uploaded',
+      message: 'Image successfully uploaded to Cloudinary',
+      variant: 'success',
+      duration: 3000
+    });
+  };
+
+  // Handle additional image upload
+  const handleAdditionalImageUpload = (uploadData) => {
+    setFormData(prev => ({
+      ...prev,
+      additional_images: [...prev.additional_images, uploadData.url]
+    }));
+    
+    addToast({
+      title: 'Image Added',
+      message: 'Image uploaded and added to gallery',
+      variant: 'success',
+      duration: 3000
+    });
+  };
+
+  const handleImageUploadError = (error) => {
+    addToast({
+      title: 'Upload Failed',
+      message: error,
+      variant: 'error',
+      duration: 5000
+    });
+  };
 
   function handleAddImage() {
     if (!newImageUrl.trim()) {
@@ -642,8 +705,24 @@ export default function AdminCatEditPage({ mode }) {
                   />
                 </FormGroup>
 
-                <FormGroup>
-                  <Label>Main Image URL</Label>
+                {/* Main Image Upload Section */}
+                <ImagesSection>
+                  <TagsTitle>Main Image</TagsTitle>
+                  <StatusHint>
+                    Upload a main image to Cloudinary or enter a URL manually. This image will be shown as the primary image in lists and the main gallery image.
+                  </StatusHint>
+
+                  <FormGroup style={{ marginTop: '1rem' }}>
+                    <ImageUploader
+                      onUploadComplete={handleMainImageUpload}
+                      onUploadError={handleImageUploadError}
+                      disabled={loading}
+                      maxSizeMB={10}
+                    />
+                  </FormGroup>
+
+                  <OrDivider>or enter URL manually</OrDivider>
+
                   <Input
                     type="text"
                     name="main_image_url"
@@ -652,16 +731,13 @@ export default function AdminCatEditPage({ mode }) {
                     disabled={loading}
                     placeholder="https://..."
                   />
-                  <StatusHint>
-                    This image will be shown as the primary image in lists and the main gallery image.
-                  </StatusHint>
-                </FormGroup>
+                </ImagesSection>
 
                 {/* Additional Images Section */}
                 <ImagesSection>
                   <TagsTitle>Additional Images Gallery</TagsTitle>
                   <StatusHint>
-                    Add extra images to create a photo gallery on the cat's detail page. These will appear as thumbnails below the main image.
+                    Upload images to Cloudinary or add URLs manually. These will appear as thumbnails below the main image on the cat's detail page.
                   </StatusHint>
 
                   {formData.additional_images.length > 0 && (
@@ -681,6 +757,18 @@ export default function AdminCatEditPage({ mode }) {
                       ))}
                     </ImageList>
                   )}
+
+                  <SectionDivider>
+                    <TagsTitle style={{ marginBottom: '0.75rem' }}>Upload to Cloudinary</TagsTitle>
+                    <ImageUploader
+                      onUploadComplete={handleAdditionalImageUpload}
+                      onUploadError={handleImageUploadError}
+                      disabled={loading}
+                      maxSizeMB={10}
+                    />
+                  </SectionDivider>
+
+                  <OrDivider>or add URL manually</OrDivider>
 
                   <AddImageSection>
                     <Input
