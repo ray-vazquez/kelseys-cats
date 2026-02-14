@@ -30,8 +30,13 @@ export async function uploadCatImages(req, res, next) {
     // Get existing additional_images
     let existingImages = [];
     try {
-      existingImages = cat.additional_images ? JSON.parse(cat.additional_images) : [];
+      if (cat.additional_images) {
+        existingImages = typeof cat.additional_images === 'string' 
+          ? JSON.parse(cat.additional_images)
+          : cat.additional_images;
+      }
     } catch (e) {
+      console.error('Failed to parse existing images:', e);
       existingImages = [];
     }
 
@@ -64,11 +69,22 @@ export async function getCatImages(req, res, next) {
       return res.status(404).json({ error: "Cat not found" });
     }
 
+    console.log('getCatImages - Raw additional_images:', cat.additional_images);
+    console.log('getCatImages - Type:', typeof cat.additional_images);
+
     let images = [];
-    try {
-      images = cat.additional_images ? JSON.parse(cat.additional_images) : [];
-    } catch (e) {
-      images = [];
+    if (cat.additional_images) {
+      try {
+        // Handle both string and already-parsed array
+        images = typeof cat.additional_images === 'string' 
+          ? JSON.parse(cat.additional_images)
+          : cat.additional_images;
+        
+        console.log('getCatImages - Parsed images:', images);
+      } catch (e) {
+        console.error('Failed to parse additional_images:', e);
+        images = [];
+      }
     }
 
     res.json({
@@ -99,7 +115,11 @@ export async function deleteCatImage(req, res, next) {
 
     let images = [];
     try {
-      images = cat.additional_images ? JSON.parse(cat.additional_images) : [];
+      if (cat.additional_images) {
+        images = typeof cat.additional_images === 'string'
+          ? JSON.parse(cat.additional_images)
+          : cat.additional_images;
+      }
     } catch (e) {
       return res.status(400).json({ error: "Invalid images data" });
     }
