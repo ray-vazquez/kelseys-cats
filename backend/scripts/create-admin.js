@@ -1,30 +1,7 @@
 import { createConnection } from 'mysql2/promise';
 import bcrypt from 'bcrypt';
 import readline from 'readline';
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Load .env manually
-function loadEnv() {
-  try {
-    const envPath = join(__dirname, '..', '.env');
-    const envFile = readFileSync(envPath, 'utf8');
-    envFile.split('\n').forEach(line => {
-      const [key, ...valueParts] = line.split('=');
-      if (key && valueParts.length) {
-        process.env[key.trim()] = valueParts.join('=').trim();
-      }
-    });
-  } catch (error) {
-    console.log('⚠️  No .env file found, using environment variables');
-  }
-}
-
-loadEnv();
+import { env } from '../src/config/env.js';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -39,7 +16,7 @@ async function createAdmin() {
   let connection;
   
   try {
-    if (!process.env.DB_URL) {
+    if (!env.DB_URL) {
       console.error('❌ DB_URL not found in .env file');
       console.log('\nExample .env entry:');
       console.log('DB_URL=mysql://user:password@localhost:3306/kelseys_cats\n');
@@ -49,7 +26,7 @@ async function createAdmin() {
 
     // Connect to database
     console.log('🔌 Connecting to database...');
-    connection = await createConnection(process.env.DB_URL);
+    connection = await createConnection(env.DB_URL);
     console.log('✅ Connected to database\n');
     
     // Get username
@@ -105,7 +82,7 @@ async function createAdmin() {
     console.log(`   Password: ${password}`);
     console.log('\n💡 Use these to login at:');
     console.log('   - Test page: file:///path/to/backend/test-upload.html');
-    console.log('   - API: http://localhost:3000/api/auth/login\n');
+    console.log('   - API: http://localhost:' + env.PORT + '/api/auth/login\n');
     
   } catch (error) {
     console.error('❌ Error:', error.message);
