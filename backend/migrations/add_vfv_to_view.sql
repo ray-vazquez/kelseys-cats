@@ -1,8 +1,8 @@
 -- Migration: Add VFV cats to all_available_cats view
 -- Purpose: Extend the view to include Voice for the Voiceless partner foster cats
 -- Date: 2026-02-13
+-- Updated: 2026-02-14 - Removed Petfinder references, using adoptapet_id
 -- Prerequisites: create_vfv_cats_table.sql must be run first
--- Note: Only run this after vfv_cats table is fully set up with gender and description columns
 
 DROP VIEW IF EXISTS all_available_cats;
 
@@ -12,14 +12,14 @@ CREATE VIEW all_available_cats AS
 SELECT 
   c.id,
   c.name,
-  c.age_years,
+  CAST(SUBSTRING_INDEX(c.age, ' ', 1) AS DECIMAL(3,1)) as age_years,
   c.breed,
-  c.sex,
+  c.gender as sex,
   c.main_image_url,
-  c.temperament,
-  c.is_senior,
-  c.is_special_needs,
-  c.bonded_pair_id,
+  c.description as temperament,
+  FALSE as is_senior,
+  FALSE as is_special_needs,
+  NULL as bonded_pair_id,
   c.adoptapet_url,
   c.featured,
   
@@ -42,7 +42,6 @@ SELECT
   
 FROM cats c
 WHERE c.status = 'available'
-  AND c.deleted_at IS NULL
 
 UNION ALL
 
@@ -63,7 +62,7 @@ SELECT
   NULL as bonded_pair_id,
   NULL as adoptapet_url,
   0 as featured,
-  v.petfinder_id as adoptapet_id,
+  v.adoptapet_id,
   
   -- Badge information
   'partner_foster' as source,
@@ -78,10 +77,10 @@ SELECT
 FROM vfv_cats v
 
 -- Deduplicate: Exclude partner fosters that match Kelsey's cats
-WHERE NOT EXISTS (
+WHERE v.adoptapet_id IS NOT NULL
+AND NOT EXISTS (
   SELECT 1 FROM cats c 
   WHERE c.status = 'available'
-  AND c.deleted_at IS NULL 
   AND c.adoptapet_url IS NOT NULL
-  AND SUBSTRING_INDEX(SUBSTRING_INDEX(c.adoptapet_url, '/pet/', -1), '-', 1) = v.petfinder_id
+  AND SUBSTRING_INDEX(SUBSTRING_INDEX(c.adoptapet_url, '/pet/', -1), '-', 1) = v.adoptapet_id
 );
