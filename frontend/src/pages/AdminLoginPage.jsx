@@ -28,7 +28,7 @@ const CardTitle = styled.h2`
 `;
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { loginUser } = useAuth();
@@ -38,10 +38,11 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setError('');
     try {
-      const res = await http.post('/auth/login', { email, password });
+      const res = await http.post('/auth/login', { username, password });
       loginUser(res.data.token, res.data.user);
       navigate('/admin/cats');
     } catch (err) {
+      console.error('Login error:', err);
       setError(err.response?.data?.error || 'Login failed');
     }
   }
@@ -55,12 +56,13 @@ export default function AdminLoginPage() {
             {error && <Alert $variant="danger">{error}</Alert>}
             <form onSubmit={handleSubmit}>
               <FormGroup>
-                <Label>Email</Label>
+                <Label>Username</Label>
                 <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
+                  autoComplete="username"
                 />
               </FormGroup>
               <FormGroup>
@@ -70,6 +72,7 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  autoComplete="current-password"
                 />
               </FormGroup>
               <Button type="submit" style={{ width: '100%' }}>
