@@ -1,5 +1,5 @@
 // Script to reset an admin user's password
-// Usage: node scripts/reset-password.js <username> <new-password>
+// Usage: node scripts/reset-password.js <email> <new-password>
 
 import bcrypt from 'bcrypt';
 import { query } from '../src/lib/db.js';
@@ -14,25 +14,25 @@ const __dirname = dirname(__filename);
 // Load environment variables from backend/.env
 dotenv.config({ path: join(__dirname, '../.env') });
 
-async function resetPassword(username, newPassword) {
+async function resetPassword(email, newPassword) {
   try {
-    console.log('\n🔄 Resetting password for user:', username);
+    console.log('\n🔄 Resetting password for user:', email);
 
     // Check if user exists
-    const [users] = await query('SELECT * FROM admin_users WHERE username = ?', [username]);
+    const [users] = await query('SELECT * FROM admin_users WHERE email = ?', [email]);
     
     if (users.length === 0) {
-      console.log('❌ Error: User not found with username:', username);
+      console.log('❌ Error: User not found with email:', email);
       console.log('\n📋 Available users:');
-      const [allUsers] = await query('SELECT id, username, role FROM admin_users');
+      const [allUsers] = await query('SELECT id, email, role FROM admin_users');
       allUsers.forEach(user => {
-        console.log(`   - ${user.username} (${user.role})`);
+        console.log(`   - ${user.email} (${user.role})`);
       });
       process.exit(1);
     }
 
     const user = users[0];
-    console.log('✓ User found:', user.username, `(ID: ${user.id}, Role: ${user.role})`);
+    console.log('✓ User found:', user.email, `(ID: ${user.id}, Role: ${user.role})`);
 
     // Hash the new password
     console.log('🔐 Hashing new password...');
@@ -48,7 +48,7 @@ async function resetPassword(username, newPassword) {
     console.log('');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('🔑 Login Credentials:');
-    console.log(`   Username: ${username}`);
+    console.log(`   Email: ${email}`);
     console.log(`   Password: ${newPassword}`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('');
@@ -68,18 +68,18 @@ const args = process.argv.slice(2);
 
 if (args.length !== 2) {
   console.log('');
-  console.log('Usage: node scripts/reset-password.js <username> <new-password>');
+  console.log('Usage: node scripts/reset-password.js <email> <new-password>');
   console.log('');
   console.log('Example:');
-  console.log('  node scripts/reset-password.js admin NewPassword123!');
+  console.log('  node scripts/reset-password.js admin@kelseys.com NewPassword123!');
   console.log('');
   process.exit(1);
 }
 
-const [username, newPassword] = args;
+const [email, newPassword] = args;
 
-if (username.length < 3) {
-  console.log('❌ Error: Username must be at least 3 characters');
+if (email.length < 3) {
+  console.log('❌ Error: Email must be at least 3 characters');
   process.exit(1);
 }
 
@@ -88,4 +88,4 @@ if (newPassword.length < 6) {
   process.exit(1);
 }
 
-resetPassword(username, newPassword);
+resetPassword(email, newPassword);
