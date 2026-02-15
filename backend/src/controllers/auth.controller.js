@@ -5,7 +5,7 @@ import { query } from '../lib/db.js';
 export async function login(req, res, next) {
   try {
     const { email, username, password } = req.body;
-    // Accept either email or username
+    // Accept either email or username (username for backwards compatibility)
     const loginIdentifier = email || username;
     const result = await AuthService.login(loginIdentifier, password);
     if (!result) return res.status(401).json({ error: 'Invalid credentials' });
@@ -17,7 +17,10 @@ export async function login(req, res, next) {
 
 export async function resetPassword(req, res, next) {
   try {
-    const { username, currentPassword, newPassword, adminSecret } = req.body;
+    const { email, username, currentPassword, newPassword, adminSecret } = req.body;
+
+    // Accept either email or username
+    const userEmail = email || username;
 
     // Require admin secret for security (set in .env as ADMIN_RESET_SECRET)
     const expectedSecret = process.env.ADMIN_RESET_SECRET || 'kelseyscats2026';
@@ -26,8 +29,8 @@ export async function resetPassword(req, res, next) {
       return res.status(403).json({ error: 'Invalid admin secret' });
     }
 
-    if (!username || !newPassword) {
-      return res.status(400).json({ error: 'Username and new password are required' });
+    if (!userEmail || !newPassword) {
+      return res.status(400).json({ error: 'Email and new password are required' });
     }
 
     if (newPassword.length < 6) {
@@ -35,7 +38,7 @@ export async function resetPassword(req, res, next) {
     }
 
     // Get user
-    const [users] = await query('SELECT * FROM admin_users WHERE username = ?', [username]);
+    const [users] = await query('SELECT * FROM admin_users WHERE email = ?', [userEmail]);
     
     if (users.length === 0) {
       return res.status(404).json({ error: 'User not found' });
@@ -63,7 +66,7 @@ export async function resetPassword(req, res, next) {
     res.json({ 
       success: true, 
       message: 'Password reset successfully',
-      username: user.username 
+      email: user.email 
     });
   } catch (err) {
     next(err);
