@@ -1,11 +1,6 @@
 -- Migration 05: Final fix for all_available_cats view
--- This migration recreates the view with correct column names from cats table
--- Key fixes:
--- 1. Use 'sex' column (not 'gender')
--- 2. Use 'age_years' (not 'age')
--- 3. good_with_* columns exist and work
--- 4. is_special_needs and is_senior exist in table
--- 5. Removed deleted_at checks (use status = 'available' only)
+-- This migration recreates the view with correct column names
+-- Note: Using adoptapet_* columns, NOT petfinder_* (we scrape Adopt-a-Pet, not Petfinder)
 
 DROP VIEW IF EXISTS all_available_cats;
 
@@ -25,18 +20,18 @@ SELECT
     WHEN LOWER(c.sex) = 'female' THEN 'female'
     ELSE 'unknown'
   END as gender,
-  NULL as color,  -- cats table doesn't have color column
-  NULL as size,   -- cats table doesn't have size column
+  NULL as color,
+  NULL as size,
   c.main_image_url,
-  NULL as description,  -- cats table doesn't have description column
+  NULL as description,
   c.medical_notes,
   
-  -- Boolean flags - these columns exist!
+  -- Boolean flags
   COALESCE(c.good_with_kids, FALSE) as good_with_kids,
   COALESCE(c.good_with_cats, FALSE) as good_with_cats,
   COALESCE(c.good_with_dogs, FALSE) as good_with_dogs,
   
-  -- Special categorization - these columns exist!
+  -- Special categorization
   COALESCE(c.is_special_needs, FALSE) as is_special_needs,
   COALESCE(c.is_senior, FALSE) as is_senior,
   
@@ -66,7 +61,7 @@ AND c.deleted_at IS NULL
 
 UNION ALL
 
--- VFV partner foster cats (Partner Homes)
+-- VFV partner foster cats (Partner Homes from Adopt-a-Pet)
 SELECT 
   v.id,
   v.name,
@@ -84,7 +79,7 @@ SELECT
   v.description,
   NULL as medical_notes,
   
-  -- Boolean flags (not available from Petfinder scraping)
+  -- Boolean flags (not available from scraping)
   FALSE as good_with_kids,
   FALSE as good_with_cats,
   FALSE as good_with_dogs,
@@ -101,8 +96,8 @@ SELECT
   
   NULL as bonded_pair_id,
   
-  v.petfinder_url as adoptapet_url,
-  v.petfinder_id as adoptapet_id,
+  v.adoptapet_url,
+  v.adoptapet_id,
   
   -- Badge information
   'partner_foster' as source,
@@ -116,11 +111,11 @@ SELECT
   
 FROM vfv_cats v
 -- Deduplicate: Exclude partner fosters that match Kelsey's cats by adoptapet_id
-WHERE v.petfinder_id IS NOT NULL
+WHERE v.adoptapet_id IS NOT NULL
 AND NOT EXISTS (
   SELECT 1 FROM cats c 
   WHERE c.status = 'available'
   AND c.deleted_at IS NULL
   AND c.adoptapet_url IS NOT NULL
-  AND SUBSTRING_INDEX(SUBSTRING_INDEX(c.adoptapet_url, '/pet/', -1), '-', 1) = v.petfinder_id
+  AND SUBSTRING_INDEX(SUBSTRING_INDEX(c.adoptapet_url, '/pet/', -1), '-', 1) = v.adoptapet_id
 );
