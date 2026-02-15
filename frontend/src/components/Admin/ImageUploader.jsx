@@ -1,4 +1,4 @@
-// ImageUploader Component for Cloudinary Integration
+// ImageUploader Component for Cloudinary Integration with Multi-file Support
 import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 import http from '../../api/http.js';
@@ -177,21 +177,34 @@ const SuccessMessage = styled.div`
   }
 `;
 
+const UploadSummary = styled.div`
+  padding: ${({ theme }) => theme.spacing[3]};
+  background: ${({ theme }) => theme.colors.light};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  
+  strong {
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+`;
+
 export default function ImageUploader({ 
   onUploadComplete, 
   onUploadError,
   disabled = false,
   maxSizeMB = 10,
   acceptedFormats = ['image/jpeg', 'image/jpg', 'image/png'],
-  showPreview = true
+  showPreview = true,
+  allowMultiple = false,
+  mode = 'single' // 'single' or 'multiple'
 }) {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [error, setError] = useState(null);
-  const [uploadedUrl, setUploadedUrl] = useState(null);
+  const [uploadingFiles, setUploadingFiles] = useState([]);
+  const [errors, setErrors] = useState([]);
+  const [completedUploads, setCompletedUploads] = useState(0);
   const fileInputRef = useRef(null);
 
   const formatFileSize = (bytes) => {
@@ -217,36 +230,68 @@ export default function ImageUploader({
     return null;
   };
 
-  const handleFileSelect = (file) => {
-    setError(null);
-    setUploadedUrl(null);
+  const handleFilesSelect = async (files) => {
+    setErrors([]);
+    setCompletedUploads(0);
 
-    const validationError = validateFile(file);
-    if (validationError) {
-      setError(validationError);
-      if (onUploadError) {
-        onUploadError(validationError);
+    const fileArray = Array.from(files);
+    const validFiles = [];
+    const newErrors = [];
+
+    // Validate all files
+    fileArray.forEach((file, index) => {
+      const validationError = validateFile(file);
+      if (validationError) {
+        newErrors.push(`${file.name}: ${validationError}`);
+      } else {
+        validFiles.push(file);
       }
+    });
+
+    if (newErrors.length > 0) {
+      setErrors(newErrors);
+      if (onUploadError) {
+        onUploadError(newErrors.join('; '));
+      }
+    }
+
+    if (validFiles.length === 0) {
       return;
     }
 
-    setSelectedFile(file);
+    // Create preview objects
+    const fileObjects = validFiles.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      progress: 0,
+      uploading: false,
+      uploaded: false,
+      error: null
+    }));
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewUrl(reader.result);
-    };
-    reader.readAsDataURL(file);
+    setSelectedFiles(fileObjects);
 
-    // Auto-upload
-    uploadFile(file);
+    // Upload files
+    if (mode === 'multiple' || allowMultiple) {
+      // Upload all files
+      for (const fileObj of fileObjects) {
+        await uploadFile(fileObj);
+      }
+    } else {
+      // Single mode - only upload first file
+      await uploadFile(fileObjects[0]);
+    }
   };
 
-  const uploadFile = async (file) => {
-    setIsUploading(true);
-    setUploadProgress(0);
-    setError(null);
+  const uploadFile = async (fileObj) => {
+    const { file } = fileObj;
+    
+    // Update state to show uploading
+    setSelectedFiles(prev => 
+      prev.map(f => 
+        f.file === file ? { ...f, uploading: true, progress: 0 } : f
+      )
+    );
 
     try {
       const formData = new FormData();
@@ -254,13 +299,13 @@ export default function ImageUploader({
 
       // Simulate progress for better UX
       const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
+        setSelectedFiles(prev => 
+          prev.map(f => 
+            f.file === file && f.progress < 90
+              ? { ...f, progress: Math.min(f.progress + 10, 90) }
+              : f
+          )
+        );
       }, 200);
 
       const response = await http.post('/upload/image', formData, {
@@ -270,10 +315,18 @@ export default function ImageUploader({
       });
 
       clearInterval(progressInterval);
-      setUploadProgress(100);
 
       if (response.data.success && response.data.url) {
-        setUploadedUrl(response.data.url);
+        // Update state to show completed
+        setSelectedFiles(prev => 
+          prev.map(f => 
+            f.file === file 
+              ? { ...f, uploading: false, uploaded: true, progress: 100, url: response.data.url }
+              : f
+          )
+        );
+
+        setCompletedUploads(prev => prev + 1);
         
         if (onUploadComplete) {
           onUploadComplete({
@@ -296,13 +349,20 @@ export default function ImageUploader({
                           err.response?.data?.details || 
                           err.message || 
                           'Failed to upload image';
-      setError(errorMessage);
+      
+      setSelectedFiles(prev => 
+        prev.map(f => 
+          f.file === file 
+            ? { ...f, uploading: false, error: errorMessage }
+            : f
+        )
+      );
+
+      setErrors(prev => [...prev, `${file.name}: ${errorMessage}`]);
       
       if (onUploadError) {
         onUploadError(errorMessage);
       }
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -334,12 +394,12 @@ export default function ImageUploader({
 
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
-      handleFileSelect(files[0]);
+      handleFilesSelect(files);
     }
   };
 
   const handleClick = () => {
-    if (!disabled && !isUploading) {
+    if (!disabled) {
       fileInputRef.current?.click();
     }
   };
@@ -347,20 +407,27 @@ export default function ImageUploader({
   const handleInputChange = (e) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      handleFileSelect(files[0]);
+      handleFilesSelect(files);
     }
   };
 
-  const handleRemove = () => {
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    setUploadedUrl(null);
-    setError(null);
-    setUploadProgress(0);
+  const handleRemove = (fileToRemove) => {
+    setSelectedFiles(prev => prev.filter(f => f.file !== fileToRemove));
+    setCompletedUploads(prev => Math.max(0, prev - 1));
+  };
+
+  const handleClearAll = () => {
+    selectedFiles.forEach(f => URL.revokeObjectURL(f.preview));
+    setSelectedFiles([]);
+    setErrors([]);
+    setCompletedUploads(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
+
+  const isUploading = selectedFiles.some(f => f.uploading);
+  const showUploadZone = selectedFiles.length === 0 || (mode === 'multiple' && !isUploading);
 
   return (
     <UploaderContainer>
@@ -370,9 +437,10 @@ export default function ImageUploader({
         accept={acceptedFormats.join(',')}
         onChange={handleInputChange}
         disabled={disabled}
+        multiple={mode === 'multiple' || allowMultiple}
       />
 
-      {!selectedFile && !uploadedUrl && (
+      {showUploadZone && (
         <DropZone
           onClick={handleClick}
           onDragEnter={handleDragEnter}
@@ -381,7 +449,7 @@ export default function ImageUploader({
           onDrop={handleDrop}
           $isDragging={isDragging}
           $disabled={disabled}
-          $hasError={!!error}
+          $hasError={errors.length > 0}
         >
           <DropZoneContent>
             <UploadIcon>📸</UploadIcon>
@@ -389,50 +457,68 @@ export default function ImageUploader({
               <strong>Click to upload</strong> or drag and drop
             </DropZoneText>
             <DropZoneHint>
-              JPG or PNG (max {maxSizeMB}MB)
+              JPG or PNG (max {maxSizeMB}MB){mode === 'multiple' && ' • Select multiple with Ctrl/Cmd+Click'}
             </DropZoneHint>
           </DropZoneContent>
         </DropZone>
       )}
 
-      {(selectedFile || uploadedUrl) && showPreview && (
-        <PreviewContainer>
-          {previewUrl && (
-            <PreviewImage src={previewUrl} alt="Upload preview" />
-          )}
-          <PreviewInfo>
-            <PreviewName>{selectedFile?.name || 'Image uploaded'}</PreviewName>
-            {selectedFile && (
-              <PreviewSize>{formatFileSize(selectedFile.size)}</PreviewSize>
-            )}
-            {isUploading && (
-              <ProgressBar>
-                <ProgressFill $progress={uploadProgress} />
-              </ProgressBar>
-            )}
-            {isUploading && (
-              <PreviewSize>Uploading... {uploadProgress}%</PreviewSize>
-            )}
-          </PreviewInfo>
-          <RemoveButton 
-            type="button" 
-            onClick={handleRemove} 
-            disabled={isUploading}
-          >
-            Remove
-          </RemoveButton>
-        </PreviewContainer>
+      {selectedFiles.length > 0 && showPreview && (
+        <>
+          {selectedFiles.map((fileObj, index) => (
+            <PreviewContainer key={index}>
+              <PreviewImage src={fileObj.preview} alt={`Upload preview ${index + 1}`} />
+              <PreviewInfo>
+                <PreviewName>{fileObj.file.name}</PreviewName>
+                <PreviewSize>{formatFileSize(fileObj.file.size)}</PreviewSize>
+                {fileObj.uploading && (
+                  <>
+                    <ProgressBar>
+                      <ProgressFill $progress={fileObj.progress} />
+                    </ProgressBar>
+                    <PreviewSize>Uploading... {fileObj.progress}%</PreviewSize>
+                  </>
+                )}
+                {fileObj.uploaded && (
+                  <PreviewSize style={{ color: '#10b981' }}>✓ Uploaded successfully</PreviewSize>
+                )}
+                {fileObj.error && (
+                  <PreviewSize style={{ color: '#ef4444' }}>✗ {fileObj.error}</PreviewSize>
+                )}
+              </PreviewInfo>
+              <RemoveButton 
+                type="button" 
+                onClick={() => handleRemove(fileObj.file)} 
+                disabled={fileObj.uploading}
+              >
+                Remove
+              </RemoveButton>
+            </PreviewContainer>
+          ))}
+        </>
       )}
 
-      {error && (
+      {selectedFiles.length > 1 && (
+        <UploadSummary>
+          <strong>{completedUploads}</strong> of <strong>{selectedFiles.length}</strong> files uploaded
+        </UploadSummary>
+      )}
+
+      {errors.length > 0 && (
         <ErrorMessage>
-          {error}
+          <div>
+            {errors.map((error, index) => (
+              <div key={index}>{error}</div>
+            ))}
+          </div>
         </ErrorMessage>
       )}
 
-      {uploadedUrl && !error && (
+      {completedUploads > 0 && completedUploads === selectedFiles.length && errors.length === 0 && (
         <SuccessMessage>
-          Image uploaded successfully to Cloudinary
+          {selectedFiles.length === 1 
+            ? 'Image uploaded successfully to Cloudinary'
+            : `All ${selectedFiles.length} images uploaded successfully to Cloudinary`}
         </SuccessMessage>
       )}
     </UploaderContainer>
