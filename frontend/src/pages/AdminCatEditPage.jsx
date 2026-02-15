@@ -1,11 +1,22 @@
 // AdminCatEditPage with Cloudinary Integration
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
-import { Container, Card, CardBody, FormGroup, Label, Input, Textarea, Select, Button, Alert } from '../components/Common/StyledComponents.js';
-import { Toast } from '../components/Common/Toast.jsx';
-import ImageUploader from '../components/Admin/ImageUploader.jsx';
-import http from '../api/http.js';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import styled from "styled-components";
+import {
+  Container,
+  Card,
+  CardBody,
+  FormGroup,
+  Label,
+  Input,
+  Textarea,
+  Select,
+  Button,
+  Alert,
+} from "../components/Common/StyledComponents.js";
+import { Toast } from "../components/Common/Toast.jsx";
+import ImageUploader from "../components/Admin/ImageUploader.jsx";
+import http from "../api/http.js";
 
 const PageWrapper = styled.div`
   padding: ${({ theme }) => theme.spacing[12]} 0;
@@ -16,7 +27,7 @@ const PageWrapper = styled.div`
 `;
 
 const PageTitle = styled.h2`
-  font-size: ${({ theme }) => theme.fontSizes['3xl']};
+  font-size: ${({ theme }) => theme.fontSizes["3xl"]};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0 0 ${({ theme }) => theme.spacing[6]} 0;
@@ -38,7 +49,7 @@ const TagsSection = styled.div`
 `;
 
 const TagsTitle = styled.h4`
-  font-size: ${({ theme}) => theme.fontSizes.base};
+  font-size: ${({ theme }) => theme.fontSizes.base};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0 0 ${({ theme }) => theme.spacing[1]} 0;
@@ -63,23 +74,26 @@ const ImageItem = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing[2]};
   padding: ${({ theme }) => theme.spacing[3]};
-  background: ${({ theme, $isDragging, $isDragOver }) => 
-    $isDragging ? theme.colors.neutral[100] :
-    $isDragOver ? `${theme.colors.primary}15` :
-    theme.colors.light};
+  background: ${({ theme, $isDragging, $isDragOver }) =>
+    $isDragging
+      ? theme.colors.neutral[100]
+      : $isDragOver
+        ? `${theme.colors.primary}15`
+        : theme.colors.light};
   border-radius: ${({ theme }) => theme.borderRadius.base};
-  border: 2px solid ${({ theme, $isDragOver }) => 
-    $isDragOver ? theme.colors.primary : 'transparent'};
-  cursor: ${({ $isDraggable }) => $isDraggable ? 'grab' : 'default'};
+  border: 2px solid
+    ${({ theme, $isDragOver }) =>
+      $isDragOver ? theme.colors.primary : "transparent"};
+  cursor: ${({ $isDraggable }) => ($isDraggable ? "grab" : "default")};
   transition: all ${({ theme }) => theme.transitions.fast};
-  opacity: ${({ $isDragging }) => $isDragging ? 0.5 : 1};
-  
+  opacity: ${({ $isDragging }) => ($isDragging ? 0.5 : 1)};
+
   &:active {
-    cursor: ${({ $isDraggable }) => $isDraggable ? 'grabbing' : 'default'};
+    cursor: ${({ $isDraggable }) => ($isDraggable ? "grabbing" : "default")};
   }
-  
+
   &:hover {
-    background: ${({ theme, $isDragging }) => 
+    background: ${({ theme, $isDragging }) =>
       $isDragging ? theme.colors.neutral[100] : theme.colors.neutral[50]};
   }
 `;
@@ -92,13 +106,13 @@ const DragHandle = styled.div`
   padding: ${({ theme }) => theme.spacing[2]};
   color: ${({ theme }) => theme.colors.text.tertiary};
   flex-shrink: 0;
-  
+
   &:active {
     cursor: grabbing;
   }
-  
+
   &::before {
-    content: '☰';
+    content: "☰";
     font-size: 18px;
     line-height: 1;
   }
@@ -221,7 +235,7 @@ const WarningBox = styled.div`
   gap: ${({ theme }) => theme.spacing[2]};
 
   &::before {
-    content: '⚠️';
+    content: "⚠️";
     font-size: ${({ theme }) => theme.fontSizes.lg};
     flex-shrink: 0;
   }
@@ -240,7 +254,7 @@ const ReorderHint = styled.div`
   gap: ${({ theme }) => theme.spacing[2]};
 
   &::before {
-    content: '👆';
+    content: "👆";
     font-size: ${({ theme }) => theme.fontSizes.base};
     flex-shrink: 0;
   }
@@ -250,18 +264,18 @@ const CheckboxLabel = styled.label`
   display: flex;
   align-items: center;
   font-size: ${({ theme }) => theme.fontSizes.base};
-  cursor: ${({ $disabled }) => ($disabled ? 'not-allowed' : 'pointer')};
+  cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
   user-select: none;
   width: fit-content;
   opacity: ${({ $muted }) => ($muted ? 0.4 : 1)};
-  color: ${({ theme, $muted }) => ($muted ? theme.colors.text.tertiary : 'inherit')};
+  color: ${({ theme, $muted }) =>
+    $muted ? theme.colors.text.tertiary : "inherit"};
 
   &:hover {
-    color: ${({ theme, $disabled, $muted }) => 
-      ($disabled || $muted) ? 'inherit' : theme.colors.primary
-    };
+    color: ${({ theme, $disabled, $muted }) =>
+      $disabled || $muted ? "inherit" : theme.colors.primary};
   }
-  
+
   input[type="checkbox"] {
     opacity: ${({ $muted }) => ($muted ? 0.4 : 1)};
   }
@@ -271,7 +285,7 @@ const Checkbox = styled.input.attrs({ type: "checkbox" })`
   width: 18px;
   height: 18px;
   margin-right: ${({ theme }) => theme.spacing[2]};
-  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   accent-color: ${({ theme }) => theme.colors.primary};
   flex-shrink: 0;
 
@@ -310,7 +324,7 @@ const OrDivider = styled.div`
 
   &::before,
   &::after {
-    content: '';
+    content: "";
     flex: 1;
     height: 1px;
     background: ${({ theme }) => theme.colors.border};
@@ -321,87 +335,89 @@ export default function AdminCatEditPage({ mode }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '',
-    age_years: '',
-    sex: 'unknown',
-    breed: '',
-    bio: '',
-    temperament: '',
+    name: "",
+    age_years: "",
+    sex: "unknown",
+    breed: "",
+    bio: "",
+    temperament: "",
     good_with_kids: false,
     good_with_cats: false,
     good_with_dogs: false,
-    medical_notes: '',
+    medical_notes: "",
     is_special_needs: false,
     is_senior: false,
-    status: 'available',
-    main_image_url: '',
+    status: "available",
+    main_image_url: "",
     additional_images: [],
-    featured: false
+    featured: false,
   });
 
-  const [newImageUrl, setNewImageUrl] = useState('');
-  const [mainImageUrlInput, setMainImageUrlInput] = useState('');
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [mainImageUrlInput, setMainImageUrlInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(mode === 'edit');
+  const [loadingData, setLoadingData] = useState(mode === "edit");
   const [error, setError] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [showAlumniWarning, setShowAlumniWarning] = useState(false);
   const [nameError, setNameError] = useState(false);
-  
+
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
 
   useEffect(() => {
-    if (mode === 'edit' && id) {
+    if (mode === "edit" && id) {
       setLoadingData(true);
-      http.get(`/cats/${id}`)
+      http
+        .get(`/cats/${id}`)
         .then((res) => {
           const cat = res.data;
-          
+
           let parsedImages = [];
           if (cat.additional_images) {
             try {
-              parsedImages = typeof cat.additional_images === 'string' 
-                ? JSON.parse(cat.additional_images)
-                : cat.additional_images;
+              parsedImages =
+                typeof cat.additional_images === "string"
+                  ? JSON.parse(cat.additional_images)
+                  : cat.additional_images;
             } catch (e) {
-              console.error('Failed to parse additional_images:', e);
+              console.error("Failed to parse additional_images:", e);
               parsedImages = [];
             }
           }
-          
+
           setFormData({
-            name: cat.name || '',
-            age_years: cat.age_years ?? '',
-            sex: cat.sex || 'unknown',
-            breed: cat.breed || '',
-            bio: cat.bio || '',
-            temperament: cat.temperament || '',
+            name: cat.name || "",
+            age_years: cat.age_years ?? "",
+            sex: cat.sex || "unknown",
+            breed: cat.breed || "",
+            bio: cat.bio || "",
+            temperament: cat.temperament || "",
             good_with_kids: cat.good_with_kids || false,
             good_with_cats: cat.good_with_cats || false,
             good_with_dogs: cat.good_with_dogs || false,
-            medical_notes: cat.medical_notes || '',
+            medical_notes: cat.medical_notes || "",
             is_special_needs: cat.is_special_needs || false,
             is_senior: cat.is_senior || false,
-            status: cat.status || 'available',
-            main_image_url: cat.main_image_url || '',
+            status: cat.status || "available",
+            main_image_url: cat.main_image_url || "",
             additional_images: parsedImages,
-            featured: cat.featured || false
+            featured: cat.featured || false,
           });
-          
-          setMainImageUrlInput(cat.main_image_url || '');
+
+          setMainImageUrlInput(cat.main_image_url || "");
           setLoadingData(false);
         })
         .catch((err) => {
-          console.error('Failed to load cat data:', err);
-          setError('Failed to load cat data. Please try again.');
+          console.error("Failed to load cat data:", err);
+          setError("Failed to load cat data. Please try again.");
           setLoadingData(false);
           addToast({
-            title: 'Error',
-            message: 'Failed to load cat data',
-            variant: 'error',
-            duration: 0
+            title: "Error",
+            message: "Failed to load cat data",
+            variant: "error",
+            duration: 0,
           });
         });
     }
@@ -409,212 +425,216 @@ export default function AdminCatEditPage({ mode }) {
 
   const addToast = (toast) => {
     const id = Date.now().toString();
-    setToasts(prev => [...prev, {
-      id,
-      ...toast,
-      onClose: () => setToasts(prev => prev.filter(t => t.id !== id))
-    }]);
+    setToasts((prev) => [
+      ...prev,
+      {
+        id,
+        ...toast,
+        onClose: () => setToasts((prev) => prev.filter((t) => t.id !== id)),
+      },
+    ]);
   };
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
-    
-    if (name === 'name') {
+
+    if (name === "name") {
       setNameError(false);
     }
-    
-    if (name === 'status') {
+
+    if (name === "status") {
       const newStatus = value;
-      const isAlumni = newStatus === 'alumni';
-      
+      const isAlumni = newStatus === "alumni";
+
       if (isAlumni && formData.featured) {
         setFormData((prev) => ({
           ...prev,
           status: newStatus,
-          featured: false
+          featured: false,
         }));
-        
+
         setShowAlumniWarning(true);
-        
+
         addToast({
-          title: 'Featured Status Removed',
-          message: 'Alumni cats are not shown on the homepage, so the Featured checkbox has been automatically unchecked.',
-          variant: 'warning',
-          duration: 7000
+          title: "Featured Status Removed",
+          message:
+            "Alumni cats are not shown on the homepage, so the Featured checkbox has been automatically unchecked.",
+          variant: "warning",
+          duration: 7000,
         });
       } else {
         setFormData((prev) => ({
           ...prev,
-          [name]: value
+          [name]: value,
         }));
         setShowAlumniWarning(false);
       }
     } else {
       setFormData((prev) => ({
         ...prev,
-        [name]: type === 'checkbox' ? checked : value
+        [name]: type === "checkbox" ? checked : value,
       }));
     }
-    
+
     if (error) setError(null);
   }
 
   const handleMainImageUpload = (uploadData) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      main_image_url: uploadData.url
+      main_image_url: uploadData.url,
     }));
     setMainImageUrlInput(uploadData.url);
-    
+
     addToast({
-      title: 'Main Image Uploaded',
-      message: 'Image successfully uploaded to Cloudinary',
-      variant: 'success',
-      duration: 3000
+      title: "Main Image Uploaded",
+      message: "Image successfully uploaded to Cloudinary",
+      variant: "success",
+      duration: 3000,
     });
   };
-  
+
   const handleSetMainImageUrl = () => {
     if (!mainImageUrlInput.trim()) {
       addToast({
-        title: 'Invalid URL',
-        message: 'Please enter a valid image URL',
-        variant: 'warning',
-        duration: 3000
+        title: "Invalid URL",
+        message: "Please enter a valid image URL",
+        variant: "warning",
+        duration: 3000,
       });
       return;
     }
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
-      main_image_url: mainImageUrlInput.trim()
+      main_image_url: mainImageUrlInput.trim(),
     }));
-    
+
     addToast({
-      title: 'Main Image URL Set',
-      message: 'Main image URL has been updated',
-      variant: 'success',
-      duration: 3000
+      title: "Main Image URL Set",
+      message: "Main image URL has been updated",
+      variant: "success",
+      duration: 3000,
     });
   };
 
   const handleAdditionalImageUpload = (uploadData) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      additional_images: [...prev.additional_images, uploadData.url]
+      additional_images: [...prev.additional_images, uploadData.url],
     }));
-    
+
     addToast({
-      title: 'Image Added',
-      message: 'Image uploaded and added to gallery',
-      variant: 'success',
-      duration: 3000
+      title: "Image Added",
+      message: "Image uploaded and added to gallery",
+      variant: "success",
+      duration: 3000,
     });
   };
 
   const handleImageUploadError = (error) => {
     addToast({
-      title: 'Upload Failed',
+      title: "Upload Failed",
       message: error,
-      variant: 'error',
-      duration: 5000
+      variant: "error",
+      duration: 5000,
     });
   };
 
   function handleAddImage() {
     if (!newImageUrl.trim()) {
       addToast({
-        title: 'Invalid URL',
-        message: 'Please enter a valid image URL',
-        variant: 'warning',
-        duration: 3000
+        title: "Invalid URL",
+        message: "Please enter a valid image URL",
+        variant: "warning",
+        duration: 3000,
       });
       return;
     }
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      additional_images: [...prev.additional_images, newImageUrl.trim()]
+      additional_images: [...prev.additional_images, newImageUrl.trim()],
     }));
-    setNewImageUrl('');
-    
+    setNewImageUrl("");
+
     addToast({
-      title: 'Image Added',
-      message: 'Image URL added to gallery',
-      variant: 'success',
-      duration: 3000
+      title: "Image Added",
+      message: "Image URL added to gallery",
+      variant: "success",
+      duration: 3000,
     });
   }
 
   function handleRemoveImage(index) {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      additional_images: prev.additional_images.filter((_, i) => i !== index)
+      additional_images: prev.additional_images.filter((_, i) => i !== index),
     }));
-    
+
     addToast({
-      title: 'Image Removed',
-      message: 'Image removed from gallery',
-      variant: 'info',
-      duration: 3000
+      title: "Image Removed",
+      message: "Image removed from gallery",
+      variant: "info",
+      duration: 3000,
     });
   }
-  
+
   // Drag and drop handlers
   const handleDragStart = (e, index) => {
     setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', e.currentTarget);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/html", e.currentTarget);
   };
-  
+
   const handleDragOver = (e, index) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    
+    e.dataTransfer.dropEffect = "move";
+
     if (draggedIndex !== null && draggedIndex !== index) {
       setDragOverIndex(index);
     }
   };
-  
+
   const handleDragLeave = (e) => {
     e.preventDefault();
     setDragOverIndex(null);
   };
-  
+
   const handleDrop = (e, dropIndex) => {
     e.preventDefault();
-    
+
     if (draggedIndex === null || draggedIndex === dropIndex) {
       setDraggedIndex(null);
       setDragOverIndex(null);
       return;
     }
-    
+
     const newImages = [...formData.additional_images];
     const draggedImage = newImages[draggedIndex];
-    
+
     // Remove from old position
     newImages.splice(draggedIndex, 1);
-    
+
     // Insert at new position
     newImages.splice(dropIndex, 0, draggedImage);
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
-      additional_images: newImages
+      additional_images: newImages,
     }));
-    
+
     addToast({
-      title: 'Images Reordered',
+      title: "Images Reordered",
       message: `Moved image from position ${draggedIndex + 1} to ${dropIndex + 1}`,
-      variant: 'info',
-      duration: 2000
+      variant: "info",
+      duration: 2000,
     });
-    
+
     setDraggedIndex(null);
     setDragOverIndex(null);
   };
-  
+
   const handleDragEnd = () => {
     setDraggedIndex(null);
     setDragOverIndex(null);
@@ -623,22 +643,17 @@ export default function AdminCatEditPage({ mode }) {
   function prepareFormData(data) {
     const cleaned = {};
     for (const [key, value] of Object.entries(data)) {
-      if (value === '') {
+      if (value === "") {
         cleaned[key] = null;
-      }
-      else if (key === 'additional_images') {
+      } else if (key === "additional_images") {
         cleaned[key] = JSON.stringify(value);
-      }
-      else if (typeof value === 'boolean') {
+      } else if (typeof value === "boolean") {
         cleaned[key] = value;
-      }
-      else if (typeof value === 'number') {
+      } else if (typeof value === "number") {
         cleaned[key] = value;
-      }
-      else if (Array.isArray(value)) {
+      } else if (Array.isArray(value)) {
         cleaned[key] = value;
-      }
-      else {
+      } else {
         cleaned[key] = value;
       }
     }
@@ -647,69 +662,74 @@ export default function AdminCatEditPage({ mode }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    
-    if (!formData.name || formData.name.trim() === '') {
+
+    if (!formData.name || formData.name.trim() === "") {
       setNameError(true);
-      setError('Name is required');
+      setError("Name is required");
       addToast({
-        title: 'Validation Error',
-        message: 'Please enter a name for the cat',
-        variant: 'error',
-        duration: 5000
+        title: "Validation Error",
+        message: "Please enter a name for the cat",
+        variant: "error",
+        duration: 5000,
       });
       return;
     }
-    
+
     setLoading(true);
     setError(null);
 
     try {
       const cleanedData = prepareFormData(formData);
-      console.log('Submitting cleaned data:', cleanedData);
+      console.log("Submitting cleaned data:", cleanedData);
 
-      if (mode === 'create') {
-        await http.post('/cats', cleanedData);
+      if (mode === "create") {
+        await http.post("/cats", cleanedData);
         addToast({
-          title: 'Success!',
+          title: "Success!",
           message: `${formData.name} has been added successfully`,
-          variant: 'success',
-          duration: 5000
+          variant: "success",
+          duration: 5000,
         });
       } else {
         await http.put(`/cats/${id}`, cleanedData);
         addToast({
-          title: 'Success!',
+          title: "Success!",
           message: `${formData.name} has been updated successfully`,
-          variant: 'success',
-          duration: 5000
+          variant: "success",
+          duration: 5000,
         });
       }
-      
+
       setTimeout(() => {
-        navigate('/admin/cats');
+        navigate("/admin/cats");
       }, 1000);
     } catch (err) {
-      console.error('Failed to save cat:', err);
-      
-      const errorMessage = err.response?.data?.message || 
-                          err.response?.data?.error || 
-                          err.message || 
-                          'An unexpected error occurred';
-      
+      console.error("Failed to save cat:", err);
+
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "An unexpected error occurred";
+
       setError(errorMessage);
       setLoading(false);
-      
+
       addToast({
-        title: mode === 'create' ? 'Failed to Add Cat' : 'Failed to Update Cat',
+        title: mode === "create" ? "Failed to Add Cat" : "Failed to Update Cat",
         message: errorMessage,
-        variant: 'error',
-        duration: 0
+        variant: "error",
+        duration: 0,
       });
     }
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Are you sure you want to delete ${formData.name}? This action cannot be undone.`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${formData.name}? This action cannot be undone.`,
+      )
+    ) {
       return;
     }
 
@@ -717,29 +737,30 @@ export default function AdminCatEditPage({ mode }) {
     try {
       await http.delete(`/cats/${id}`);
       addToast({
-        title: 'Deleted',
+        title: "Deleted",
         message: `${formData.name} has been removed`,
-        variant: 'info',
-        duration: 5000
+        variant: "info",
+        duration: 5000,
       });
-      
+
       setTimeout(() => {
-        navigate('/admin/cats');
+        navigate("/admin/cats");
       }, 1000);
     } catch (err) {
-      console.error('Failed to delete cat:', err);
-      const errorMessage = err.response?.data?.message || 
-                          err.response?.data?.error || 
-                          'Failed to delete cat';
-      
+      console.error("Failed to delete cat:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Failed to delete cat";
+
       setError(errorMessage);
       setLoading(false);
-      
+
       addToast({
-        title: 'Delete Failed',
+        title: "Delete Failed",
         message: errorMessage,
-        variant: 'error',
-        duration: 0
+        variant: "error",
+        duration: 0,
       });
     }
   }
@@ -758,7 +779,7 @@ export default function AdminCatEditPage({ mode }) {
     );
   }
 
-  const isAlumni = formData.status === 'alumni';
+  const isAlumni = formData.status === "alumni";
 
   return (
     <>
@@ -766,10 +787,12 @@ export default function AdminCatEditPage({ mode }) {
         <Container>
           <FormCard>
             <CardBody>
-              <PageTitle>{mode === 'create' ? 'Add New Cat' : 'Edit Cat'}</PageTitle>
+              <PageTitle>
+                {mode === "create" ? "Add New Cat" : "Edit Cat"}
+              </PageTitle>
 
               {error && (
-                <Alert $variant="danger" style={{ marginBottom: '1.5rem' }}>
+                <Alert $variant="danger" style={{ marginBottom: "1.5rem" }}>
                   <strong>Error:</strong> {error}
                 </Alert>
               )}
@@ -786,7 +809,9 @@ export default function AdminCatEditPage({ mode }) {
                       disabled={loading}
                       $error={nameError}
                     />
-                    {nameError && <NameErrorText>Name is required</NameErrorText>}
+                    {nameError && (
+                      <NameErrorText>Name is required</NameErrorText>
+                    )}
                   </NameFieldWrapper>
                 </FormGroup>
 
@@ -794,8 +819,8 @@ export default function AdminCatEditPage({ mode }) {
                   <Label>Age (years)</Label>
                   <Input
                     type="number"
-                    step="0.1"
-                    min="0.1"
+                    step="1"
+                    min="1"
                     name="age_years"
                     value={formData.age_years}
                     onChange={handleChange}
@@ -806,7 +831,12 @@ export default function AdminCatEditPage({ mode }) {
 
                 <FormGroup>
                   <Label>Sex</Label>
-                  <Select name="sex" value={formData.sex} onChange={handleChange} disabled={loading}>
+                  <Select
+                    name="sex"
+                    value={formData.sex}
+                    onChange={handleChange}
+                    disabled={loading}
+                  >
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                     <option value="unknown">Unknown</option>
@@ -836,7 +866,8 @@ export default function AdminCatEditPage({ mode }) {
                     placeholder="Brief biography or story about the cat..."
                   />
                   <StatusHint>
-                    A short introduction or background story that will be displayed on the cat's detail page.
+                    A short introduction or background story that will be
+                    displayed on the cat's detail page.
                   </StatusHint>
                 </FormGroup>
 
@@ -868,10 +899,12 @@ export default function AdminCatEditPage({ mode }) {
                 <ImagesSection>
                   <TagsTitle>Main Image</TagsTitle>
                   <StatusHint>
-                    Upload a main image to Cloudinary or enter a URL manually. This image will be shown as the primary image in lists and the main gallery image.
+                    Upload a main image to Cloudinary or enter a URL manually.
+                    This image will be shown as the primary image in lists and
+                    the main gallery image.
                   </StatusHint>
 
-                  <FormGroup style={{ marginTop: '1rem' }}>
+                  <FormGroup style={{ marginTop: "1rem" }}>
                     <ImageUploader
                       mode="single"
                       onUploadComplete={handleMainImageUpload}
@@ -891,19 +924,24 @@ export default function AdminCatEditPage({ mode }) {
                       disabled={loading}
                       placeholder="https://..."
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === "Enter") {
                           e.preventDefault();
                           handleSetMainImageUrl();
                         }
                       }}
                     />
-                    <Button type="button" onClick={handleSetMainImageUrl} disabled={loading} $variant="outline">
+                    <Button
+                      type="button"
+                      onClick={handleSetMainImageUrl}
+                      disabled={loading}
+                      $variant="outline"
+                    >
                       Set URL
                     </Button>
                   </AddImageSection>
-                  
+
                   {formData.main_image_url && (
-                    <StatusHint style={{ marginTop: '0.5rem' }}>
+                    <StatusHint style={{ marginTop: "0.5rem" }}>
                       Current: {formData.main_image_url}
                     </StatusHint>
                   )}
@@ -913,7 +951,9 @@ export default function AdminCatEditPage({ mode }) {
                 <ImagesSection>
                   <TagsTitle>Additional Images Gallery</TagsTitle>
                   <StatusHint>
-                    Upload multiple images to Cloudinary or add URLs manually. These will appear as thumbnails below the main image on the cat's detail page.
+                    Upload multiple images to Cloudinary or add URLs manually.
+                    These will appear as thumbnails below the main image on the
+                    cat's detail page.
                   </StatusHint>
 
                   {formData.additional_images.length > 0 && (
@@ -923,7 +963,7 @@ export default function AdminCatEditPage({ mode }) {
                       </ReorderHint>
                       <ImageList>
                         {formData.additional_images.map((url, index) => (
-                          <ImageItem 
+                          <ImageItem
                             key={`${url}-${index}`}
                             draggable={!loading}
                             onDragStart={(e) => handleDragStart(e, index)}
@@ -935,22 +975,29 @@ export default function AdminCatEditPage({ mode }) {
                             $isDragOver={dragOverIndex === index}
                             $isDraggable={!loading}
                           >
-                            <DragHandle title="Drag to reorder">
-                            </DragHandle>
+                            <DragHandle title="Drag to reorder"></DragHandle>
                             {url ? (
-                              <ImagePreview 
-                                src={url} 
-                                alt={`Additional ${index + 1}`} 
-                                onError={(e) => e.target.style.display = 'none'} 
+                              <ImagePreview
+                                src={url}
+                                alt={`Additional ${index + 1}`}
+                                onError={(e) =>
+                                  (e.target.style.display = "none")
+                                }
                               />
                             ) : (
                               <ImagePlaceholder>🖼️</ImagePlaceholder>
                             )}
                             <ImageInfo>
-                              <ImagePosition>Position {index + 1} of {formData.additional_images.length}</ImagePosition>
+                              <ImagePosition>
+                                Position {index + 1} of{" "}
+                                {formData.additional_images.length}
+                              </ImagePosition>
                               <ImageUrl>{url}</ImageUrl>
                             </ImageInfo>
-                            <RemoveButton type="button" onClick={() => handleRemoveImage(index)}>
+                            <RemoveButton
+                              type="button"
+                              onClick={() => handleRemoveImage(index)}
+                            >
                               Remove
                             </RemoveButton>
                           </ImageItem>
@@ -960,7 +1007,9 @@ export default function AdminCatEditPage({ mode }) {
                   )}
 
                   <SectionDivider>
-                    <TagsTitle style={{ marginBottom: '0.75rem' }}>Upload to Cloudinary</TagsTitle>
+                    <TagsTitle style={{ marginBottom: "0.75rem" }}>
+                      Upload to Cloudinary
+                    </TagsTitle>
                     <ImageUploader
                       mode="multiple"
                       allowMultiple={true}
@@ -981,13 +1030,18 @@ export default function AdminCatEditPage({ mode }) {
                       placeholder="https://example.com/image.jpg"
                       disabled={loading}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === "Enter") {
                           e.preventDefault();
                           handleAddImage();
                         }
                       }}
                     />
-                    <Button type="button" onClick={handleAddImage} disabled={loading} $variant="outline">
+                    <Button
+                      type="button"
+                      onClick={handleAddImage}
+                      disabled={loading}
+                      $variant="outline"
+                    >
                       Add Image
                     </Button>
                   </AddImageSection>
@@ -995,25 +1049,32 @@ export default function AdminCatEditPage({ mode }) {
 
                 <FormGroup>
                   <Label>Status</Label>
-                  <Select name="status" value={formData.status} onChange={handleChange} disabled={loading}>
+                  <Select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    disabled={loading}
+                  >
                     <option value="available">Available</option>
                     <option value="pending">Pending</option>
                     <option value="hold">Hold</option>
                     <option value="alumni">Alumni - (Adopted)</option>
                   </Select>
                   <StatusHint>
-                    Available: Ready for adoption | Pending: Application in review | Hold: Reserved | Alumni: Successfully adopted
+                    Available: Ready for adoption | Pending: Application in
+                    review | Hold: Reserved | Alumni: Successfully adopted
                   </StatusHint>
                   {showAlumniWarning && (
                     <WarningBox>
-                      Featured status has been automatically removed because alumni cats are not displayed on the homepage.
+                      Featured status has been automatically removed because
+                      alumni cats are not displayed on the homepage.
                     </WarningBox>
                   )}
                 </FormGroup>
 
                 <TagsSection>
                   <TagsTitle>Tags</TagsTitle>
-                  
+
                   <CheckboxLabel>
                     <Checkbox
                       name="good_with_kids"
@@ -1040,7 +1101,7 @@ export default function AdminCatEditPage({ mode }) {
                       checked={formData.good_with_dogs}
                       onChange={handleChange}
                       disabled={loading}
-                      />
+                    />
                     Good with Dogs
                   </CheckboxLabel>
 
@@ -1064,10 +1125,10 @@ export default function AdminCatEditPage({ mode }) {
                     Senior
                   </CheckboxLabel>
 
-                  <CheckboxLabel 
+                  <CheckboxLabel
                     $disabled={isAlumni}
                     $muted={isAlumni}
-                    title={isAlumni ? 'Alumni cats cannot be featured' : ''}
+                    title={isAlumni ? "Alumni cats cannot be featured" : ""}
                   >
                     <Checkbox
                       name="featured"
@@ -1077,7 +1138,9 @@ export default function AdminCatEditPage({ mode }) {
                     />
                     Featured
                     {isAlumni && (
-                      <StatusHint style={{ display: 'inline', marginLeft: '0.5rem' }}>
+                      <StatusHint
+                        style={{ display: "inline", marginLeft: "0.5rem" }}
+                      >
                         (Not available for Alumni cats)
                       </StatusHint>
                     )}
@@ -1085,16 +1148,31 @@ export default function AdminCatEditPage({ mode }) {
                 </TagsSection>
 
                 <ButtonGroup>
-                  {mode === 'edit' && (
-                    <Button type="button" $variant="danger" onClick={handleDelete} disabled={loading} style={{ marginRight: 'auto' }}>
-                      {loading ? 'Deleting...' : 'Delete'}
+                  {mode === "edit" && (
+                    <Button
+                      type="button"
+                      $variant="danger"
+                      onClick={handleDelete}
+                      disabled={loading}
+                      style={{ marginRight: "auto" }}
+                    >
+                      {loading ? "Deleting..." : "Delete"}
                     </Button>
                   )}
-                  <Button type="button" $variant="outline" onClick={() => navigate('/admin/cats')} disabled={loading}>
+                  <Button
+                    type="button"
+                    $variant="outline"
+                    onClick={() => navigate("/admin/cats")}
+                    disabled={loading}
+                  >
                     Cancel
                   </Button>
                   <Button type="submit" disabled={loading}>
-                    {loading ? 'Saving...' : (mode === 'create' ? 'Create Cat' : 'Save Changes')}
+                    {loading
+                      ? "Saving..."
+                      : mode === "create"
+                        ? "Create Cat"
+                        : "Save Changes"}
                   </Button>
                 </ButtonGroup>
               </form>

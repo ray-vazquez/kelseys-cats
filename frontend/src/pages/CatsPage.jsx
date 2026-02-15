@@ -539,7 +539,7 @@ export default function CatsPage() {
                       <AgeInput
                         type="number"
                         min="0"
-                        step="0.5"
+                        step="1"
                         placeholder="Min"
                         value={filters.minAge}
                         onChange={(e) => handleFilterChange('minAge', e.target.value)}
@@ -548,7 +548,7 @@ export default function CatsPage() {
                       <AgeInput
                         type="number"
                         min="0"
-                        step="0.5"
+                        step="1"
                         placeholder="Max"
                         value={filters.maxAge}
                         onChange={(e) => handleFilterChange('maxAge', e.target.value)}
