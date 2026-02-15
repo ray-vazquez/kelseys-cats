@@ -219,6 +219,11 @@ export default function CatDetailPage() {
     }
   }
 
+  // Format tags for display
+  const displayTags = cat.tags && Array.isArray(cat.tags) && cat.tags.length > 0
+    ? cat.tags.join(', ')
+    : null;
+
   return (
     <>
       {/* Hero Section - Compact title for cat names */}
@@ -257,8 +262,11 @@ export default function CatDetailPage() {
               <CatHeader>
                 <CatTitle>{cat.name}</CatTitle>
                 <CatMeta>
-                  {cat.age_years ? `${cat.age_years} years old` : "Age unknown"} ·{" "}
+                  {cat.age_years 
+                    ? `${Math.floor(cat.age_years)} year${Math.floor(cat.age_years) !== 1 ? 's' : ''} old` 
+                    : "Age unknown"} ·{" "}
                   {cat.sex || "Unknown"} · {cat.breed || "Mixed breed"}
+                  {displayTags && ` · ${displayTags}`}
                 </CatMeta>
 
                 <BadgeGroup>
