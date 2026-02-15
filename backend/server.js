@@ -10,6 +10,7 @@ import authRouter from './src/routes/auth.routes.js';
 import scraperRouter from './src/routes/scraper.routes.js';
 import uploadRouter from './src/routes/upload.routes.js';
 import debugRouter from './src/routes/debug.routes.js';
+import tagsRouter from './src/routes/tags.routes.js';
 import { errorHandler } from './src/middleware/error.middleware.js';
 import { loginRateLimiter } from './src/middleware/rateLimit.middleware.js';
 import { initCronJobs } from './src/services/cronService.js';
@@ -43,6 +44,7 @@ app.get('/test-upload.html', (req, res) => {
 app.use('/api/auth', loginRateLimiter, authRouter);
 app.use('/api/cats', catsRouter);
 app.use('/api/alumni', alumniRouter);
+app.use('/api/tags', tagsRouter);  // Tag management endpoints
 
 // Debug routes (only in development)
 if (env.NODE_ENV !== 'production') {
@@ -62,6 +64,7 @@ app.listen(env.PORT, () => {
   console.log(`🐈 Cats API ready!`);
   console.log(`🌍 CORS enabled for: ${env.FRONTEND_ORIGIN}`);
   console.log(`🧪 Test page: http://localhost:${env.PORT}/test-upload.html`);
+  console.log(`🏷️  Tags API available at /api/tags`);
   
   // Initialize cron jobs for automated scraping
   initCronJobs();
