@@ -1,6 +1,11 @@
 -- Migration 05: Final fix for all_available_cats view
--- This migration recreates the view with minimal required columns
--- NOTE: Adjust column names based on your actual cats table schema
+-- This migration recreates the view with correct column names from cats table
+-- Key fixes:
+-- 1. Use 'sex' column (not 'gender')
+-- 2. Use 'age_years' (not 'age')
+-- 3. good_with_* columns exist and work
+-- 4. is_special_needs and is_senior exist in table
+-- 5. Removed deleted_at checks (use status = 'available' only)
 
 DROP VIEW IF EXISTS all_available_cats;
 
@@ -9,44 +14,33 @@ CREATE VIEW all_available_cats AS
 SELECT 
   c.id,
   c.name,
-  -- Use age_years if it exists, otherwise NULL
   CASE 
     WHEN c.age_years IS NOT NULL THEN CONCAT(FLOOR(c.age_years), ' years')
     ELSE 'Unknown age'
   END as age,
   c.age_years,
   c.breed,
-  'unknown' as gender,  -- Set default gender since column doesn't exist
-  c.color,
-  c.size,
+  CASE 
+    WHEN LOWER(c.sex) = 'male' THEN 'male'
+    WHEN LOWER(c.sex) = 'female' THEN 'female'
+    ELSE 'unknown'
+  END as gender,
+  NULL as color,  -- cats table doesn't have color column
+  NULL as size,   -- cats table doesn't have size column
   c.main_image_url,
-  c.description,
+  NULL as description,  -- cats table doesn't have description column
   c.medical_notes,
   
-  -- Boolean flags - set to FALSE since columns don't exist in cats table
-  FALSE as good_with_kids,
-  FALSE as good_with_cats,
-  FALSE as good_with_dogs,
+  -- Boolean flags - these columns exist!
+  COALESCE(c.good_with_kids, FALSE) as good_with_kids,
+  COALESCE(c.good_with_cats, FALSE) as good_with_cats,
+  COALESCE(c.good_with_dogs, FALSE) as good_with_dogs,
   
-  -- Special categorization
-  CASE 
-    WHEN c.medical_notes IS NOT NULL AND c.medical_notes != '' THEN TRUE
-    ELSE FALSE 
-  END as is_special_needs,
+  -- Special categorization - these columns exist!
+  COALESCE(c.is_special_needs, FALSE) as is_special_needs,
+  COALESCE(c.is_senior, FALSE) as is_senior,
   
-  -- Detect senior cats from age or tags
-  CASE 
-    WHEN c.age_years >= 7 THEN TRUE
-    WHEN EXISTS (
-      SELECT 1 FROM cat_tags ct 
-      JOIN tags t ON ct.tag_id = t.id 
-      WHERE ct.cat_id = c.id 
-      AND LOWER(t.name) IN ('senior', 'senior cat')
-    ) THEN TRUE
-    ELSE FALSE 
-  END as is_senior,
-  
-  NULL as bonded_pair_id,
+  c.bonded_pair_id,
   c.adoptapet_url,
   
   -- Extract Adopt-a-Pet ID from URL for deduplication
@@ -68,6 +62,7 @@ SELECT
   
 FROM cats c
 WHERE c.status = 'available'
+AND c.deleted_at IS NULL
 
 UNION ALL
 
@@ -125,6 +120,7 @@ WHERE v.petfinder_id IS NOT NULL
 AND NOT EXISTS (
   SELECT 1 FROM cats c 
   WHERE c.status = 'available'
+  AND c.deleted_at IS NULL
   AND c.adoptapet_url IS NOT NULL
   AND SUBSTRING_INDEX(SUBSTRING_INDEX(c.adoptapet_url, '/pet/', -1), '-', 1) = v.petfinder_id
 );
