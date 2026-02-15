@@ -7,12 +7,12 @@
     "dev": "node server.js",
     "start": "node server.js",
     "stop": "npx kill-port 5001 || echo 'No process running'",
-    "update": "npm run stop && git pull origin main && npm run start",
+    "update": "npm run stop && git pull origin main",
     "migrate": "node scripts/run-migrations-safe.js",
     "migrate:reset": "node scripts/reset-migration-tracking.js",
     "migrate:fresh": "echo '⚠️  This will DROP ALL TABLES and recreate them!' && read -p 'Type YES to continue: ' confirm && [ \"$confirm\" = \"YES\" ] && mysql -u root -p kelseys_cats < scripts/fresh-start.sql && node scripts/create-admin.js",
     "create-admin": "node scripts/create-admin.js",
-    "list-users": "node scripts/list-users.js"
+    "list-users": "node scripts/list-admin-users.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
