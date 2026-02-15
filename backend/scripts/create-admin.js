@@ -1,99 +1,68 @@
-import { createConnection } from 'mysql2/promise';
+// Script to create an admin user
+// Usage: node backend/scripts/create-admin.js <username> <password>
+
 import bcrypt from 'bcrypt';
-import readline from 'readline';
-import { env } from '../src/config/env.js';
+import { query } from '../src/lib/db.js';
+import dotenv from 'dotenv';
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+// Load environment variables
+dotenv.config({ path: './backend/.env' });
 
-function question(query) {
-  return new Promise(resolve => rl.question(query, resolve));
-}
-
-async function createAdmin() {
-  let connection;
-  
+async function createAdmin(username, password) {
   try {
-    if (!env.DB_URL) {
-      console.error('❌ DB_URL not found in .env file');
-      console.log('\nExample .env entry:');
-      console.log('DB_URL=mysql://user:password@localhost:3306/kelseys_cats\n');
-      rl.close();
-      return;
+    console.log('Creating admin user...');
+    console.log('Username:', username);
+
+    // Check if user already exists
+    const [existing] = await query('SELECT * FROM admin_users WHERE username = ?', [username]);
+    if (existing.length > 0) {
+      console.log('❌ Error: User already exists with that username');
+      process.exit(1);
     }
 
-    // Connect to database
-    console.log('🔌 Connecting to database...');
-    connection = await createConnection(env.DB_URL);
-    console.log('✅ Connected to database\n');
-    
-    // Get username
-    const username = await question('Enter admin username (default: admin): ') || 'admin';
-    
-    // Check if user exists
-    const [existing] = await connection.execute(
-      'SELECT id FROM users WHERE username = ?',
-      [username]
+    // Hash the password
+    const password_hash = await bcrypt.hash(password, 10);
+    console.log('Password hashed successfully');
+
+    // Insert the user
+    const [result] = await query(
+      'INSERT INTO admin_users (username, password_hash, role) VALUES (?, ?, ?)',
+      [username, password_hash, 'admin']
     );
+
+    console.log('✅ Admin user created successfully!');
+    console.log('User ID:', result.insertId);
+    console.log('Username:', username);
+    console.log('Role: admin');
+    console.log('');
+    console.log('You can now login at http://localhost:5173/admin/login');
     
-    if (existing.length > 0) {
-      const overwrite = await question(`⚠️  User '${username}' already exists. Update password? (y/n): `);
-      if (overwrite.toLowerCase() !== 'y') {
-        console.log('❌ Cancelled');
-        rl.close();
-        await connection.end();
-        return;
-      }
-    }
-    
-    // Get password (Note: this is visible, for dev only)
-    const password = await question('Enter password: ');
-    
-    if (!password || password.length < 6) {
-      console.log('❌ Password must be at least 6 characters');
-      rl.close();
-      await connection.end();
-      return;
-    }
-    
-    // Hash password
-    console.log('\n🔐 Hashing password...');
-    const passwordHash = await bcrypt.hash(password, 10);
-    
-    // Insert or update user
-    if (existing.length > 0) {
-      await connection.execute(
-        'UPDATE users SET password_hash = ?, role = ? WHERE username = ?',
-        [passwordHash, 'admin', username]
-      );
-      console.log(`\n✅ Admin user '${username}' updated successfully!`);
-    } else {
-      await connection.execute(
-        'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
-        [username, passwordHash, 'admin']
-      );
-      console.log(`\n✅ Admin user '${username}' created successfully!`);
-    }
-    
-    console.log('\n📋 Login credentials:');
-    console.log(`   Username: ${username}`);
-    console.log(`   Password: ${password}`);
-    console.log('\n💡 Use these to login at:');
-    console.log('   - Test page: file:///path/to/backend/test-upload.html');
-    console.log('   - API: http://localhost:' + env.PORT + '/api/auth/login\n');
-    
+    process.exit(0);
   } catch (error) {
-    console.error('❌ Error:', error.message);
-    if (error.code === 'ER_NO_SUCH_TABLE') {
-      console.log('\n💡 Tip: Run migrations first:');
-      console.log('   npm run migrate\n');
-    }
-  } finally {
-    rl.close();
-    if (connection) await connection.end();
+    console.error('❌ Error creating admin user:', error.message);
+    process.exit(1);
   }
 }
 
-createAdmin();
+// Get command line arguments
+const args = process.argv.slice(2);
+
+if (args.length !== 2) {
+  console.log('Usage: node backend/scripts/create-admin.js <username> <password>');
+  console.log('Example: node backend/scripts/create-admin.js admin mypassword123');
+  process.exit(1);
+}
+
+const [username, password] = args;
+
+if (username.length < 3) {
+  console.log('❌ Error: Username must be at least 3 characters');
+  process.exit(1);
+}
+
+if (password.length < 6) {
+  console.log('❌ Error: Password must be at least 6 characters');
+  process.exit(1);
+}
+
+createAdmin(username, password);
