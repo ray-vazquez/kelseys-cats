@@ -24,22 +24,10 @@ import { NoCatsFound } from "../components/Common/EmptyState.jsx";
 import http from "../api/http.js";
 import PaginationControls from "../components/Common/PaginationControls.jsx";
 
-// Wrapper to make filter expansion not push content down
+// Fixed wrapper - no margin change
 const FilterWrapper = styled.div`
   position: relative;
-  margin-bottom: ${({ theme, $hasAdvancedOpen }) => 
-    $hasAdvancedOpen ? '32rem' : theme.spacing[8]};
-  transition: margin-bottom 0.3s ease-in-out;
-  
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    margin-bottom: ${({ theme, $hasAdvancedOpen }) => 
-      $hasAdvancedOpen ? '40rem' : theme.spacing[8]};
-  }
-  
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    margin-bottom: ${({ theme, $hasAdvancedOpen }) => 
-      $hasAdvancedOpen ? '50rem' : theme.spacing[8]};
-  }
+  margin-bottom: ${({ theme }) => theme.spacing[8]};
 `;
 
 const FilterSection = styled.div`
@@ -49,7 +37,7 @@ const FilterSection = styled.div`
   box-shadow: ${({ theme }) => theme.shadows.sm};
   border: 1px solid ${({ theme }) => theme.colors.border};
   position: relative;
-  z-index: 10;
+  z-index: ${({ $isExpanded }) => ($isExpanded ? '100' : '10')};
 `;
 
 const FilterTitle = styled.h3`
@@ -81,13 +69,41 @@ const SearchInput = styled(Input)`
   }
 `;
 
-// Animated collapsible container with absolute positioning overlay
-const AdvancedFiltersContainer = styled.div`
-  max-height: ${({ $isOpen }) => ($isOpen ? '1000px' : '0')};
+// Overlay that blocks content behind when expanded - like select dropdown behavior
+const FilterOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 50;
   opacity: ${({ $isOpen }) => ($isOpen ? '1' : '0')};
-  overflow: hidden;
+  pointer-events: ${({ $isOpen }) => ($isOpen ? 'auto' : 'none')};
+  transition: opacity 0.3s ease-in-out;
+  backdrop-filter: blur(2px);
+`;
+
+// Advanced filters now use absolute positioning to overlay content
+const AdvancedFiltersContainer = styled.div`
+  position: ${({ $isOpen }) => ($isOpen ? 'absolute' : 'relative')};
+  top: ${({ $isOpen }) => ($isOpen ? '100%' : 'auto')};
+  left: ${({ $isOpen }) => ($isOpen ? '0' : 'auto')};
+  right: ${({ $isOpen }) => ($isOpen ? '0' : 'auto')};
+  max-height: ${({ $isOpen }) => ($isOpen ? '600px' : '0')};
+  opacity: ${({ $isOpen }) => ($isOpen ? '1' : '0')};
+  overflow: ${({ $isOpen }) => ($isOpen ? 'visible' : 'hidden')};
   transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
-  background: ${({ theme }) => theme.colors.white};
+  background: ${({ theme, $isOpen }) => ($isOpen ? theme.colors.white : 'transparent')};
+  z-index: ${({ $isOpen }) => ($isOpen ? '60' : '1')};
+  
+  ${({ $isOpen, theme }) => $isOpen && `
+    margin-top: ${theme.spacing[2]};
+    padding: ${theme.spacing[6]};
+    border-radius: ${theme.borderRadius.lg};
+    box-shadow: ${theme.shadows.lg};
+    border: 1px solid ${theme.colors.border};
+  `}
 `;
 
 const FilterGrid = styled.div`
@@ -272,7 +288,6 @@ export default function CatsPage() {
   const [loading, setLoading] = useState(true);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
-  // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     minAge: '',
@@ -288,7 +303,6 @@ export default function CatsPage() {
 
   const page = Number(searchParams.get("page") || "1");
 
-  // Fetch data with filters
   useEffect(() => {
     setLoading(true);
     
@@ -413,8 +427,14 @@ export default function CatsPage() {
             </StatsBar>
           )}
 
-          <FilterWrapper $hasAdvancedOpen={showAdvancedFilters}>
-            <FilterSection>
+          {/* Overlay to block content when filters expanded */}
+          <FilterOverlay 
+            $isOpen={showAdvancedFilters} 
+            onClick={() => setShowAdvancedFilters(false)}
+          />
+
+          <FilterWrapper>
+            <FilterSection $isExpanded={showAdvancedFilters}>
               <FilterTitle>
                 🔍 Search & Filter
                 <ExpandToggle type="button" onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}>
@@ -434,6 +454,7 @@ export default function CatsPage() {
                 )}
               </SearchBar>
               
+              {/* Advanced filters with overlay behavior */}
               <AdvancedFiltersContainer $isOpen={showAdvancedFilters}>
                 <FilterGrid>
                   <FilterGroup>
