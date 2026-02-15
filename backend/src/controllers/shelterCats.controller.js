@@ -15,7 +15,7 @@ import { query } from '../lib/db.js';
  * Uses all_available_cats view for automatic deduplication
  * 
  * Supports query parameters:
- * - search: string to search in name, breed, description, medical_notes, age
+ * - search: string to search in name, breed, bio, temperament, description, medical_notes, age, color
  * - minAge: minimum age in years
  * - maxAge: maximum age in years
  * - gender: male, female, or unknown
@@ -50,13 +50,13 @@ export async function getAllAvailableCats(req, res) {
     const conditions = [];
     const params = [];
     
-    // Search across comprehensive fields
+    // Search across comprehensive fields including bio and temperament
     if (search && search.trim()) {
       conditions.push(
-        `(name LIKE ? OR breed LIKE ? OR description LIKE ? OR medical_notes LIKE ? OR age LIKE ? OR color LIKE ?)`
+        `(name LIKE ? OR breed LIKE ? OR bio LIKE ? OR temperament LIKE ? OR description LIKE ? OR medical_notes LIKE ? OR age LIKE ? OR color LIKE ?)`
       );
       const searchTerm = `%${search.trim()}%`;
-      params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
     }
     
     // Age range filters
