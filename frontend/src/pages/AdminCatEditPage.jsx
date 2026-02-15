@@ -63,8 +63,45 @@ const ImageItem = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing[2]};
   padding: ${({ theme }) => theme.spacing[3]};
-  background: ${({ theme }) => theme.colors.light};
+  background: ${({ theme, $isDragging, $isDragOver }) => 
+    $isDragging ? theme.colors.neutral[100] :
+    $isDragOver ? `${theme.colors.primary}15` :
+    theme.colors.light};
   border-radius: ${({ theme }) => theme.borderRadius.base};
+  border: 2px solid ${({ theme, $isDragOver }) => 
+    $isDragOver ? theme.colors.primary : 'transparent'};
+  cursor: ${({ $isDraggable }) => $isDraggable ? 'grab' : 'default'};
+  transition: all ${({ theme }) => theme.transitions.fast};
+  opacity: ${({ $isDragging }) => $isDragging ? 0.5 : 1};
+  
+  &:active {
+    cursor: ${({ $isDraggable }) => $isDraggable ? 'grabbing' : 'default'};
+  }
+  
+  &:hover {
+    background: ${({ theme, $isDragging }) => 
+      $isDragging ? theme.colors.neutral[100] : theme.colors.neutral[50]};
+  }
+`;
+
+const DragHandle = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: grab;
+  padding: ${({ theme }) => theme.spacing[2]};
+  color: ${({ theme }) => theme.colors.text.tertiary};
+  flex-shrink: 0;
+  
+  &:active {
+    cursor: grabbing;
+  }
+  
+  &::before {
+    content: '☰';
+    font-size: 18px;
+    line-height: 1;
+  }
 `;
 
 const ImagePreview = styled.img`
@@ -87,11 +124,26 @@ const ImagePlaceholder = styled.div`
   flex-shrink: 0;
 `;
 
-const ImageUrl = styled.span`
+const ImageInfo = styled.div`
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[1]};
+  min-width: 0;
+`;
+
+const ImageUrl = styled.span`
   font-size: ${({ theme }) => theme.fontSizes.sm};
   color: ${({ theme }) => theme.colors.text.secondary};
   word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const ImagePosition = styled.span`
+  font-size: ${({ theme }) => theme.fontSizes.xs};
+  color: ${({ theme }) => theme.colors.text.tertiary};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
 `;
 
 const RemoveButton = styled.button`
@@ -104,6 +156,7 @@ const RemoveButton = styled.button`
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   transition: background ${({ theme }) => theme.transitions.fast};
+  flex-shrink: 0;
 
   &:hover {
     background: ${({ theme }) => theme.colors.dangerHover};
@@ -170,6 +223,25 @@ const WarningBox = styled.div`
   &::before {
     content: '⚠️';
     font-size: ${({ theme }) => theme.fontSizes.lg};
+    flex-shrink: 0;
+  }
+`;
+
+const ReorderHint = styled.div`
+  background: ${({ theme }) => `${theme.colors.primary}10`};
+  border: 1px solid ${({ theme }) => theme.colors.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  padding: ${({ theme }) => theme.spacing[2]};
+  margin-top: ${({ theme }) => theme.spacing[2]};
+  font-size: ${({ theme }) => theme.fontSizes.xs};
+  color: ${({ theme }) => theme.colors.primary};
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+
+  &::before {
+    content: '👆';
+    font-size: ${({ theme }) => theme.fontSizes.base};
     flex-shrink: 0;
   }
 `;
@@ -268,13 +340,17 @@ export default function AdminCatEditPage({ mode }) {
   });
 
   const [newImageUrl, setNewImageUrl] = useState('');
-  const [mainImageUrlInput, setMainImageUrlInput] = useState(''); // Separate state for main image URL input
+  const [mainImageUrlInput, setMainImageUrlInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(mode === 'edit');
   const [error, setError] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [showAlumniWarning, setShowAlumniWarning] = useState(false);
   const [nameError, setNameError] = useState(false);
+  
+  // Drag and drop state
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
 
   useEffect(() => {
     if (mode === 'edit' && id) {
@@ -283,7 +359,6 @@ export default function AdminCatEditPage({ mode }) {
         .then((res) => {
           const cat = res.data;
           
-          // Parse additional_images if it's a JSON string
           let parsedImages = [];
           if (cat.additional_images) {
             try {
@@ -315,9 +390,7 @@ export default function AdminCatEditPage({ mode }) {
             featured: cat.featured || false
           });
           
-          // Sync main image URL input with formData
           setMainImageUrlInput(cat.main_image_url || '');
-          
           setLoadingData(false);
         })
         .catch((err) => {
@@ -386,7 +459,6 @@ export default function AdminCatEditPage({ mode }) {
     if (error) setError(null);
   }
 
-  // Handle main image upload
   const handleMainImageUpload = (uploadData) => {
     setFormData(prev => ({
       ...prev,
@@ -402,7 +474,6 @@ export default function AdminCatEditPage({ mode }) {
     });
   };
   
-  // Handle setting main image URL manually
   const handleSetMainImageUrl = () => {
     if (!mainImageUrlInput.trim()) {
       addToast({
@@ -427,7 +498,6 @@ export default function AdminCatEditPage({ mode }) {
     });
   };
 
-  // Handle additional image upload
   const handleAdditionalImageUpload = (uploadData) => {
     setFormData(prev => ({
       ...prev,
@@ -489,6 +559,66 @@ export default function AdminCatEditPage({ mode }) {
       duration: 3000
     });
   }
+  
+  // Drag and drop handlers
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.currentTarget);
+  };
+  
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+  
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setDragOverIndex(null);
+  };
+  
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+    
+    const newImages = [...formData.additional_images];
+    const draggedImage = newImages[draggedIndex];
+    
+    // Remove from old position
+    newImages.splice(draggedIndex, 1);
+    
+    // Insert at new position
+    newImages.splice(dropIndex, 0, draggedImage);
+    
+    setFormData(prev => ({
+      ...prev,
+      additional_images: newImages
+    }));
+    
+    addToast({
+      title: 'Images Reordered',
+      message: `Moved image from position ${draggedIndex + 1} to ${dropIndex + 1}`,
+      variant: 'info',
+      duration: 2000
+    });
+    
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+  
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
 
   function prepareFormData(data) {
     const cleaned = {};
@@ -497,7 +627,6 @@ export default function AdminCatEditPage({ mode }) {
         cleaned[key] = null;
       }
       else if (key === 'additional_images') {
-        // Convert array to JSON string for backend
         cleaned[key] = JSON.stringify(value);
       }
       else if (typeof value === 'boolean') {
@@ -519,7 +648,6 @@ export default function AdminCatEditPage({ mode }) {
   async function handleSubmit(e) {
     e.preventDefault();
     
-    // Name validation
     if (!formData.name || formData.name.trim() === '') {
       setNameError(true);
       setError('Name is required');
@@ -789,21 +917,46 @@ export default function AdminCatEditPage({ mode }) {
                   </StatusHint>
 
                   {formData.additional_images.length > 0 && (
-                    <ImageList>
-                      {formData.additional_images.map((url, index) => (
-                        <ImageItem key={index}>
-                          {url ? (
-                            <ImagePreview src={url} alt={`Additional ${index + 1}`} onError={(e) => e.target.style.display = 'none'} />
-                          ) : (
-                            <ImagePlaceholder>🖼️</ImagePlaceholder>
-                          )}
-                          <ImageUrl>{url}</ImageUrl>
-                          <RemoveButton type="button" onClick={() => handleRemoveImage(index)}>
-                            Remove
-                          </RemoveButton>
-                        </ImageItem>
-                      ))}
-                    </ImageList>
+                    <>
+                      <ReorderHint>
+                        Drag and drop images to reorder them in the gallery
+                      </ReorderHint>
+                      <ImageList>
+                        {formData.additional_images.map((url, index) => (
+                          <ImageItem 
+                            key={`${url}-${index}`}
+                            draggable={!loading}
+                            onDragStart={(e) => handleDragStart(e, index)}
+                            onDragOver={(e) => handleDragOver(e, index)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, index)}
+                            onDragEnd={handleDragEnd}
+                            $isDragging={draggedIndex === index}
+                            $isDragOver={dragOverIndex === index}
+                            $isDraggable={!loading}
+                          >
+                            <DragHandle title="Drag to reorder">
+                            </DragHandle>
+                            {url ? (
+                              <ImagePreview 
+                                src={url} 
+                                alt={`Additional ${index + 1}`} 
+                                onError={(e) => e.target.style.display = 'none'} 
+                              />
+                            ) : (
+                              <ImagePlaceholder>🖼️</ImagePlaceholder>
+                            )}
+                            <ImageInfo>
+                              <ImagePosition>Position {index + 1} of {formData.additional_images.length}</ImagePosition>
+                              <ImageUrl>{url}</ImageUrl>
+                            </ImageInfo>
+                            <RemoveButton type="button" onClick={() => handleRemoveImage(index)}>
+                              Remove
+                            </RemoveButton>
+                          </ImageItem>
+                        ))}
+                      </ImageList>
+                    </>
                   )}
 
                   <SectionDivider>
