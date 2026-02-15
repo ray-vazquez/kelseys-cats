@@ -1,5 +1,5 @@
 // ImageUploader Component for Cloudinary Integration with Multi-file Support
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import http from '../../api/http.js';
 
@@ -39,6 +39,7 @@ const DropZoneContent = styled.div`
   flex-direction: column;
   align-items: center;
   gap: ${({ theme }) => theme.spacing[2]};
+  pointer-events: none; /* Prevent drag event interference */
 `;
 
 const UploadIcon = styled.div`
@@ -202,10 +203,50 @@ export default function ImageUploader({
 }) {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadingFiles, setUploadingFiles] = useState([]);
   const [errors, setErrors] = useState([]);
   const [completedUploads, setCompletedUploads] = useState(0);
   const fileInputRef = useRef(null);
+  const dragCounterRef = useRef(0);
+
+  // Auto-clear previews after all uploads complete
+  useEffect(() => {
+    if (selectedFiles.length > 0 && 
+        completedUploads === selectedFiles.length && 
+        selectedFiles.every(f => f.uploaded || f.error)) {
+      
+      const timer = setTimeout(() => {
+        // Clean up blob URLs
+        selectedFiles.forEach(f => {
+          if (f.preview) {
+            URL.revokeObjectURL(f.preview);
+          }
+        });
+        
+        // Clear state
+        setSelectedFiles([]);
+        setErrors([]);
+        setCompletedUploads(0);
+        
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }, 2000); // Clear after 2 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [selectedFiles, completedUploads]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      selectedFiles.forEach(f => {
+        if (f.preview) {
+          URL.revokeObjectURL(f.preview);
+        }
+      });
+    };
+  }, []);
 
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
@@ -231,6 +272,8 @@ export default function ImageUploader({
   };
 
   const handleFilesSelect = async (files) => {
+    if (!files || files.length === 0) return;
+    
     setErrors([]);
     setCompletedUploads(0);
 
@@ -239,7 +282,7 @@ export default function ImageUploader({
     const newErrors = [];
 
     // Validate all files
-    fileArray.forEach((file, index) => {
+    fileArray.forEach((file) => {
       const validationError = validateFile(file);
       if (validationError) {
         newErrors.push(`${file.name}: ${validationError}`);
@@ -271,9 +314,9 @@ export default function ImageUploader({
 
     setSelectedFiles(fileObjects);
 
-    // Upload files
+    // Upload files immediately after selection
     if (mode === 'multiple' || allowMultiple) {
-      // Upload all files
+      // Upload all files sequentially
       for (const fileObj of fileObjects) {
         await uploadFile(fileObj);
       }
@@ -297,24 +340,23 @@ export default function ImageUploader({
       const formData = new FormData();
       formData.append('image', file);
 
-      // Simulate progress for better UX
-      const progressInterval = setInterval(() => {
-        setSelectedFiles(prev => 
-          prev.map(f => 
-            f.file === file && f.progress < 90
-              ? { ...f, progress: Math.min(f.progress + 10, 90) }
-              : f
-          )
-        );
-      }, 200);
-
+      // Real progress tracking
       const response = await http.post('/upload/image', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          
+          setSelectedFiles(prev => 
+            prev.map(f => 
+              f.file === file ? { ...f, progress: percentCompleted } : f
+            )
+          );
+        },
       });
-
-      clearInterval(progressInterval);
 
       if (response.data.success && response.data.url) {
         // Update state to show completed
@@ -353,7 +395,7 @@ export default function ImageUploader({
       setSelectedFiles(prev => 
         prev.map(f => 
           f.file === file 
-            ? { ...f, uploading: false, error: errorMessage }
+            ? { ...f, uploading: false, uploaded: false, error: errorMessage, progress: 0 }
             : f
         )
       );
@@ -369,7 +411,9 @@ export default function ImageUploader({
   const handleDragEnter = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
     if (!disabled) {
+      dragCounterRef.current++;
       setIsDragging(true);
     }
   };
@@ -377,7 +421,11 @@ export default function ImageUploader({
   const handleDragLeave = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(false);
+    
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDragging(false);
+    }
   };
 
   const handleDragOver = (e) => {
@@ -385,49 +433,57 @@ export default function ImageUploader({
     e.stopPropagation();
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = async (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    dragCounterRef.current = 0;
     setIsDragging(false);
 
     if (disabled) return;
 
-    const files = e.dataTransfer.files;
+    const files = e.dataTransfer?.files;
     if (files && files.length > 0) {
-      handleFilesSelect(files);
+      // Process files asynchronously to prevent freezing
+      await handleFilesSelect(files);
     }
   };
 
-  const handleClick = () => {
-    if (!disabled) {
-      fileInputRef.current?.click();
+  const handleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!disabled && fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = async (e) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      handleFilesSelect(files);
+      await handleFilesSelect(files);
     }
+    // Reset input to allow re-selecting same files
+    e.target.value = '';
   };
 
   const handleRemove = (fileToRemove) => {
-    setSelectedFiles(prev => prev.filter(f => f.file !== fileToRemove));
+    setSelectedFiles(prev => {
+      const filtered = prev.filter(f => f.file !== fileToRemove);
+      // Clean up blob URL
+      const fileObj = prev.find(f => f.file === fileToRemove);
+      if (fileObj?.preview) {
+        URL.revokeObjectURL(fileObj.preview);
+      }
+      return filtered;
+    });
+    
     setCompletedUploads(prev => Math.max(0, prev - 1));
   };
 
-  const handleClearAll = () => {
-    selectedFiles.forEach(f => URL.revokeObjectURL(f.preview));
-    setSelectedFiles([]);
-    setErrors([]);
-    setCompletedUploads(0);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
   const isUploading = selectedFiles.some(f => f.uploading);
-  const showUploadZone = selectedFiles.length === 0 || (mode === 'multiple' && !isUploading);
+  const allUploaded = selectedFiles.length > 0 && selectedFiles.every(f => f.uploaded);
+  const showUploadZone = selectedFiles.length === 0 || (mode === 'multiple' && allUploaded);
 
   return (
     <UploaderContainer>
@@ -457,7 +513,7 @@ export default function ImageUploader({
               <strong>Click to upload</strong> or drag and drop
             </DropZoneText>
             <DropZoneHint>
-              JPG or PNG (max {maxSizeMB}MB){mode === 'multiple' && ' • Select multiple with Ctrl/Cmd+Click'}
+              JPG or PNG (max {maxSizeMB}MB){(mode === 'multiple' || allowMultiple) && ' • Multiple files supported'}
             </DropZoneHint>
           </DropZoneContent>
         </DropZone>
@@ -466,7 +522,7 @@ export default function ImageUploader({
       {selectedFiles.length > 0 && showPreview && (
         <>
           {selectedFiles.map((fileObj, index) => (
-            <PreviewContainer key={index}>
+            <PreviewContainer key={`${fileObj.file.name}-${index}`}>
               <PreviewImage src={fileObj.preview} alt={`Upload preview ${index + 1}`} />
               <PreviewInfo>
                 <PreviewName>{fileObj.file.name}</PreviewName>
@@ -517,8 +573,8 @@ export default function ImageUploader({
       {completedUploads > 0 && completedUploads === selectedFiles.length && errors.length === 0 && (
         <SuccessMessage>
           {selectedFiles.length === 1 
-            ? 'Image uploaded successfully to Cloudinary'
-            : `All ${selectedFiles.length} images uploaded successfully to Cloudinary`}
+            ? 'Image uploaded successfully! Clearing preview...'
+            : `All ${selectedFiles.length} images uploaded successfully! Clearing previews...`}
         </SuccessMessage>
       )}
     </UploaderContainer>
