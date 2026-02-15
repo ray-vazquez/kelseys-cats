@@ -9,25 +9,54 @@ CREATE TABLE IF NOT EXISTS tag_categories (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- Step 2: Add category_id to tags table
-ALTER TABLE tags 
-ADD COLUMN IF NOT EXISTS category_id INT UNSIGNED NULL,
-ADD CONSTRAINT fk_tag_category FOREIGN KEY (category_id) 
-  REFERENCES tag_categories(id) ON DELETE SET NULL;
-
--- Step 3: Seed tag categories
+-- Step 2: Seed tag categories first (needed for foreign key reference)
 INSERT INTO tag_categories (name, description) VALUES
 ('temperament', 'Personality and behavior traits'),
 ('medical', 'Medical conditions and health needs'),
 ('general', 'General tags and characteristics')
 ON DUPLICATE KEY UPDATE description=VALUES(description);
 
--- Step 4: Seed common temperament tags
--- Get category IDs for insertion
+-- Step 3: Add category_id to tags table (check if column exists first)
+-- MySQL doesn't support IF NOT EXISTS for ALTER TABLE, so we handle it gracefully
+SET @col_exists = (
+  SELECT COUNT(*) 
+  FROM INFORMATION_SCHEMA.COLUMNS 
+  WHERE TABLE_SCHEMA = DATABASE() 
+    AND TABLE_NAME = 'tags' 
+    AND COLUMN_NAME = 'category_id'
+);
+
+-- Only add column if it doesn't exist
+SET @sql = IF(@col_exists = 0, 
+  'ALTER TABLE tags ADD COLUMN category_id INT UNSIGNED NULL',
+  'SELECT "Column category_id already exists" AS message'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Step 4: Add foreign key constraint (check if it exists first)
+SET @fk_exists = (
+  SELECT COUNT(*) 
+  FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+  WHERE TABLE_SCHEMA = DATABASE() 
+    AND TABLE_NAME = 'tags' 
+    AND CONSTRAINT_NAME = 'fk_tag_category'
+);
+
+SET @sql = IF(@fk_exists = 0,
+  'ALTER TABLE tags ADD CONSTRAINT fk_tag_category FOREIGN KEY (category_id) REFERENCES tag_categories(id) ON DELETE SET NULL',
+  'SELECT "Foreign key fk_tag_category already exists" AS message'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Step 5: Get category IDs for tag insertion
 SET @temp_cat_id = (SELECT id FROM tag_categories WHERE name = 'temperament');
 SET @med_cat_id = (SELECT id FROM tag_categories WHERE name = 'medical');
 
--- Insert temperament tags
+-- Step 6: Insert temperament tags
 INSERT INTO tags (name, category_id) VALUES
 ('Affectionate', @temp_cat_id),
 ('Shy', @temp_cat_id),
@@ -51,7 +80,7 @@ INSERT INTO tags (name, category_id) VALUES
 ('Quiet', @temp_cat_id)
 ON DUPLICATE KEY UPDATE category_id=VALUES(category_id);
 
--- Insert medical condition tags
+-- Step 7: Insert medical condition tags
 INSERT INTO tags (name, category_id) VALUES
 ('FIV+', @med_cat_id),
 ('FeLV+', @med_cat_id),
@@ -75,10 +104,8 @@ INSERT INTO tags (name, category_id) VALUES
 ('Senior Care', @med_cat_id)
 ON DUPLICATE KEY UPDATE category_id=VALUES(category_id);
 
--- Step 5: Deprecate temperament and medical_notes columns (keep for now, migrate data later)
--- ALTER TABLE featured_foster_cats 
--- ADD COLUMN IF NOT EXISTS temperament_legacy TEXT NULL,
--- ADD COLUMN IF NOT EXISTS medical_notes_legacy TEXT NULL;
-
--- Future: Migrate existing text data to tags, then drop legacy columns
--- This migration just sets up the infrastructure
+-- Success message
+SELECT 
+  'Migration completed successfully!' AS status,
+  (SELECT COUNT(*) FROM tag_categories) AS categories_count,
+  (SELECT COUNT(*) FROM tags WHERE category_id IS NOT NULL) AS categorized_tags_count;
