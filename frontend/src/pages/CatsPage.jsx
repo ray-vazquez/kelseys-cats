@@ -697,7 +697,7 @@ export default function CatsPage() {
                       <CardTitle>{cat.name}</CardTitle>
                       <TextMuted>
                         {cat.age_years
-                          ? `${cat.age_years} years old`
+                          ? `${Math.floor(cat.age_years)} year${Math.floor(cat.age_years) !== 1 ? 's' : ''} old`
                           : cat.age || "Age unknown"}{" "}
                         · {cat.breed || "Mixed breed"}
                       </TextMuted>
