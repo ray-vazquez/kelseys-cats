@@ -150,11 +150,9 @@ export default function HomePage() {
     http
       .get('/cats/all-available')
       .then((res) => {
-        // Extract only featured foster cats for homepage spotlight
-        // Filter to only show cats with featured=1
+        // Extract featured foster cats - show all featured cats (not filtering by featured=1)
         const featured = (res.data.featured_foster_cats || [])
-          .filter(cat => cat.featured === 1)
-          .slice(0, 12); // Show up to 12 featured cats
+          .slice(0, 12); // Show up to 12 cats
         setFeaturedCats(featured);
       })
       .catch((err) => {
@@ -222,7 +220,7 @@ export default function HomePage() {
                       <CardTitle>{cat.name}</CardTitle>
                       <TextMuted>
                         {cat.age_years
-                          ? `${cat.age_years} years old`
+                          ? `${Math.floor(cat.age_years)} year${Math.floor(cat.age_years) !== 1 ? 's' : ''} old`
                           : "Age unknown"}{" "}
                         · {cat.breed || "Mixed breed"}
                       </TextMuted>
