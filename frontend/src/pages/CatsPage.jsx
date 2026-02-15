@@ -245,11 +245,7 @@ export default function CatsPage() {
   const [filters, setFilters] = useState({
     minAge: '',
     maxAge: '',
-    sex: 'all',
-    goodWithKids: false,
-    goodWithCats: false,
-    goodWithDogs: false,
-    isSpecialNeeds: false,
+    gender: 'all',
     isSenior: false,
     showPartnerFosters: true
   });
@@ -275,24 +271,8 @@ export default function CatsPage() {
       params.append('maxAge', filters.maxAge);
     }
     
-    if (filters.sex !== 'all') {
-      params.append('sex', filters.sex);
-    }
-    
-    if (filters.goodWithKids) {
-      params.append('goodWithKids', '1');
-    }
-    
-    if (filters.goodWithCats) {
-      params.append('goodWithCats', '1');
-    }
-    
-    if (filters.goodWithDogs) {
-      params.append('goodWithDogs', '1');
-    }
-    
-    if (filters.isSpecialNeeds) {
-      params.append('isSpecialNeeds', '1');
+    if (filters.gender !== 'all') {
+      params.append('gender', filters.gender);
     }
     
     if (filters.isSenior) {
@@ -362,11 +342,7 @@ export default function CatsPage() {
     setFilters({
       minAge: '',
       maxAge: '',
-      sex: 'all',
-      goodWithKids: false,
-      goodWithCats: false,
-      goodWithDogs: false,
-      isSpecialNeeds: false,
+      gender: 'all',
       isSenior: false,
       showPartnerFosters: true
     });
@@ -377,11 +353,7 @@ export default function CatsPage() {
     return searchQuery.trim() !== '' ||
       filters.minAge !== '' ||
       filters.maxAge !== '' ||
-      filters.sex !== 'all' ||
-      filters.goodWithKids ||
-      filters.goodWithCats ||
-      filters.goodWithDogs ||
-      filters.isSpecialNeeds ||
+      filters.gender !== 'all' ||
       filters.isSenior ||
       !filters.showPartnerFosters;
   }, [searchQuery, filters]);
@@ -402,28 +374,12 @@ export default function CatsPage() {
       labels.push({ key: 'maxAge', label: `Max Age: ${filters.maxAge}` });
     }
     
-    if (filters.sex !== 'all') {
-      labels.push({ key: 'sex', label: `Sex: ${filters.sex}` });
-    }
-    
-    if (filters.goodWithKids) {
-      labels.push({ key: 'goodWithKids', label: 'Good with Kids' });
-    }
-    
-    if (filters.goodWithCats) {
-      labels.push({ key: 'goodWithCats', label: 'Good with Cats' });
-    }
-    
-    if (filters.goodWithDogs) {
-      labels.push({ key: 'goodWithDogs', label: 'Good with Dogs' });
-    }
-    
-    if (filters.isSpecialNeeds) {
-      labels.push({ key: 'isSpecialNeeds', label: 'Special Needs' });
+    if (filters.gender !== 'all') {
+      labels.push({ key: 'gender', label: `Gender: ${filters.gender}` });
     }
     
     if (filters.isSenior) {
-      labels.push({ key: 'isSenior', label: 'Senior' });
+      labels.push({ key: 'isSenior', label: 'Senior Cats' });
     }
     
     if (!filters.showPartnerFosters) {
@@ -437,8 +393,8 @@ export default function CatsPage() {
   const removeFilter = (key) => {
     if (key === 'search') {
       setSearchQuery('');
-    } else if (key === 'minAge' || key === 'maxAge' || key === 'sex') {
-      handleFilterChange(key, key === 'sex' ? 'all' : '');
+    } else if (key === 'minAge' || key === 'maxAge' || key === 'gender') {
+      handleFilterChange(key, key === 'gender' ? 'all' : '');
     } else {
       handleFilterChange(key, key === 'showPartnerFosters' ? true : false);
     }
@@ -519,7 +475,7 @@ export default function CatsPage() {
                 <FilterGrid>
                   {/* Age Range */}
                   <FilterGroup>
-                    <FilterLabel>Age Range</FilterLabel>
+                    <FilterLabel>Age Range (years)</FilterLabel>
                     <AgeRangeGroup>
                       <AgeInput
                         type="number"
@@ -538,16 +494,15 @@ export default function CatsPage() {
                         value={filters.maxAge}
                         onChange={(e) => handleFilterChange('maxAge', e.target.value)}
                       />
-                      <span>years</span>
                     </AgeRangeGroup>
                   </FilterGroup>
                   
-                  {/* Sex */}
+                  {/* Gender */}
                   <FilterGroup>
-                    <FilterLabel>Sex</FilterLabel>
+                    <FilterLabel>Gender</FilterLabel>
                     <Select
-                      value={filters.sex}
-                      onChange={(e) => handleFilterChange('sex', e.target.value)}
+                      value={filters.gender}
+                      onChange={(e) => handleFilterChange('gender', e.target.value)}
                     >
                       <option value="all">All</option>
                       <option value="male">Male</option>
@@ -561,42 +516,10 @@ export default function CatsPage() {
                 <CheckboxGroup>
                   <CheckboxLabel>
                     <Checkbox
-                      checked={filters.goodWithKids}
-                      onChange={(e) => handleFilterChange('goodWithKids', e.target.checked)}
-                    />
-                    Good with Kids
-                  </CheckboxLabel>
-                  
-                  <CheckboxLabel>
-                    <Checkbox
-                      checked={filters.goodWithCats}
-                      onChange={(e) => handleFilterChange('goodWithCats', e.target.checked)}
-                    />
-                    Good with Cats
-                  </CheckboxLabel>
-                  
-                  <CheckboxLabel>
-                    <Checkbox
-                      checked={filters.goodWithDogs}
-                      onChange={(e) => handleFilterChange('goodWithDogs', e.target.checked)}
-                    />
-                    Good with Dogs
-                  </CheckboxLabel>
-                  
-                  <CheckboxLabel>
-                    <Checkbox
-                      checked={filters.isSpecialNeeds}
-                      onChange={(e) => handleFilterChange('isSpecialNeeds', e.target.checked)}
-                    />
-                    Special Needs
-                  </CheckboxLabel>
-                  
-                  <CheckboxLabel>
-                    <Checkbox
                       checked={filters.isSenior}
                       onChange={(e) => handleFilterChange('isSenior', e.target.checked)}
                     />
-                    Senior Cats
+                    Senior Cats Only
                   </CheckboxLabel>
                   
                   <CheckboxLabel>
