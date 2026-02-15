@@ -1,4 +1,4 @@
-// CatsPage - Unified listing with search and advanced filtering
+// CatsPage - Unified listing with comprehensive search and advanced filtering
 import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import styled from "styled-components";
@@ -97,10 +97,14 @@ const AgeInput = styled(Input)`
 `;
 
 const CheckboxGroup = styled.div`
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: ${({ theme }) => theme.spacing[2]};
   margin-top: ${({ theme }) => theme.spacing[4]};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const FilterActions = styled.div`
@@ -246,6 +250,11 @@ export default function CatsPage() {
     minAge: '',
     maxAge: '',
     gender: 'all',
+    size: 'all',
+    goodWithKids: false,
+    goodWithCats: false,
+    goodWithDogs: false,
+    isSpecialNeeds: false,
     isSenior: false,
     showPartnerFosters: true
   });
@@ -273,6 +282,26 @@ export default function CatsPage() {
     
     if (filters.gender !== 'all') {
       params.append('gender', filters.gender);
+    }
+    
+    if (filters.size !== 'all') {
+      params.append('size', filters.size);
+    }
+    
+    if (filters.goodWithKids) {
+      params.append('goodWithKids', '1');
+    }
+    
+    if (filters.goodWithCats) {
+      params.append('goodWithCats', '1');
+    }
+    
+    if (filters.goodWithDogs) {
+      params.append('goodWithDogs', '1');
+    }
+    
+    if (filters.isSpecialNeeds) {
+      params.append('isSpecialNeeds', '1');
     }
     
     if (filters.isSenior) {
@@ -322,7 +351,7 @@ export default function CatsPage() {
 
   // Pagination
   const perPage = 12;
-  const startIdx = (page - 1) * perPage;
+    const startIdx = (page - 1) * perPage;
   const endIdx = Math.min(startIdx + perPage, filteredCats.length);
   const paginatedCats = filteredCats.slice(startIdx, endIdx);
 
@@ -343,6 +372,11 @@ export default function CatsPage() {
       minAge: '',
       maxAge: '',
       gender: 'all',
+      size: 'all',
+      goodWithKids: false,
+      goodWithCats: false,
+      goodWithDogs: false,
+      isSpecialNeeds: false,
       isSenior: false,
       showPartnerFosters: true
     });
@@ -354,6 +388,11 @@ export default function CatsPage() {
       filters.minAge !== '' ||
       filters.maxAge !== '' ||
       filters.gender !== 'all' ||
+      filters.size !== 'all' ||
+      filters.goodWithKids ||
+      filters.goodWithCats ||
+      filters.goodWithDogs ||
+      filters.isSpecialNeeds ||
       filters.isSenior ||
       !filters.showPartnerFosters;
   }, [searchQuery, filters]);
@@ -378,8 +417,28 @@ export default function CatsPage() {
       labels.push({ key: 'gender', label: `Gender: ${filters.gender}` });
     }
     
+    if (filters.size !== 'all') {
+      labels.push({ key: 'size', label: `Size: ${filters.size}` });
+    }
+    
+    if (filters.goodWithKids) {
+      labels.push({ key: 'goodWithKids', label: 'Good with Kids' });
+    }
+    
+    if (filters.goodWithCats) {
+      labels.push({ key: 'goodWithCats', label: 'Good with Cats' });
+    }
+    
+    if (filters.goodWithDogs) {
+      labels.push({ key: 'goodWithDogs', label: 'Good with Dogs' });
+    }
+    
+    if (filters.isSpecialNeeds) {
+      labels.push({ key: 'isSpecialNeeds', label: 'Special Needs' });
+    }
+    
     if (filters.isSenior) {
-      labels.push({ key: 'isSenior', label: 'Senior Cats' });
+      labels.push({ key: 'isSenior', label: 'Senior' });
     }
     
     if (!filters.showPartnerFosters) {
@@ -393,8 +452,8 @@ export default function CatsPage() {
   const removeFilter = (key) => {
     if (key === 'search') {
       setSearchQuery('');
-    } else if (key === 'minAge' || key === 'maxAge' || key === 'gender') {
-      handleFilterChange(key, key === 'gender' ? 'all' : '');
+    } else if (key === 'minAge' || key === 'maxAge' || key === 'gender' || key === 'size') {
+      handleFilterChange(key, (key === 'gender' || key === 'size') ? 'all' : '');
     } else {
       handleFilterChange(key, key === 'showPartnerFosters' ? true : false);
     }
@@ -454,7 +513,7 @@ export default function CatsPage() {
             <SearchBar>
               <SearchInput
                 type="text"
-                placeholder="Search by name, breed, or description..."
+                placeholder="Search by name, breed, color, description, or medical notes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -510,16 +569,62 @@ export default function CatsPage() {
                       <option value="unknown">Unknown</option>
                     </Select>
                   </FilterGroup>
+                  
+                  {/* Size */}
+                  <FilterGroup>
+                    <FilterLabel>Size</FilterLabel>
+                    <Select
+                      value={filters.size}
+                      onChange={(e) => handleFilterChange('size', e.target.value)}
+                    >
+                      <option value="all">All</option>
+                      <option value="small">Small</option>
+                      <option value="medium">Medium</option>
+                      <option value="large">Large</option>
+                    </Select>
+                  </FilterGroup>
                 </FilterGrid>
                 
                 {/* Tag Filters */}
                 <CheckboxGroup>
                   <CheckboxLabel>
                     <Checkbox
+                      checked={filters.goodWithKids}
+                      onChange={(e) => handleFilterChange('goodWithKids', e.target.checked)}
+                    />
+                    Good with Kids
+                  </CheckboxLabel>
+                  
+                  <CheckboxLabel>
+                    <Checkbox
+                      checked={filters.goodWithCats}
+                      onChange={(e) => handleFilterChange('goodWithCats', e.target.checked)}
+                    />
+                    Good with Cats
+                  </CheckboxLabel>
+                  
+                  <CheckboxLabel>
+                    <Checkbox
+                      checked={filters.goodWithDogs}
+                      onChange={(e) => handleFilterChange('goodWithDogs', e.target.checked)}
+                    />
+                    Good with Dogs
+                  </CheckboxLabel>
+                  
+                  <CheckboxLabel>
+                    <Checkbox
+                      checked={filters.isSpecialNeeds}
+                      onChange={(e) => handleFilterChange('isSpecialNeeds', e.target.checked)}
+                    />
+                    Special Needs
+                  </CheckboxLabel>
+                  
+                  <CheckboxLabel>
+                    <Checkbox
                       checked={filters.isSenior}
                       onChange={(e) => handleFilterChange('isSenior', e.target.checked)}
                     />
-                    Senior Cats Only
+                    Senior Cats
                   </CheckboxLabel>
                   
                   <CheckboxLabel>
@@ -527,7 +632,7 @@ export default function CatsPage() {
                       checked={filters.showPartnerFosters}
                       onChange={(e) => handleFilterChange('showPartnerFosters', e.target.checked)}
                     />
-                    Include cats from VFV partner foster homes
+                    Include VFV Partner Homes
                   </CheckboxLabel>
                 </CheckboxGroup>
                 
@@ -622,7 +727,7 @@ export default function CatsPage() {
                       <TextMuted>
                         {cat.age_years
                           ? `${cat.age_years} years old`
-                          : "Age unknown"}{" "}
+                          : cat.age || "Age unknown"}{" "}
                         · {cat.breed || "Mixed breed"}
                       </TextMuted>
                       
