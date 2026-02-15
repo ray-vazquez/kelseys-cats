@@ -15,18 +15,18 @@ import { query } from '../lib/db.js';
  * Uses all_available_cats view for automatic deduplication
  * 
  * Supports query parameters:
- * - search: string to search in name, breed, description
+ * - search: string to search in name, breed, description, medical_notes, age
  * - minAge: minimum age in years
  * - maxAge: maximum age in years
  * - gender: male, female, or unknown
  * - breed: exact breed match (case-insensitive)
+ * - color: exact color match (case-insensitive)
+ * - size: small, medium, or large
+ * - goodWithKids: boolean (1/0 or true/false)
+ * - goodWithCats: boolean (1/0 or true/false)
+ * - goodWithDogs: boolean (1/0 or true/false)
+ * - isSpecialNeeds: boolean (1/0 or true/false)
  * - isSenior: boolean (1/0 or true/false)
- * 
- * Note: The view columns are:
- * - gender (not sex)
- * - description (not bio)
- * - is_senior (computed from age_text)
- * - No good_with_* columns available in view
  */
 export async function getAllAvailableCats(req, res) {
   try {
@@ -37,6 +37,12 @@ export async function getAllAvailableCats(req, res) {
       maxAge,
       gender,
       breed,
+      color,
+      size,
+      goodWithKids,
+      goodWithCats,
+      goodWithDogs,
+      isSpecialNeeds,
       isSenior
     } = req.query;
     
@@ -44,16 +50,16 @@ export async function getAllAvailableCats(req, res) {
     const conditions = [];
     const params = [];
     
-    // Search across available fields in the view
+    // Search across comprehensive fields
     if (search && search.trim()) {
       conditions.push(
-        `(name LIKE ? OR breed LIKE ? OR description LIKE ?)`
+        `(name LIKE ? OR breed LIKE ? OR description LIKE ? OR medical_notes LIKE ? OR age LIKE ? OR color LIKE ?)`
       );
       const searchTerm = `%${search.trim()}%`;
-      params.push(searchTerm, searchTerm, searchTerm);
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
     }
     
-    // Age range filters (only available for partner fosters)
+    // Age range filters
     if (minAge !== undefined && minAge !== '') {
       conditions.push('(age_years IS NULL OR age_years >= ?)');
       params.push(parseFloat(minAge));
@@ -64,10 +70,10 @@ export async function getAllAvailableCats(req, res) {
       params.push(parseFloat(maxAge));
     }
     
-    // Gender filter (column is 'gender' not 'sex' in the view)
+    // Gender filter
     if (gender && gender !== 'all') {
       conditions.push('gender = ?');
-      params.push(gender);
+      params.push(gender.toLowerCase());
     }
     
     // Breed filter (exact match, case-insensitive)
@@ -76,7 +82,43 @@ export async function getAllAvailableCats(req, res) {
       params.push(breed.trim());
     }
     
-    // Senior filter
+    // Color filter (exact match, case-insensitive)
+    if (color && color.trim()) {
+      conditions.push('LOWER(color) = LOWER(?)');
+      params.push(color.trim());
+    }
+    
+    // Size filter
+    if (size && size !== 'all') {
+      conditions.push('LOWER(size) = LOWER(?)');
+      params.push(size.toLowerCase());
+    }
+    
+    // Boolean tag filters
+    if (goodWithKids !== undefined && goodWithKids !== '') {
+      const value = goodWithKids === 'true' || goodWithKids === '1' ? 1 : 0;
+      conditions.push('good_with_kids = ?');
+      params.push(value);
+    }
+    
+    if (goodWithCats !== undefined && goodWithCats !== '') {
+      const value = goodWithCats === 'true' || goodWithCats === '1' ? 1 : 0;
+      conditions.push('good_with_cats = ?');
+      params.push(value);
+    }
+    
+    if (goodWithDogs !== undefined && goodWithDogs !== '') {
+      const value = goodWithDogs === 'true' || goodWithDogs === '1' ? 1 : 0;
+      conditions.push('good_with_dogs = ?');
+      params.push(value);
+    }
+    
+    if (isSpecialNeeds !== undefined && isSpecialNeeds !== '') {
+      const value = isSpecialNeeds === 'true' || isSpecialNeeds === '1' ? 1 : 0;
+      conditions.push('is_special_needs = ?');
+      params.push(value);
+    }
+    
     if (isSenior !== undefined && isSenior !== '') {
       const value = isSenior === 'true' || isSenior === '1' ? 1 : 0;
       conditions.push('is_senior = ?');
@@ -112,6 +154,12 @@ export async function getAllAvailableCats(req, res) {
         maxAge: maxAge || null,
         gender: gender || null,
         breed: breed || null,
+        color: color || null,
+        size: size || null,
+        goodWithKids: goodWithKids || null,
+        goodWithCats: goodWithCats || null,
+        goodWithDogs: goodWithDogs || null,
+        isSpecialNeeds: isSpecialNeeds || null,
         isSenior: isSenior || null
       }
     });
