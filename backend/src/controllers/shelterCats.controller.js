@@ -13,14 +13,113 @@ import { query } from '../lib/db.js';
  * GET /api/cats/all-available
  * Returns merged list of featured foster cats + partner foster cats
  * Uses all_available_cats view for automatic deduplication
+ * 
+ * Supports query parameters:
+ * - search: string to search in name, breed, bio, temperament
+ * - minAge: minimum age in years
+ * - maxAge: maximum age in years
+ * - sex: male, female, or unknown
+ * - breed: exact breed match (case-insensitive)
+ * - goodWithKids: boolean (1/0 or true/false)
+ * - goodWithCats: boolean (1/0 or true/false)
+ * - goodWithDogs: boolean (1/0 or true/false)
+ * - isSpecialNeeds: boolean (1/0 or true/false)
+ * - isSenior: boolean (1/0 or true/false)
  */
 export async function getAllAvailableCats(req, res) {
   try {
-    // Query the unified view (handles deduplication automatically)
-    // Note: query() returns [rows, fields], so we destructure [rows]
-    const [allCats] = await query(
-      `SELECT * FROM all_available_cats ORDER BY name ASC`
-    );
+    // Extract query parameters
+    const {
+      search,
+      minAge,
+      maxAge,
+      sex,
+      breed,
+      goodWithKids,
+      goodWithCats,
+      goodWithDogs,
+      isSpecialNeeds,
+      isSenior
+    } = req.query;
+    
+    // Build WHERE clause dynamically
+    const conditions = [];
+    const params = [];
+    
+    // Search across multiple fields
+    if (search && search.trim()) {
+      conditions.push(
+        `(name LIKE ? OR breed LIKE ? OR bio LIKE ? OR temperament LIKE ?)`
+      );
+      const searchTerm = `%${search.trim()}%`;
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+    }
+    
+    // Age range filters
+    if (minAge !== undefined && minAge !== '') {
+      conditions.push('age_years >= ?');
+      params.push(parseFloat(minAge));
+    }
+    
+    if (maxAge !== undefined && maxAge !== '') {
+      conditions.push('age_years <= ?');
+      params.push(parseFloat(maxAge));
+    }
+    
+    // Sex filter
+    if (sex && sex !== 'all') {
+      conditions.push('sex = ?');
+      params.push(sex);
+    }
+    
+    // Breed filter (exact match, case-insensitive)
+    if (breed && breed.trim()) {
+      conditions.push('LOWER(breed) = LOWER(?)');
+      params.push(breed.trim());
+    }
+    
+    // Boolean tag filters
+    if (goodWithKids !== undefined && goodWithKids !== '') {
+      const value = goodWithKids === 'true' || goodWithKids === '1' ? 1 : 0;
+      conditions.push('good_with_kids = ?');
+      params.push(value);
+    }
+    
+    if (goodWithCats !== undefined && goodWithCats !== '') {
+      const value = goodWithCats === 'true' || goodWithCats === '1' ? 1 : 0;
+      conditions.push('good_with_cats = ?');
+      params.push(value);
+    }
+    
+    if (goodWithDogs !== undefined && goodWithDogs !== '') {
+      const value = goodWithDogs === 'true' || goodWithDogs === '1' ? 1 : 0;
+      conditions.push('good_with_dogs = ?');
+      params.push(value);
+    }
+    
+    if (isSpecialNeeds !== undefined && isSpecialNeeds !== '') {
+      const value = isSpecialNeeds === 'true' || isSpecialNeeds === '1' ? 1 : 0;
+      conditions.push('is_special_needs = ?');
+      params.push(value);
+    }
+    
+    if (isSenior !== undefined && isSenior !== '') {
+      const value = isSenior === 'true' || isSenior === '1' ? 1 : 0;
+      conditions.push('is_senior = ?');
+      params.push(value);
+    }
+    
+    // Build final query
+    let sql = 'SELECT * FROM all_available_cats';
+    
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    sql += ' ORDER BY name ASC';
+    
+    // Execute query
+    const [allCats] = await query(sql, params);
     
     // Separate into featured vs partner for stats using 'source' field
     const featuredCats = allCats.filter(cat => cat.source === 'featured_foster');
@@ -32,7 +131,19 @@ export async function getAllAvailableCats(req, res) {
       partner_foster_cats: partnerCats,
       total: allCats.length,
       featured_count: featuredCats.length,
-      partner_count: partnerCats.length
+      partner_count: partnerCats.length,
+      filters_applied: {
+        search: search || null,
+        minAge: minAge || null,
+        maxAge: maxAge || null,
+        sex: sex || null,
+        breed: breed || null,
+        goodWithKids: goodWithKids || null,
+        goodWithCats: goodWithCats || null,
+        goodWithDogs: goodWithDogs || null,
+        isSpecialNeeds: isSpecialNeeds || null,
+        isSenior: isSenior || null
+      }
     });
     
   } catch (error) {
