@@ -1,18 +1,18 @@
 import { query } from '../lib/db.js';
 
 export class AdminUserModel {
-  static async findByEmail(usernameOrEmail) {
-    // Check admin_users table with username column
-    const [rows] = await query('SELECT * FROM admin_users WHERE username = ?', [usernameOrEmail]);
+  static async findByEmail(emailOrUsername) {
+    // Check admin_users table with email column
+    const [rows] = await query('SELECT * FROM admin_users WHERE email = ?', [emailOrUsername]);
     return rows[0] || null;
   }
 
   static async create({ email, username, password_hash, role = 'admin' }) {
-    // Use username (admin_users table schema)
-    const user = username || email;
+    // Use email (admin_users table schema)
+    const userEmail = email || username;
     const [result] = await query(
-      'INSERT INTO admin_users (username, password_hash, role) VALUES (?, ?, ?)',
-      [user, password_hash, role]
+      'INSERT INTO admin_users (email, password_hash, role) VALUES (?, ?, ?)',
+      [userEmail, password_hash, role]
     );
     const [rows] = await query('SELECT * FROM admin_users WHERE id = ?', [result.insertId]);
     return rows[0];
