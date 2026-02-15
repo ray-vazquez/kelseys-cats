@@ -62,6 +62,14 @@ const SearchInput = styled(Input)`
   }
 `;
 
+// Animated collapsible container for advanced filters
+const AdvancedFiltersContainer = styled.div`
+  max-height: ${({ $isOpen }) => ($isOpen ? '1000px' : '0')};
+  opacity: ${({ $isOpen }) => ($isOpen ? '1' : '0')};
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+`;
+
 const FilterGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -498,11 +506,11 @@ export default function CatsPage() {
               </ExpandToggle>
             </FilterTitle>
             
-            {/* Search Bar */}
+            {/* Search Bar - Updated placeholder to include bio */}
             <SearchBar>
               <SearchInput
                 type="text"
-                placeholder="Search by name, breed, color, description, or medical notes..."
+                placeholder="Search by name, breed, bio, temperament, color, or medical notes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -517,109 +525,107 @@ export default function CatsPage() {
               )}
             </SearchBar>
             
-            {/* Advanced Filters */}
-            {showAdvancedFilters && (
-              <>
-                <FilterGrid>
-                  {/* Age Range */}
-                  <FilterGroup>
-                    <FilterLabel>Age Range (years)</FilterLabel>
-                    <AgeRangeGroup>
-                      <AgeInput
-                        type="number"
-                        min="0"
-                        step="1"
-                        placeholder="Min"
-                        value={filters.minAge}
-                        onChange={(e) => handleFilterChange('minAge', e.target.value)}
-                      />
-                      <span>to</span>
-                      <AgeInput
-                        type="number"
-                        min="0"
-                        step="1"
-                        placeholder="Max"
-                        value={filters.maxAge}
-                        onChange={(e) => handleFilterChange('maxAge', e.target.value)}
-                      />
-                    </AgeRangeGroup>
-                  </FilterGroup>
-                  
-                  {/* Gender - Only Male and Female */}
-                  <FilterGroup>
-                    <FilterLabel>Gender</FilterLabel>
-                    <Select
-                      value={filters.gender}
-                      onChange={(e) => handleFilterChange('gender', e.target.value)}
-                    >
-                      <option value="all">All</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                    </Select>
-                  </FilterGroup>
-                </FilterGrid>
+            {/* Advanced Filters - Now with smooth collapse animation */}
+            <AdvancedFiltersContainer $isOpen={showAdvancedFilters}>
+              <FilterGrid>
+                {/* Age Range */}
+                <FilterGroup>
+                  <FilterLabel>Age Range (years)</FilterLabel>
+                  <AgeRangeGroup>
+                    <AgeInput
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="Min"
+                      value={filters.minAge}
+                      onChange={(e) => handleFilterChange('minAge', e.target.value)}
+                    />
+                    <span>to</span>
+                    <AgeInput
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="Max"
+                      value={filters.maxAge}
+                      onChange={(e) => handleFilterChange('maxAge', e.target.value)}
+                    />
+                  </AgeRangeGroup>
+                </FilterGroup>
                 
-                {/* Tag Filters */}
-                <CheckboxGroup>
-                  <CheckboxLabel>
-                    <Checkbox
-                      checked={filters.goodWithKids}
-                      onChange={(e) => handleFilterChange('goodWithKids', e.target.checked)}
-                    />
-                    Good with Kids
-                  </CheckboxLabel>
-                  
-                  <CheckboxLabel>
-                    <Checkbox
-                      checked={filters.goodWithCats}
-                      onChange={(e) => handleFilterChange('goodWithCats', e.target.checked)}
-                    />
-                    Good with Cats
-                  </CheckboxLabel>
-                  
-                  <CheckboxLabel>
-                    <Checkbox
-                      checked={filters.goodWithDogs}
-                      onChange={(e) => handleFilterChange('goodWithDogs', e.target.checked)}
-                    />
-                    Good with Dogs
-                  </CheckboxLabel>
-                  
-                  <CheckboxLabel>
-                    <Checkbox
-                      checked={filters.isSpecialNeeds}
-                      onChange={(e) => handleFilterChange('isSpecialNeeds', e.target.checked)}
-                    />
-                    Special Needs
-                  </CheckboxLabel>
-                  
-                  <CheckboxLabel>
-                    <Checkbox
-                      checked={filters.isSenior}
-                      onChange={(e) => handleFilterChange('isSenior', e.target.checked)}
-                    />
-                    Senior Cats
-                  </CheckboxLabel>
-                  
-                  <CheckboxLabel>
-                    <Checkbox
-                      checked={filters.showPartnerFosters}
-                      onChange={(e) => handleFilterChange('showPartnerFosters', e.target.checked)}
-                    />
-                    Include VFV Partner Homes
-                  </CheckboxLabel>
-                </CheckboxGroup>
+                {/* Gender - Only Male and Female */}
+                <FilterGroup>
+                  <FilterLabel>Gender</FilterLabel>
+                  <Select
+                    value={filters.gender}
+                    onChange={(e) => handleFilterChange('gender', e.target.value)}
+                  >
+                    <option value="all">All</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </Select>
+                </FilterGroup>
+              </FilterGrid>
+              
+              {/* Tag Filters */}
+              <CheckboxGroup>
+                <CheckboxLabel>
+                  <Checkbox
+                    checked={filters.goodWithKids}
+                    onChange={(e) => handleFilterChange('goodWithKids', e.target.checked)}
+                  />
+                  Good with Kids
+                </CheckboxLabel>
                 
-                {/* Filter Actions */}
-                {hasActiveFilters && (
-                  <FilterActions>
-                    <ClearFiltersButton type="button" onClick={clearFilters}>
-                      Clear All Filters
-                    </ClearFiltersButton>
-                  </FilterActions>
-                )}
-              </>
-            )}
+                <CheckboxLabel>
+                  <Checkbox
+                    checked={filters.goodWithCats}
+                    onChange={(e) => handleFilterChange('goodWithCats', e.target.checked)}
+                  />
+                  Good with Cats
+                </CheckboxLabel>
+                
+                <CheckboxLabel>
+                  <Checkbox
+                    checked={filters.goodWithDogs}
+                    onChange={(e) => handleFilterChange('goodWithDogs', e.target.checked)}
+                  />
+                  Good with Dogs
+                </CheckboxLabel>
+                
+                <CheckboxLabel>
+                  <Checkbox
+                    checked={filters.isSpecialNeeds}
+                    onChange={(e) => handleFilterChange('isSpecialNeeds', e.target.checked)}
+                  />
+                  Special Needs
+                </CheckboxLabel>
+                
+                <CheckboxLabel>
+                  <Checkbox
+                    checked={filters.isSenior}
+                    onChange={(e) => handleFilterChange('isSenior', e.target.checked)}
+                  />
+                  Senior Cats
+                </CheckboxLabel>
+                
+                <CheckboxLabel>
+                  <Checkbox
+                    checked={filters.showPartnerFosters}
+                    onChange={(e) => handleFilterChange('showPartnerFosters', e.target.checked)}
+                  />
+                  Include VFV Partner Homes
+                </CheckboxLabel>
+              </CheckboxGroup>
+              
+              {/* Filter Actions */}
+              {hasActiveFilters && (
+                <FilterActions>
+                  <ClearFiltersButton type="button" onClick={clearFilters}>
+                    Clear All Filters
+                  </ClearFiltersButton>
+                </FilterActions>
+              )}
+            </AdvancedFiltersContainer>
           </FilterSection>
           
           {/* Active Filters Bar */}
