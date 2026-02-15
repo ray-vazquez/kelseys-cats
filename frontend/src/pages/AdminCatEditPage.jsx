@@ -1,4 +1,4 @@
-// AdminCatEditPage with Cloudinary Integration
+// AdminCatEditPage with Cloudinary Integration and Tag Selectors
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
@@ -16,6 +16,7 @@ import {
 } from "../components/Common/StyledComponents.js";
 import { Toast } from "../components/Common/Toast.jsx";
 import ImageUploader from "../components/Admin/ImageUploader.jsx";
+import TagSelector from "../components/Admin/TagSelector.jsx";
 import http from "../api/http.js";
 
 const PageWrapper = styled.div`
@@ -340,11 +341,9 @@ export default function AdminCatEditPage({ mode }) {
     sex: "unknown",
     breed: "",
     bio: "",
-    temperament: "",
     good_with_kids: false,
     good_with_cats: false,
     good_with_dogs: false,
-    medical_notes: "",
     is_special_needs: false,
     is_senior: false,
     status: "available",
@@ -352,6 +351,10 @@ export default function AdminCatEditPage({ mode }) {
     additional_images: [],
     featured: false,
   });
+
+  // NEW: Separate state for tag IDs
+  const [temperamentTags, setTemperamentTags] = useState([]);
+  const [medicalTags, setMedicalTags] = useState([]);
 
   const [newImageUrl, setNewImageUrl] = useState("");
   const [mainImageUrlInput, setMainImageUrlInput] = useState("");
@@ -369,6 +372,8 @@ export default function AdminCatEditPage({ mode }) {
   useEffect(() => {
     if (mode === "edit" && id) {
       setLoadingData(true);
+      
+      // Load cat basic data
       http
         .get(`/cats/${id}`)
         .then((res) => {
@@ -393,11 +398,9 @@ export default function AdminCatEditPage({ mode }) {
             sex: cat.sex || "unknown",
             breed: cat.breed || "",
             bio: cat.bio || "",
-            temperament: cat.temperament || "",
             good_with_kids: cat.good_with_kids || false,
             good_with_cats: cat.good_with_cats || false,
             good_with_dogs: cat.good_with_dogs || false,
-            medical_notes: cat.medical_notes || "",
             is_special_needs: cat.is_special_needs || false,
             is_senior: cat.is_senior || false,
             status: cat.status || "available",
@@ -407,18 +410,40 @@ export default function AdminCatEditPage({ mode }) {
           });
 
           setMainImageUrlInput(cat.main_image_url || "");
-          setLoadingData(false);
         })
         .catch((err) => {
           console.error("Failed to load cat data:", err);
           setError("Failed to load cat data. Please try again.");
-          setLoadingData(false);
           addToast({
             title: "Error",
             message: "Failed to load cat data",
             variant: "error",
             duration: 0,
           });
+        });
+      
+      // NEW: Load cat tags separately
+      http
+        .get(`/tags/cats/${id}`)
+        .then((res) => {
+          const { grouped } = res.data;
+          
+          // Set temperament tag IDs
+          if (grouped.temperament) {
+            setTemperamentTags(grouped.temperament.map(t => t.id));
+          }
+          
+          // Set medical tag IDs
+          if (grouped.medical) {
+            setMedicalTags(grouped.medical.map(t => t.id));
+          }
+          
+          setLoadingData(false);
+        })
+        .catch((err) => {
+          console.error("Failed to load cat tags:", err);
+          // Don't fail if tags don't load - they might not exist yet
+          setLoadingData(false);
         });
     }
   }, [mode, id]);
@@ -682,8 +707,10 @@ export default function AdminCatEditPage({ mode }) {
       const cleanedData = prepareFormData(formData);
       console.log("Submitting cleaned data:", cleanedData);
 
+      let savedCat;
       if (mode === "create") {
-        await http.post("/cats", cleanedData);
+        const response = await http.post("/cats", cleanedData);
+        savedCat = response.data;
         addToast({
           title: "Success!",
           message: `${formData.name} has been added successfully`,
@@ -691,11 +718,29 @@ export default function AdminCatEditPage({ mode }) {
           duration: 5000,
         });
       } else {
-        await http.put(`/cats/${id}`, cleanedData);
+        const response = await http.put(`/cats/${id}`, cleanedData);
+        savedCat = response.data;
         addToast({
           title: "Success!",
           message: `${formData.name} has been updated successfully`,
           variant: "success",
+          duration: 5000,
+        });
+      }
+
+      // NEW: Save tags separately after cat is saved
+      try {
+        await http.put(`/tags/cats/${savedCat.id || id}`, {
+          temperament: temperamentTags,
+          medical: medicalTags
+        });
+        console.log('Tags saved successfully');
+      } catch (tagError) {
+        console.error('Failed to save tags:', tagError);
+        addToast({
+          title: "Warning",
+          message: "Cat saved but tags failed to update",
+          variant: "warning",
           duration: 5000,
         });
       }
@@ -871,28 +916,32 @@ export default function AdminCatEditPage({ mode }) {
                   </StatusHint>
                 </FormGroup>
 
+                {/* REPLACED: Temperament textarea with TagSelector */}
                 <FormGroup>
-                  <Label>Temperament</Label>
-                  <Textarea
-                    rows={3}
-                    name="temperament"
-                    value={formData.temperament}
-                    onChange={handleChange}
-                    disabled={loading}
-                    placeholder="Describe the cat's personality..."
+                  <TagSelector
+                    category="temperament"
+                    value={temperamentTags}
+                    onChange={setTemperamentTags}
+                    label="Personality & Temperament"
+                    placeholder="Search personality traits (e.g., shy, playful, friendly)..."
                   />
+                  <StatusHint>
+                    Select tags that describe this cat's personality and behavior traits.
+                  </StatusHint>
                 </FormGroup>
 
+                {/* REPLACED: Medical notes textarea with TagSelector */}
                 <FormGroup>
-                  <Label>Medical Notes</Label>
-                  <Textarea
-                    rows={3}
-                    name="medical_notes"
-                    value={formData.medical_notes}
-                    onChange={handleChange}
-                    disabled={loading}
-                    placeholder="Any medical conditions or special needs..."
+                  <TagSelector
+                    category="medical"
+                    value={medicalTags}
+                    onChange={setMedicalTags}
+                    label="Medical Conditions & Health Notes"
+                    placeholder="Search medical conditions (e.g., special diet, FIV+)..."
                   />
+                  <StatusHint>
+                    Select any medical conditions, dietary restrictions, or health considerations.
+                  </StatusHint>
                 </FormGroup>
 
                 {/* Main Image Upload Section */}
@@ -1073,7 +1122,7 @@ export default function AdminCatEditPage({ mode }) {
                 </FormGroup>
 
                 <TagsSection>
-                  <TagsTitle>Tags</TagsTitle>
+                  <TagsTitle>Compatibility & Features</TagsTitle>
 
                   <CheckboxLabel>
                     <Checkbox
