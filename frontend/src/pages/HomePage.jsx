@@ -150,10 +150,18 @@ export default function HomePage() {
     http
       .get('/cats/all-available')
       .then((res) => {
-        // Extract only cats marked as featured (featured=1) from featured_foster_cats
+        console.log('Featured foster cats data:', res.data.featured_foster_cats);
+        
+        // Extract only cats marked as featured (featured truthy: 1, true, or "1")
+        // Use double equals to handle numeric/string/boolean variations from MySQL
         const featured = (res.data.featured_foster_cats || [])
-          .filter(cat => cat.featured === 1)
+          .filter(cat => {
+            // Handle featured as: 1, "1", true, or any truthy value
+            return cat.featured == 1 || cat.featured === true || cat.featured === "1";
+          })
           .slice(0, 12); // Show up to 12 featured cats
+          
+        console.log('Filtered featured cats:', featured);
         setFeaturedCats(featured);
       })
       .catch((err) => {
