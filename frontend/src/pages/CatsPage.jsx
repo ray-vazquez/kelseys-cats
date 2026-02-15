@@ -244,13 +244,12 @@ export default function CatsPage() {
   const [loading, setLoading] = useState(true);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
-  // Filter states
+  // Filter states - REMOVED size, kept only male/female for gender
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     minAge: '',
     maxAge: '',
     gender: 'all',
-    size: 'all',
     goodWithKids: false,
     goodWithCats: false,
     goodWithDogs: false,
@@ -282,10 +281,6 @@ export default function CatsPage() {
     
     if (filters.gender !== 'all') {
       params.append('gender', filters.gender);
-    }
-    
-    if (filters.size !== 'all') {
-      params.append('size', filters.size);
     }
     
     if (filters.goodWithKids) {
@@ -351,7 +346,7 @@ export default function CatsPage() {
 
   // Pagination
   const perPage = 12;
-    const startIdx = (page - 1) * perPage;
+  const startIdx = (page - 1) * perPage;
   const endIdx = Math.min(startIdx + perPage, filteredCats.length);
   const paginatedCats = filteredCats.slice(startIdx, endIdx);
 
@@ -372,7 +367,6 @@ export default function CatsPage() {
       minAge: '',
       maxAge: '',
       gender: 'all',
-      size: 'all',
       goodWithKids: false,
       goodWithCats: false,
       goodWithDogs: false,
@@ -388,7 +382,6 @@ export default function CatsPage() {
       filters.minAge !== '' ||
       filters.maxAge !== '' ||
       filters.gender !== 'all' ||
-      filters.size !== 'all' ||
       filters.goodWithKids ||
       filters.goodWithCats ||
       filters.goodWithDogs ||
@@ -415,10 +408,6 @@ export default function CatsPage() {
     
     if (filters.gender !== 'all') {
       labels.push({ key: 'gender', label: `Gender: ${filters.gender}` });
-    }
-    
-    if (filters.size !== 'all') {
-      labels.push({ key: 'size', label: `Size: ${filters.size}` });
     }
     
     if (filters.goodWithKids) {
@@ -452,8 +441,8 @@ export default function CatsPage() {
   const removeFilter = (key) => {
     if (key === 'search') {
       setSearchQuery('');
-    } else if (key === 'minAge' || key === 'maxAge' || key === 'gender' || key === 'size') {
-      handleFilterChange(key, (key === 'gender' || key === 'size') ? 'all' : '');
+    } else if (key === 'minAge' || key === 'maxAge' || key === 'gender') {
+      handleFilterChange(key, key === 'gender' ? 'all' : '');
     } else {
       handleFilterChange(key, key === 'showPartnerFosters' ? true : false);
     }
@@ -556,7 +545,7 @@ export default function CatsPage() {
                     </AgeRangeGroup>
                   </FilterGroup>
                   
-                  {/* Gender */}
+                  {/* Gender - Only Male and Female */}
                   <FilterGroup>
                     <FilterLabel>Gender</FilterLabel>
                     <Select
@@ -566,21 +555,6 @@ export default function CatsPage() {
                       <option value="all">All</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
-                      <option value="unknown">Unknown</option>
-                    </Select>
-                  </FilterGroup>
-                  
-                  {/* Size */}
-                  <FilterGroup>
-                    <FilterLabel>Size</FilterLabel>
-                    <Select
-                      value={filters.size}
-                      onChange={(e) => handleFilterChange('size', e.target.value)}
-                    >
-                      <option value="all">All</option>
-                      <option value="small">Small</option>
-                      <option value="medium">Medium</option>
-                      <option value="large">Large</option>
                     </Select>
                   </FilterGroup>
                 </FilterGrid>
@@ -682,7 +656,7 @@ export default function CatsPage() {
               ))}
             </Grid>
           ) : filteredCats.length === 0 ? (
-            /* Empty State */
+            /* Empty State */}
             <NoCatsFound
               description={
                 hasActiveFilters
