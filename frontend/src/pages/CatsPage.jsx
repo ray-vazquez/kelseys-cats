@@ -656,7 +656,6 @@ export default function CatsPage() {
               ))}
             </Grid>
           ) : filteredCats.length === 0 ? (
-            /* Empty State */}
             <NoCatsFound
               description={
                 hasActiveFilters
@@ -676,12 +675,10 @@ export default function CatsPage() {
               }
             />
           ) : (
-            /* Unified Cats Grid */
             <>
               <Grid $cols={3} $mdCols={2}>
                 {paginatedCats.map((cat) => (
                   <Card key={`${cat.source}-${cat.id}`} $flexColumn $hover style={{ position: 'relative' }}>
-                    {/* Source Badge */}
                     <SourceBadge 
                       $variant={cat.source === 'featured_foster' ? 'success' : 'info'}
                     >
@@ -705,7 +702,6 @@ export default function CatsPage() {
                         · {cat.breed || "Mixed breed"}
                       </TextMuted>
                       
-                      {/* Only render CardFooter if there are badges to show */}
                       {(cat.is_special_needs === 1 || cat.is_senior === 1 || cat.bonded_pair_id) && (
                         <CardFooter>
                           {cat.is_special_needs === 1 && (
@@ -720,17 +716,14 @@ export default function CatsPage() {
                         </CardFooter>
                       )}
                       
-                      {/* Spacer to push button to bottom */}
                       <div style={{ flex: 1 }} />
                       
                       <div style={{ marginTop: "1rem" }}>
                         {cat.source === 'featured_foster' ? (
-                          // Featured foster cats link to your detail page
                           <ButtonLink to={`/cats/${cat.id}`} $variant="primary" $fullWidth>
                             View Details
                           </ButtonLink>
                         ) : (
-                          // Partner foster cats link to Adopt-a-Pet
                           <ButtonLink 
                             as="a"
                             href={cat.adoptapet_url} 
@@ -748,7 +741,6 @@ export default function CatsPage() {
                 ))}
               </Grid>
 
-              {/* Pagination */}
               {filteredCats.length > perPage && (
                 <div style={{ marginTop: '3rem' }}>
                   <PaginationControls
