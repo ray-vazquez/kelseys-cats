@@ -1,23 +1,19 @@
--- Migration: Final Fix - all_available_cats view with good_with columns
--- Purpose: Add missing good_with_* columns and ensure view works
--- Date: 2026-02-15
--- Changes:
---   - Ensures good_with_kids, good_with_cats, good_with_dogs columns exist
---   - Removes size and unknown gender from frontend filters
---   - Fixes all schema issues
+-- Migration 05: Final fix for all_available_cats view
+-- This migration recreates the view with:
+-- 1. Correct column references (no c.age - use age_years instead)
+-- 2. Added good_with_kids, good_with_cats, good_with_dogs columns
+-- 3. Removed deleted_at checks (use status = 'available' only)
+-- 4. Fixed vfv_cats column names (petfinder_url -> adoptapet_url)
 
--- Drop existing view
 DROP VIEW IF EXISTS all_available_cats;
 
--- Create complete unified view with all necessary columns
 CREATE VIEW all_available_cats AS
-
 -- Kelsey's foster cats (Featured Fosters)
 SELECT 
   c.id,
   c.name,
-  c.age,
-  NULL as age_years,
+  CONCAT(FLOOR(c.age_years), ' years') as age,
+  c.age_years,
   c.breed,
   CASE 
     WHEN c.gender = 'Male' THEN 'male'
@@ -30,7 +26,7 @@ SELECT
   c.description,
   c.medical_notes,
   
-  -- Boolean flags - THESE ARE THE COLUMNS THAT WERE MISSING
+  -- Boolean flags with COALESCE for safety
   COALESCE(c.good_with_kids, FALSE) as good_with_kids,
   COALESCE(c.good_with_cats, FALSE) as good_with_cats,
   COALESCE(c.good_with_dogs, FALSE) as good_with_dogs,
@@ -43,7 +39,7 @@ SELECT
   
   -- Detect senior cats from age or tags
   CASE 
-    WHEN c.age LIKE '%senior%' OR c.age LIKE '%Senior%' THEN TRUE
+    WHEN c.age_years >= 7 THEN TRUE
     WHEN EXISTS (
       SELECT 1 FROM cat_tags ct 
       JOIN tags t ON ct.tag_id = t.id 
@@ -106,7 +102,7 @@ SELECT
   
   -- Calculate is_senior from age_text
   CASE 
-    WHEN v.age_text = 'Senior' OR v.age_text LIKE '%senior%' THEN TRUE 
+    WHEN v.age_text = 'Senior' OR v.age_text LIKE '%senior%' THEN TRUE
     WHEN v.age_years >= 7 THEN TRUE
     ELSE FALSE 
   END as is_senior,
@@ -127,17 +123,11 @@ SELECT
   v.updated_at
   
 FROM vfv_cats v
-
--- Deduplicate: Exclude partner fosters that match Kelsey's cats
+-- Deduplicate: Exclude partner fosters that match Kelsey's cats by adoptapet_id
 WHERE v.petfinder_id IS NOT NULL
 AND NOT EXISTS (
   SELECT 1 FROM cats c 
-  WHERE c.status = 'available' 
+  WHERE c.status = 'available'
   AND c.adoptapet_url IS NOT NULL
   AND SUBSTRING_INDEX(SUBSTRING_INDEX(c.adoptapet_url, '/pet/', -1), '-', 1) = v.petfinder_id
 );
-
--- Add helpful comment
-ALTER VIEW all_available_cats COMMENT = 'Unified view with good_with columns (FINAL FIX)';
-
-SELECT 'all_available_cats view fixed with good_with columns' AS status;
