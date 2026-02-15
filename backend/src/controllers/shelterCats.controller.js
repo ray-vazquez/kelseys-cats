@@ -15,16 +15,18 @@ import { query } from '../lib/db.js';
  * Uses all_available_cats view for automatic deduplication
  * 
  * Supports query parameters:
- * - search: string to search in name, breed, bio, temperament
+ * - search: string to search in name, breed, description
  * - minAge: minimum age in years
  * - maxAge: maximum age in years
- * - sex: male, female, or unknown
+ * - gender: male, female, or unknown
  * - breed: exact breed match (case-insensitive)
- * - goodWithKids: boolean (1/0 or true/false)
- * - goodWithCats: boolean (1/0 or true/false)
- * - goodWithDogs: boolean (1/0 or true/false)
- * - isSpecialNeeds: boolean (1/0 or true/false)
  * - isSenior: boolean (1/0 or true/false)
+ * 
+ * Note: The view columns are:
+ * - gender (not sex)
+ * - description (not bio)
+ * - is_senior (computed from age_text)
+ * - No good_with_* columns available in view
  */
 export async function getAllAvailableCats(req, res) {
   try {
@@ -33,12 +35,8 @@ export async function getAllAvailableCats(req, res) {
       search,
       minAge,
       maxAge,
-      sex,
+      gender,
       breed,
-      goodWithKids,
-      goodWithCats,
-      goodWithDogs,
-      isSpecialNeeds,
       isSenior
     } = req.query;
     
@@ -46,30 +44,30 @@ export async function getAllAvailableCats(req, res) {
     const conditions = [];
     const params = [];
     
-    // Search across multiple fields
+    // Search across available fields in the view
     if (search && search.trim()) {
       conditions.push(
-        `(name LIKE ? OR breed LIKE ? OR bio LIKE ? OR temperament LIKE ?)`
+        `(name LIKE ? OR breed LIKE ? OR description LIKE ?)`
       );
       const searchTerm = `%${search.trim()}%`;
-      params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+      params.push(searchTerm, searchTerm, searchTerm);
     }
     
-    // Age range filters
+    // Age range filters (only available for partner fosters)
     if (minAge !== undefined && minAge !== '') {
-      conditions.push('age_years >= ?');
+      conditions.push('(age_years IS NULL OR age_years >= ?)');
       params.push(parseFloat(minAge));
     }
     
     if (maxAge !== undefined && maxAge !== '') {
-      conditions.push('age_years <= ?');
+      conditions.push('(age_years IS NULL OR age_years <= ?)');
       params.push(parseFloat(maxAge));
     }
     
-    // Sex filter
-    if (sex && sex !== 'all') {
-      conditions.push('sex = ?');
-      params.push(sex);
+    // Gender filter (column is 'gender' not 'sex' in the view)
+    if (gender && gender !== 'all') {
+      conditions.push('gender = ?');
+      params.push(gender);
     }
     
     // Breed filter (exact match, case-insensitive)
@@ -78,31 +76,7 @@ export async function getAllAvailableCats(req, res) {
       params.push(breed.trim());
     }
     
-    // Boolean tag filters
-    if (goodWithKids !== undefined && goodWithKids !== '') {
-      const value = goodWithKids === 'true' || goodWithKids === '1' ? 1 : 0;
-      conditions.push('good_with_kids = ?');
-      params.push(value);
-    }
-    
-    if (goodWithCats !== undefined && goodWithCats !== '') {
-      const value = goodWithCats === 'true' || goodWithCats === '1' ? 1 : 0;
-      conditions.push('good_with_cats = ?');
-      params.push(value);
-    }
-    
-    if (goodWithDogs !== undefined && goodWithDogs !== '') {
-      const value = goodWithDogs === 'true' || goodWithDogs === '1' ? 1 : 0;
-      conditions.push('good_with_dogs = ?');
-      params.push(value);
-    }
-    
-    if (isSpecialNeeds !== undefined && isSpecialNeeds !== '') {
-      const value = isSpecialNeeds === 'true' || isSpecialNeeds === '1' ? 1 : 0;
-      conditions.push('is_special_needs = ?');
-      params.push(value);
-    }
-    
+    // Senior filter
     if (isSenior !== undefined && isSenior !== '') {
       const value = isSenior === 'true' || isSenior === '1' ? 1 : 0;
       conditions.push('is_senior = ?');
@@ -136,12 +110,8 @@ export async function getAllAvailableCats(req, res) {
         search: search || null,
         minAge: minAge || null,
         maxAge: maxAge || null,
-        sex: sex || null,
+        gender: gender || null,
         breed: breed || null,
-        goodWithKids: goodWithKids || null,
-        goodWithCats: goodWithCats || null,
-        goodWithDogs: goodWithDogs || null,
-        isSpecialNeeds: isSpecialNeeds || null,
         isSenior: isSenior || null
       }
     });
