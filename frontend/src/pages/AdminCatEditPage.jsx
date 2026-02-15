@@ -38,7 +38,7 @@ const TagsSection = styled.div`
 `;
 
 const TagsTitle = styled.h4`
-  font-size: ${({ theme }) => theme.fontSizes.base};
+  font-size: ${({ theme}) => theme.fontSizes.base};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0 0 ${({ theme }) => theme.spacing[1]} 0;
@@ -268,6 +268,7 @@ export default function AdminCatEditPage({ mode }) {
   });
 
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [mainImageUrlInput, setMainImageUrlInput] = useState(''); // Separate state for main image URL input
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(mode === 'edit');
   const [error, setError] = useState(null);
@@ -313,6 +314,10 @@ export default function AdminCatEditPage({ mode }) {
             additional_images: parsedImages,
             featured: cat.featured || false
           });
+          
+          // Sync main image URL input with formData
+          setMainImageUrlInput(cat.main_image_url || '');
+          
           setLoadingData(false);
         })
         .catch((err) => {
@@ -387,10 +392,36 @@ export default function AdminCatEditPage({ mode }) {
       ...prev,
       main_image_url: uploadData.url
     }));
+    setMainImageUrlInput(uploadData.url);
     
     addToast({
       title: 'Main Image Uploaded',
       message: 'Image successfully uploaded to Cloudinary',
+      variant: 'success',
+      duration: 3000
+    });
+  };
+  
+  // Handle setting main image URL manually
+  const handleSetMainImageUrl = () => {
+    if (!mainImageUrlInput.trim()) {
+      addToast({
+        title: 'Invalid URL',
+        message: 'Please enter a valid image URL',
+        variant: 'warning',
+        duration: 3000
+      });
+      return;
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      main_image_url: mainImageUrlInput.trim()
+    }));
+    
+    addToast({
+      title: 'Main Image URL Set',
+      message: 'Main image URL has been updated',
       variant: 'success',
       duration: 3000
     });
@@ -714,6 +745,7 @@ export default function AdminCatEditPage({ mode }) {
 
                   <FormGroup style={{ marginTop: '1rem' }}>
                     <ImageUploader
+                      mode="single"
                       onUploadComplete={handleMainImageUpload}
                       onUploadError={handleImageUploadError}
                       disabled={loading}
@@ -723,21 +755,37 @@ export default function AdminCatEditPage({ mode }) {
 
                   <OrDivider>or enter URL manually</OrDivider>
 
-                  <Input
-                    type="text"
-                    name="main_image_url"
-                    value={formData.main_image_url}
-                    onChange={handleChange}
-                    disabled={loading}
-                    placeholder="https://..."
-                  />
+                  <AddImageSection>
+                    <Input
+                      type="text"
+                      value={mainImageUrlInput}
+                      onChange={(e) => setMainImageUrlInput(e.target.value)}
+                      disabled={loading}
+                      placeholder="https://..."
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSetMainImageUrl();
+                        }
+                      }}
+                    />
+                    <Button type="button" onClick={handleSetMainImageUrl} disabled={loading} $variant="outline">
+                      Set URL
+                    </Button>
+                  </AddImageSection>
+                  
+                  {formData.main_image_url && (
+                    <StatusHint style={{ marginTop: '0.5rem' }}>
+                      Current: {formData.main_image_url}
+                    </StatusHint>
+                  )}
                 </ImagesSection>
 
                 {/* Additional Images Section */}
                 <ImagesSection>
                   <TagsTitle>Additional Images Gallery</TagsTitle>
                   <StatusHint>
-                    Upload images to Cloudinary or add URLs manually. These will appear as thumbnails below the main image on the cat's detail page.
+                    Upload multiple images to Cloudinary or add URLs manually. These will appear as thumbnails below the main image on the cat's detail page.
                   </StatusHint>
 
                   {formData.additional_images.length > 0 && (
@@ -761,6 +809,8 @@ export default function AdminCatEditPage({ mode }) {
                   <SectionDivider>
                     <TagsTitle style={{ marginBottom: '0.75rem' }}>Upload to Cloudinary</TagsTitle>
                     <ImageUploader
+                      mode="multiple"
+                      allowMultiple={true}
                       onUploadComplete={handleAdditionalImageUpload}
                       onUploadError={handleImageUploadError}
                       disabled={loading}
@@ -777,7 +827,12 @@ export default function AdminCatEditPage({ mode }) {
                       onChange={(e) => setNewImageUrl(e.target.value)}
                       placeholder="https://example.com/image.jpg"
                       disabled={loading}
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddImage())}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddImage();
+                        }
+                      }}
                     />
                     <Button type="button" onClick={handleAddImage} disabled={loading} $variant="outline">
                       Add Image
