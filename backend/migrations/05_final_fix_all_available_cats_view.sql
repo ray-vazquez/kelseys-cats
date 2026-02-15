@@ -1,6 +1,6 @@
 -- Migration 05: Final fix for all_available_cats view
 -- This migration recreates the view with correct column names
--- Note: Using adoptapet_* columns, NOT petfinder_* (we scrape Adopt-a-Pet, not Petfinder)
+-- Removes all petfinder references - uses adoptapet only
 
 DROP VIEW IF EXISTS all_available_cats;
 
@@ -61,7 +61,7 @@ AND c.deleted_at IS NULL
 
 UNION ALL
 
--- VFV partner foster cats (Partner Homes from Adopt-a-Pet)
+-- VFV partner foster cats (Partner Homes)
 SELECT 
   v.id,
   v.name,
