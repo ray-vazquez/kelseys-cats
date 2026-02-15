@@ -9,6 +9,7 @@ import alumniRouter from './src/routes/alumni.routes.js';
 import authRouter from './src/routes/auth.routes.js';
 import scraperRouter from './src/routes/scraper.routes.js';
 import uploadRouter from './src/routes/upload.routes.js';
+import debugRouter from './src/routes/debug.routes.js';
 import { errorHandler } from './src/middleware/error.middleware.js';
 import { loginRateLimiter } from './src/middleware/rateLimit.middleware.js';
 import { initCronJobs } from './src/services/cronService.js';
@@ -42,6 +43,12 @@ app.get('/test-upload.html', (req, res) => {
 app.use('/api/auth', loginRateLimiter, authRouter);
 app.use('/api/cats', catsRouter);
 app.use('/api/alumni', alumniRouter);
+
+// Debug routes (only in development)
+if (env.NODE_ENV !== 'production') {
+  app.use('/api/debug', debugRouter);
+  console.log('🐛 Debug routes enabled at /api/debug');
+}
 
 // Admin routes
 app.use('/api/upload', uploadRouter);
