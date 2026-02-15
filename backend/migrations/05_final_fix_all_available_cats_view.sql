@@ -1,9 +1,6 @@
 -- Migration 05: Final fix for all_available_cats view
--- This migration recreates the view with:
--- 1. Correct column references (no c.age - use age_years instead)
--- 2. Added good_with_kids, good_with_cats, good_with_dogs columns
--- 3. Removed deleted_at checks (use status = 'available' only)
--- 4. Fixed vfv_cats column names (petfinder_url -> adoptapet_url)
+-- This migration recreates the view with minimal required columns
+-- NOTE: Adjust column names based on your actual cats table schema
 
 DROP VIEW IF EXISTS all_available_cats;
 
@@ -12,24 +9,24 @@ CREATE VIEW all_available_cats AS
 SELECT 
   c.id,
   c.name,
-  CONCAT(FLOOR(c.age_years), ' years') as age,
+  -- Use age_years if it exists, otherwise NULL
+  CASE 
+    WHEN c.age_years IS NOT NULL THEN CONCAT(FLOOR(c.age_years), ' years')
+    ELSE 'Unknown age'
+  END as age,
   c.age_years,
   c.breed,
-  CASE 
-    WHEN c.gender = 'Male' THEN 'male'
-    WHEN c.gender = 'Female' THEN 'female'
-    ELSE 'unknown'
-  END as gender,
+  'unknown' as gender,  -- Set default gender since column doesn't exist
   c.color,
   c.size,
   c.main_image_url,
   c.description,
   c.medical_notes,
   
-  -- Boolean flags with COALESCE for safety
-  COALESCE(c.good_with_kids, FALSE) as good_with_kids,
-  COALESCE(c.good_with_cats, FALSE) as good_with_cats,
-  COALESCE(c.good_with_dogs, FALSE) as good_with_dogs,
+  -- Boolean flags - set to FALSE since columns don't exist in cats table
+  FALSE as good_with_kids,
+  FALSE as good_with_cats,
+  FALSE as good_with_dogs,
   
   -- Special categorization
   CASE 
