@@ -150,9 +150,10 @@ export default function HomePage() {
     http
       .get('/cats/all-available')
       .then((res) => {
-        // Extract featured foster cats - show all featured cats (not filtering by featured=1)
+        // Extract only cats marked as featured (featured=1) from featured_foster_cats
         const featured = (res.data.featured_foster_cats || [])
-          .slice(0, 12); // Show up to 12 cats
+          .filter(cat => cat.featured === 1)
+          .slice(0, 12); // Show up to 12 featured cats
         setFeaturedCats(featured);
       })
       .catch((err) => {
