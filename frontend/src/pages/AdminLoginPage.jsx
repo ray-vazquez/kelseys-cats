@@ -93,11 +93,11 @@ const HelpText = styled.p`
 `;
 
 export default function AdminLoginPage() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showResetModal, setShowResetModal] = useState(false);
-  const [resetUsername, setResetUsername] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
   const [resetNewPassword, setResetNewPassword] = useState('');
   const [resetAdminSecret, setResetAdminSecret] = useState('');
   const [resetError, setResetError] = useState('');
@@ -110,7 +110,7 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setError('');
     try {
-      const res = await http.post('/auth/login', { username, password });
+      const res = await http.post('/auth/login', { email, password });
       loginUser(res.data.token, res.data.user);
       navigate('/admin/cats');
     } catch (err) {
@@ -127,13 +127,13 @@ export default function AdminLoginPage() {
 
     try {
       const res = await http.post('/auth/reset-password', {
-        username: resetUsername,
+        email: resetEmail,
         newPassword: resetNewPassword,
         adminSecret: resetAdminSecret
       });
 
-      setResetSuccess(`Password reset successfully for ${res.data.username}!`);
-      setResetUsername('');
+      setResetSuccess(`Password reset successfully for ${res.data.email}!`);
+      setResetEmail('');
       setResetNewPassword('');
       setResetAdminSecret('');
 
@@ -154,7 +154,7 @@ export default function AdminLoginPage() {
     setShowResetModal(true);
     setResetError('');
     setResetSuccess('');
-    setResetUsername('');
+    setResetEmail('');
     setResetNewPassword('');
     setResetAdminSecret('');
   }
@@ -169,13 +169,13 @@ export default function AdminLoginPage() {
               {error && <Alert $variant="danger">{error}</Alert>}
               <form onSubmit={handleSubmit}>
                 <FormGroup>
-                  <Label>Username</Label>
+                  <Label>Email</Label>
                   <Input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
-                    autoComplete="username"
+                    autoComplete="email"
                   />
                 </FormGroup>
                 <FormGroup>
@@ -213,7 +213,7 @@ export default function AdminLoginPage() {
               </ModalHeader>
 
               <HelpText>
-                Enter your username, a new password, and the admin secret key to reset your password.
+                Enter your email address, a new password, and the admin secret key to reset your password.
                 The admin secret is "kelseyscats2026" by default (can be changed in .env as ADMIN_RESET_SECRET).
               </HelpText>
 
@@ -222,11 +222,11 @@ export default function AdminLoginPage() {
 
               <form onSubmit={handleResetPassword}>
                 <FormGroup>
-                  <Label>Username</Label>
+                  <Label>Email</Label>
                   <Input
-                    type="text"
-                    value={resetUsername}
-                    onChange={(e) => setResetUsername(e.target.value)}
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
                     required
                     disabled={resetLoading || resetSuccess}
                   />
