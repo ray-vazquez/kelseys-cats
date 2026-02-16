@@ -33,17 +33,27 @@ ALTER TABLE cats DROP COLUMN medical_notes;
 ALTER TABLE cats 
   MODIFY COLUMN featured BOOLEAN NOT NULL DEFAULT FALSE;
 
--- Add performance indexes
-CREATE INDEX IF NOT EXISTS idx_cats_status ON cats(status);
-CREATE INDEX IF NOT EXISTS idx_cats_featured ON cats(featured);
-CREATE INDEX IF NOT EXISTS idx_cats_special_needs ON cats(is_special_needs);
-CREATE INDEX IF NOT EXISTS idx_cats_senior ON cats(is_senior);
-CREATE INDEX IF NOT EXISTS idx_cats_status_featured ON cats(status, featured);
-CREATE INDEX IF NOT EXISTS idx_tags_category ON tags(category_id);
+-- Add performance indexes (drop first if they exist, ignore errors)
+DROP INDEX IF EXISTS idx_cats_status ON cats;
+DROP INDEX IF EXISTS idx_cats_featured ON cats;
+DROP INDEX IF EXISTS idx_cats_special_needs ON cats;
+DROP INDEX IF EXISTS idx_cats_senior ON cats;
+DROP INDEX IF EXISTS idx_cats_status_featured ON cats;
+DROP INDEX IF EXISTS idx_tags_category ON tags;
+
+CREATE INDEX idx_cats_status ON cats(status);
+CREATE INDEX idx_cats_featured ON cats(featured);
+CREATE INDEX idx_cats_special_needs ON cats(is_special_needs);
+CREATE INDEX idx_cats_senior ON cats(is_senior);
+CREATE INDEX idx_cats_status_featured ON cats(status, featured);
+CREATE INDEX idx_tags_category ON tags(category_id);
 
 -- Ensure FK constraints exist
-ALTER TABLE cat_tags
-  DROP FOREIGN KEY IF EXISTS fk_cat_tags_tag_id;
+-- Drop existing constraints (ignore errors if they don't exist)
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+
+ALTER TABLE cat_tags DROP FOREIGN KEY fk_cat_tags_tag_id;
+ALTER TABLE cat_tags DROP FOREIGN KEY fk_cat_tags_cat_id;
 
 ALTER TABLE cat_tags
   ADD CONSTRAINT fk_cat_tags_tag_id 
@@ -51,12 +61,11 @@ ALTER TABLE cat_tags
   ON DELETE CASCADE;
 
 ALTER TABLE cat_tags
-  DROP FOREIGN KEY IF EXISTS fk_cat_tags_cat_id;
-
-ALTER TABLE cat_tags
   ADD CONSTRAINT fk_cat_tags_cat_id 
   FOREIGN KEY (cat_id) REFERENCES cats(id) 
   ON DELETE CASCADE;
+
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 
 
 -- ============================================================================
