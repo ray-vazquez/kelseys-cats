@@ -1,5 +1,5 @@
 // Migrated CatDetailPage - Using Phase 1+2 enhanced components with Image Gallery
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import {
@@ -130,6 +130,18 @@ export default function CatDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // Process tags array and filter out nulls
+  const validTags = useMemo(() => {
+    if (!cat?.tags || !Array.isArray(cat.tags)) return [];
+    
+    return cat.tags.filter(tag => 
+      tag !== null && 
+      tag !== undefined && 
+      tag !== '' &&
+      typeof tag === 'string'
+    );
+  }, [cat?.tags]);
+
   if (loading) {
     return (
       <>
@@ -219,10 +231,8 @@ export default function CatDetailPage() {
     }
   }
 
-  // Format tags for display
-  const displayTags = cat.tags && Array.isArray(cat.tags) && cat.tags.length > 0
-    ? cat.tags.join(', ')
-    : null;
+  // Check if badges should be displayed
+  const hasBadges = cat.is_special_needs || isSenior || cat.bonded_pair_id || cat.featured;
 
   return (
     <>
@@ -264,25 +274,29 @@ export default function CatDetailPage() {
                 <CatMeta>
                   {cat.age_years 
                     ? `${Math.floor(cat.age_years)} year${Math.floor(cat.age_years) !== 1 ? 's' : ''} old` 
-                    : "Age unknown"} ·{" "}
-                  {cat.sex || "Unknown"} · {cat.breed || "Mixed breed"}
-                  {displayTags && ` · ${displayTags}`}
+                    : "Age unknown"}
+                  {" · "}
+                  {cat.sex || "Unknown"}
+                  {" · "}
+                  {cat.breed || "Mixed breed"}
                 </CatMeta>
 
-                <BadgeGroup>
-                  {cat.is_special_needs && (
-                    <Badge $variant="warning">Special Needs</Badge>
-                  )}
-                  {isSenior && (
-                    <Badge $variant="secondary">Senior</Badge>
-                  )}
-                  {cat.bonded_pair_id && (
-                    <Badge $variant="info">Bonded Pair</Badge>
-                  )}
-                  {cat.featured && (
-                    <Badge $variant="success">Featured</Badge>
-                  )}
-                </BadgeGroup>
+                {hasBadges && (
+                  <BadgeGroup>
+                    {cat.is_special_needs && (
+                      <Badge $variant="warning">Special Needs</Badge>
+                    )}
+                    {isSenior && (
+                      <Badge $variant="secondary">Senior</Badge>
+                    )}
+                    {cat.bonded_pair_id && (
+                      <Badge $variant="info">Bonded Pair</Badge>
+                    )}
+                    {cat.featured && (
+                      <Badge $variant="success">Featured</Badge>
+                    )}
+                  </BadgeGroup>
+                )}
               </CatHeader>
 
               {/* Bio Section */}
@@ -293,11 +307,11 @@ export default function CatDetailPage() {
                 </InfoSection>
               )}
 
-              {/* Temperament */}
-              {cat.temperament && (
+              {/* Personality & Temperament - from tags */}
+              {validTags.length > 0 && (
                 <InfoSection>
-                  <InfoTitle>Temperament</InfoTitle>
-                  <InfoText>{cat.temperament}</InfoText>
+                  <InfoTitle>Personality & Temperament</InfoTitle>
+                  <InfoText>{validTags.join(', ')}</InfoText>
                 </InfoSection>
               )}
 
@@ -319,14 +333,6 @@ export default function CatDetailPage() {
                   </InfoListItem>
                 </InfoList>
               </InfoSection>
-
-              {/* Medical Notes */}
-              {cat.medical_notes && (
-                <InfoSection>
-                  <InfoTitle>Medical Notes</InfoTitle>
-                  <InfoText>{cat.medical_notes}</InfoText>
-                </InfoSection>
-              )}
 
               {/* Intake Information */}
               {cat.intake_date && (
