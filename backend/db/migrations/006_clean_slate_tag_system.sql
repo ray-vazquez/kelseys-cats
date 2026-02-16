@@ -20,9 +20,9 @@ DELETE FROM cat_images;
 -- PART 2: DROP LEGACY COLUMNS
 -- ============================================================================
 
-ALTER TABLE cats
-  DROP COLUMN IF EXISTS temperament,
-  DROP COLUMN IF EXISTS medical_notes;
+-- Drop columns separately for MySQL 5.7 compatibility
+ALTER TABLE cats DROP COLUMN temperament;
+ALTER TABLE cats DROP COLUMN medical_notes;
 
 
 -- ============================================================================
