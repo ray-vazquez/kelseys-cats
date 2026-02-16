@@ -54,23 +54,34 @@ CALL AddIndexIfNotExists();
 DROP PROCEDURE AddIndexIfNotExists;
 
 -- Ensure FK constraints exist
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+-- Use stored procedure with error handler to safely drop/create FK constraints
+DELIMITER $$
 
--- Drop and recreate FK constraints (errors ignored due to FK checks disabled)
-ALTER TABLE cat_tags DROP FOREIGN KEY fk_cat_tags_tag_id;
-ALTER TABLE cat_tags DROP FOREIGN KEY fk_cat_tags_cat_id;
+CREATE PROCEDURE RecreateFK()
+BEGIN
+  DECLARE CONTINUE HANDLER FOR 1091 BEGIN END; -- Can't DROP, doesn't exist
+  DECLARE CONTINUE HANDLER FOR 1022 BEGIN END; -- Can't write, duplicate key
+  
+  -- Drop existing constraints if they exist
+  ALTER TABLE cat_tags DROP FOREIGN KEY fk_cat_tags_tag_id;
+  ALTER TABLE cat_tags DROP FOREIGN KEY fk_cat_tags_cat_id;
+  
+  -- Create constraints
+  ALTER TABLE cat_tags
+    ADD CONSTRAINT fk_cat_tags_tag_id 
+    FOREIGN KEY (tag_id) REFERENCES tags(id) 
+    ON DELETE CASCADE;
+  
+  ALTER TABLE cat_tags
+    ADD CONSTRAINT fk_cat_tags_cat_id 
+    FOREIGN KEY (cat_id) REFERENCES cats(id) 
+    ON DELETE CASCADE;
+END$$
 
-ALTER TABLE cat_tags
-  ADD CONSTRAINT fk_cat_tags_tag_id 
-  FOREIGN KEY (tag_id) REFERENCES tags(id) 
-  ON DELETE CASCADE;
+DELIMITER ;
 
-ALTER TABLE cat_tags
-  ADD CONSTRAINT fk_cat_tags_cat_id 
-  FOREIGN KEY (cat_id) REFERENCES cats(id) 
-  ON DELETE CASCADE;
-
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+CALL RecreateFK();
+DROP PROCEDURE RecreateFK;
 
 
 -- ============================================================================
