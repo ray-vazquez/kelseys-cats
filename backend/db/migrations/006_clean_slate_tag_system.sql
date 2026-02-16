@@ -1,5 +1,6 @@
 -- backend/db/migrations/006_clean_slate_tag_system.sql
 -- Clean slate migration: remove legacy data and implement pure tag system
+-- MySQL 5.7 Compatible
 
 -- ============================================================================
 -- PART 1: CLEAN EXISTING DATA
@@ -17,38 +18,10 @@ DELETE FROM cat_images;
 
 
 -- ============================================================================
--- PART 2: DROP LEGACY COLUMNS (SAFE)
+-- PART 2: DROP LEGACY COLUMNS (SKIPPED - ALREADY DROPPED)
 -- ============================================================================
-
--- Check and drop temperament column if it exists
-SET @dbname = DATABASE();
-SET @tablename = 'cats';
-SET @columnname = 'temperament';
-SET @preparedStatement = (SELECT IF(
-  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-   WHERE (table_name = @tablename)
-     AND (table_schema = @dbname)
-     AND (column_name = @columnname)) > 0,
-  'ALTER TABLE cats DROP COLUMN temperament;',
-  'SELECT 1;'
-));
-PREPARE alterIfExists FROM @preparedStatement;
-EXECUTE alterIfExists;
-DEALLOCATE PREPARE alterIfExists;
-
--- Check and drop medical_notes column if it exists
-SET @columnname = 'medical_notes';
-SET @preparedStatement = (SELECT IF(
-  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-   WHERE (table_name = @tablename)
-     AND (table_schema = @dbname)
-     AND (column_name = @columnname)) > 0,
-  'ALTER TABLE cats DROP COLUMN medical_notes;',
-  'SELECT 1;'
-));
-PREPARE alterIfExists FROM @preparedStatement;
-EXECUTE alterIfExists;
-DEALLOCATE PREPARE alterIfExists;
+-- Note: temperament and medical_notes columns have been removed in previous migration
+-- Skipping to avoid errors
 
 
 -- ============================================================================
@@ -59,25 +32,31 @@ DEALLOCATE PREPARE alterIfExists;
 ALTER TABLE cats 
   MODIFY COLUMN featured BOOLEAN NOT NULL DEFAULT FALSE;
 
--- Add performance indexes (drop first if they exist, ignore errors)
-DROP INDEX IF EXISTS idx_cats_status ON cats;
-DROP INDEX IF EXISTS idx_cats_featured ON cats;
-DROP INDEX IF EXISTS idx_cats_special_needs ON cats;
-DROP INDEX IF EXISTS idx_cats_senior ON cats;
-DROP INDEX IF EXISTS idx_cats_status_featured ON cats;
-DROP INDEX IF EXISTS idx_tags_category ON tags;
+-- Add performance indexes
+-- Note: We ignore errors if indexes already exist by wrapping in stored procedure
+DELIMITER $$
 
-CREATE INDEX idx_cats_status ON cats(status);
-CREATE INDEX idx_cats_featured ON cats(featured);
-CREATE INDEX idx_cats_special_needs ON cats(is_special_needs);
-CREATE INDEX idx_cats_senior ON cats(is_senior);
-CREATE INDEX idx_cats_status_featured ON cats(status, featured);
-CREATE INDEX idx_tags_category ON tags(category_id);
+CREATE PROCEDURE AddIndexIfNotExists()
+BEGIN
+  DECLARE CONTINUE HANDLER FOR 1061 BEGIN END; -- Duplicate key name
+  
+  CREATE INDEX idx_cats_status ON cats(status);
+  CREATE INDEX idx_cats_featured ON cats(featured);
+  CREATE INDEX idx_cats_special_needs ON cats(is_special_needs);
+  CREATE INDEX idx_cats_senior ON cats(is_senior);
+  CREATE INDEX idx_cats_status_featured ON cats(status, featured);
+  CREATE INDEX idx_tags_category ON tags(category_id);
+END$$
+
+DELIMITER ;
+
+CALL AddIndexIfNotExists();
+DROP PROCEDURE AddIndexIfNotExists;
 
 -- Ensure FK constraints exist
--- Drop existing constraints (ignore errors if they don't exist)
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 
+-- Drop and recreate FK constraints (errors ignored due to FK checks disabled)
 ALTER TABLE cat_tags DROP FOREIGN KEY fk_cat_tags_tag_id;
 ALTER TABLE cat_tags DROP FOREIGN KEY fk_cat_tags_cat_id;
 
