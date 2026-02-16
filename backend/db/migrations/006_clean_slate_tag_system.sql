@@ -17,12 +17,38 @@ DELETE FROM cat_images;
 
 
 -- ============================================================================
--- PART 2: DROP LEGACY COLUMNS
+-- PART 2: DROP LEGACY COLUMNS (SAFE)
 -- ============================================================================
 
--- Drop columns separately for MySQL 5.7 compatibility
-ALTER TABLE cats DROP COLUMN temperament;
-ALTER TABLE cats DROP COLUMN medical_notes;
+-- Check and drop temperament column if it exists
+SET @dbname = DATABASE();
+SET @tablename = 'cats';
+SET @columnname = 'temperament';
+SET @preparedStatement = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE (table_name = @tablename)
+     AND (table_schema = @dbname)
+     AND (column_name = @columnname)) > 0,
+  'ALTER TABLE cats DROP COLUMN temperament;',
+  'SELECT 1;'
+));
+PREPARE alterIfExists FROM @preparedStatement;
+EXECUTE alterIfExists;
+DEALLOCATE PREPARE alterIfExists;
+
+-- Check and drop medical_notes column if it exists
+SET @columnname = 'medical_notes';
+SET @preparedStatement = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+   WHERE (table_name = @tablename)
+     AND (table_schema = @dbname)
+     AND (column_name = @columnname)) > 0,
+  'ALTER TABLE cats DROP COLUMN medical_notes;',
+  'SELECT 1;'
+));
+PREPARE alterIfExists FROM @preparedStatement;
+EXECUTE alterIfExists;
+DEALLOCATE PREPARE alterIfExists;
 
 
 -- ============================================================================
