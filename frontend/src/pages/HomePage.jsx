@@ -152,13 +152,9 @@ export default function HomePage() {
       .then((res) => {
         console.log('Featured foster cats data:', res.data.featured_foster_cats);
         
-        // Extract only cats marked as featured (featured truthy: 1, true, or "1")
-        // Use double equals to handle numeric/string/boolean variations from MySQL
+        // Filter for truly featured cats (featured = true/1 after migration)
         const featured = (res.data.featured_foster_cats || [])
-          .filter(cat => {
-            // Handle featured as: 1, "1", true, or any truthy value
-            return cat.featured == 1 || cat.featured === true || cat.featured === "1";
-          })
+          .filter(cat => cat.featured)
           .slice(0, 12); // Show up to 12 featured cats
           
         console.log('Filtered featured cats:', featured);
@@ -233,13 +229,6 @@ export default function HomePage() {
                           : "Age unknown"}{" "}
                         · {cat.breed || "Mixed breed"}
                       </TextMuted>
-                      {cat.temperament && (
-                        <p style={{ marginBottom: '1rem', lineHeight: 1.5 }}>
-                          {cat.temperament.length > 100
-                            ? `${cat.temperament.substring(0, 100)}...`
-                            : cat.temperament}
-                        </p>
-                      )}
                       <CardFooter>
                         {!!cat.is_special_needs && (
                           <Badge $variant="warning">Special Needs</Badge>
