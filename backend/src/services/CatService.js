@@ -92,7 +92,7 @@ export class CatService {
    * Create a cat and set tags (if provided).
    * Accepts payload with camelCase keys from controllers:
    *  - ageyears, goodwithkids, goodwithcats, goodwithdogs,
-   *    medicalnotes, isspecialneeds, issenior, mainimageurl, bondedpairid, etc.
+   *    isspecialneeds, issenior, mainimageurl, bondedpairid, etc.
    */
   static async createCat(payload) {
     const catData = this._mapPayloadToModel(payload);
@@ -153,6 +153,7 @@ export class CatService {
   /**
    * Internal helper to normalize controller payload into model fields.
    * Converts camelCase (used in API) into snake_case (used in DB).
+   * Note: temperament and medical_notes removed - use tag system instead
    */
   static _mapPayloadToModel(payload) {
     if (!payload) return {};
@@ -162,11 +163,11 @@ export class CatService {
       age_years: payload.age_years ?? payload.ageyears ?? null,
       sex: payload.sex,
       breed: payload.breed,
-      temperament: payload.temperament,
+      // Removed: temperament (now uses tag system)
+      // Removed: medical_notes (now uses tag system)
       good_with_kids: payload.good_with_kids ?? (payload.goodwithkids ? 1 : 0),
       good_with_cats: payload.good_with_cats ?? (payload.goodwithcats ? 1 : 0),
       good_with_dogs: payload.good_with_dogs ?? (payload.goodwithdogs ? 1 : 0),
-      medical_notes: payload.medical_notes ?? payload.medicalnotes,
       is_special_needs:
         payload.is_special_needs ?? (payload.isspecialneeds ? 1 : 0),
       is_senior:
@@ -200,7 +201,7 @@ export class CatService {
       senior: undefined,
     });
 
-    // Optional: fetch tags per cat and join as a comma-separated string
+    // Fetch tags per cat and join as a comma-separated string
     const rows = [];
     for (const cat of cats) {
       const tags = await TagModel.findTagsForCat(cat.id);
@@ -212,11 +213,11 @@ export class CatService {
         age_years: cat.age_years,
         sex: cat.sex,
         breed: cat.breed,
-        temperament: cat.temperament,
+        // Removed: temperament (now uses tag system)
         good_with_kids: cat.good_with_kids ? 1 : 0,
         good_with_cats: cat.good_with_cats ? 1 : 0,
         good_with_dogs: cat.good_with_dogs ? 1 : 0,
-        medical_notes: cat.medical_notes,
+        // Removed: medical_notes (now uses tag system)
         is_special_needs: cat.is_special_needs ? 1 : 0,
         is_senior: cat.is_senior ? 1 : 0,
         status: cat.status,
@@ -237,11 +238,11 @@ export class CatService {
         "age_years",
         "sex",
         "breed",
-        "temperament",
+        // Removed: "temperament",
         "good_with_kids",
         "good_with_cats",
         "good_with_dogs",
-        "medical_notes",
+        // Removed: "medical_notes",
         "is_special_needs",
         "is_senior",
         "status",
