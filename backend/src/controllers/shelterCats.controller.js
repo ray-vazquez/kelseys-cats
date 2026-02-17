@@ -8,6 +8,7 @@ import {
   cleanupOldPartnerFosterCats 
 } from '../services/adoptAPetScraper.js';
 import { query } from '../lib/db.js';
+import { TagModel } from '../models/TagModel.js';
 
 /**
  * GET /api/cats/all-available
@@ -136,6 +137,17 @@ export async function getAllAvailableCats(req, res) {
     
     // Execute query
     const [allCats] = await query(sql, params);
+    
+    // Fetch tags for each cat (view no longer includes tags)
+    for (const cat of allCats) {
+      try {
+        const tags = await TagModel.findTagsForCat(cat.id);
+        cat.tags = tags.map(t => t.name);
+      } catch (err) {
+        console.error(`Failed to fetch tags for cat ${cat.id}:`, err);
+        cat.tags = [];
+      }
+    }
     
     // Separate into featured vs partner for stats using 'source' field
     const featuredCats = allCats.filter(cat => cat.source === 'featured_foster');
