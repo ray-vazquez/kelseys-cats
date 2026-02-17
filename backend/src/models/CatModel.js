@@ -134,11 +134,11 @@ export class CatModel {
   static async create(data) {
     const sql = `
       INSERT INTO cats (
-        name, age_years, sex, breed, temperament,
+        name, age_years, sex, breed,
         good_with_kids, good_with_cats, good_with_dogs,
-        medical_notes, is_special_needs, is_senior, status,
+        is_special_needs, is_senior, status,
         main_image_url, additional_images, featured, bonded_pair_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
@@ -146,11 +146,9 @@ export class CatModel {
       data.age_years ?? null,
       data.sex ?? "unknown",
       data.breed ?? null,
-      data.temperament ?? null,
       data.good_with_kids ? 1 : 0,
       data.good_with_cats ? 1 : 0,
       data.good_with_dogs ? 1 : 0,
-      data.medical_notes ?? null,
       data.is_special_needs ? 1 : 0,
       data.is_senior ? 1 : 0,
       data.status ?? "available",
@@ -176,16 +174,14 @@ export class CatModel {
       "age_years",
       "sex",
       "breed",
-      "temperament",
       "good_with_kids",
       "good_with_cats",
       "good_with_dogs",
-      "medical_notes",
       "is_special_needs",
       "is_senior",
       "status",
       "main_image_url",
-      "additional_images",  // CRITICAL FIX: Added this!
+      "additional_images",
       "featured",
       "bonded_pair_id",
       "adoption_date",
