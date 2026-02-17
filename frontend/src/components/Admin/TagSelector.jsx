@@ -92,7 +92,7 @@ const Tag = styled.span`
   padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
   background: ${({ theme, $variant }) => {
     if ($variant === 'temperament') return theme.colors.primary;
-    if ($variant === 'medical') return theme.colors.warning.main;
+    if ($variant === 'medical') return theme.colors.warning || '#f59e0b'; // Fallback to orange
     return theme.colors.secondary;
   }};
   color: ${({ theme }) => theme.colors.white};
