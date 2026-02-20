@@ -34,7 +34,7 @@ const CatHeader = styled.div`
 `;
 
 const CatTitle = styled.h1`
-  font-size: ${({ theme }) => theme.fontSizes['4xl']};
+  font-size: ${({ theme }) => theme.fontSizes["4xl"]};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   margin-bottom: ${({ theme }) => theme.spacing[3]};
   color: ${({ theme }) => theme.colors.text.primary};
@@ -133,12 +133,13 @@ export default function CatDetailPage() {
   // Process tags array and filter out nulls
   const validTags = useMemo(() => {
     if (!cat?.tags || !Array.isArray(cat.tags)) return [];
-    
-    return cat.tags.filter(tag => 
-      tag !== null && 
-      tag !== undefined && 
-      tag !== '' &&
-      typeof tag === 'string'
+
+    return cat.tags.filter(
+      (tag) =>
+        tag !== null &&
+        tag !== undefined &&
+        tag !== "" &&
+        typeof tag === "string",
     );
   }, [cat?.tags]);
 
@@ -155,7 +156,11 @@ export default function CatDetailPage() {
           <Container>
             <DetailGrid>
               <div>
-                <LoadingState variant="skeleton" skeletonCount={1} skeletonHeight="400px" />
+                <LoadingState
+                  variant="skeleton"
+                  skeletonCount={1}
+                  skeletonHeight="400px"
+                />
               </div>
               <DetailContent>
                 <LoadingState variant="skeleton" skeletonCount={8} />
@@ -179,7 +184,7 @@ export default function CatDetailPage() {
         <Section $padding="lg">
           <Container>
             {error && (
-              <Alert $variant="danger" style={{ marginBottom: '2rem' }}>
+              <Alert $variant="danger" style={{ marginBottom: "2rem" }}>
                 {error}
               </Alert>
             )}
@@ -205,34 +210,42 @@ export default function CatDetailPage() {
     );
   }
 
-  const isAvailable = cat.status === 'available';
-  const isAdopted = cat.status === 'alumni';
+  const isAvailable = cat.status === "available";
+  const isAdopted = cat.status === "alumni";
+
   // Check for senior status: prioritize is_senior column, fallback to age >= 10
-  const isSenior = cat.is_senior || (cat.age_years && cat.age_years >= 10);
+  const isSenior =
+    !!cat.is_senior || (cat.age_years != null && cat.age_years >= 10);
 
   // Prepare images array for gallery
   const catImages = [];
   if (cat.main_image_url) {
     catImages.push(cat.main_image_url);
   }
-  
+
   // Parse additional_images if it's a JSON string
   if (cat.additional_images) {
     try {
-      const additionalImages = typeof cat.additional_images === 'string'
-        ? JSON.parse(cat.additional_images)
-        : cat.additional_images;
-      
+      const additionalImages =
+        typeof cat.additional_images === "string"
+          ? JSON.parse(cat.additional_images)
+          : cat.additional_images;
+
       if (Array.isArray(additionalImages)) {
         catImages.push(...additionalImages);
       }
     } catch (e) {
-      console.error('Failed to parse additional_images:', e);
+      console.error("Failed to parse additional_images:", e);
     }
   }
 
   // Check if badges should be displayed
-  const hasBadges = cat.is_special_needs || isSenior || cat.bonded_pair_id || cat.featured;
+
+  const hasBadges =
+    !!cat.is_special_needs ||
+    isSenior ||
+    cat.bonded_pair_id > 0 ||
+    !!cat.featured;
 
   return (
     <>
@@ -245,8 +258,8 @@ export default function CatDetailPage() {
           isAvailable
             ? "Available for adoption"
             : isAdopted
-            ? "Successfully adopted!"
-            : cat.status
+              ? "Successfully adopted!"
+              : cat.status
         }
         compactTitle
       />
@@ -256,7 +269,10 @@ export default function CatDetailPage() {
         <Container>
           {/* Status Alert */}
           {!isAvailable && (
-            <Alert $variant={isAdopted ? "success" : "info"} style={{ marginBottom: '2rem' }}>
+            <Alert
+              $variant={isAdopted ? "success" : "info"}
+              style={{ marginBottom: "2rem" }}
+            >
               {isAdopted
                 ? `${cat.name} has found their forever home! Check out our other cats looking for adoption.`
                 : `${cat.name} is currently ${cat.status}.`}
@@ -272,8 +288,8 @@ export default function CatDetailPage() {
               <CatHeader>
                 <CatTitle>{cat.name}</CatTitle>
                 <CatMeta>
-                  {cat.age_years 
-                    ? `${Math.floor(cat.age_years)} year${Math.floor(cat.age_years) !== 1 ? 's' : ''} old` 
+                  {cat.age_years
+                    ? `${Math.floor(cat.age_years)} year${Math.floor(cat.age_years) !== 1 ? "s" : ""} old`
                     : "Age unknown"}
                   {" · "}
                   {cat.sex || "Unknown"}
@@ -283,16 +299,14 @@ export default function CatDetailPage() {
 
                 {hasBadges && (
                   <BadgeGroup>
-                    {cat.is_special_needs && (
+                    {!!cat.is_special_needs && (
                       <Badge $variant="warning">Special Needs</Badge>
                     )}
-                    {isSenior && (
-                      <Badge $variant="secondary">Senior</Badge>
-                    )}
-                    {cat.bonded_pair_id && (
+                    {isSenior && <Badge $variant="secondary">Senior</Badge>}
+                    {cat.bonded_pair_id > 0 && (
                       <Badge $variant="info">Bonded Pair</Badge>
                     )}
-                    {cat.featured && (
+                    {!!cat.featured && (
                       <Badge $variant="success">Featured</Badge>
                     )}
                   </BadgeGroup>
@@ -311,7 +325,7 @@ export default function CatDetailPage() {
               {validTags.length > 0 && (
                 <InfoSection>
                   <InfoTitle>Personality & Temperament</InfoTitle>
-                  <InfoText>{validTags.join(', ')}</InfoText>
+                  <InfoText>{validTags.join(", ")}</InfoText>
                 </InfoSection>
               )}
 
@@ -341,7 +355,9 @@ export default function CatDetailPage() {
                   <InfoList>
                     <InfoListItem>
                       <strong>Intake Date:</strong>
-                      <span>{new Date(cat.intake_date).toLocaleDateString()}</span>
+                      <span>
+                        {new Date(cat.intake_date).toLocaleDateString()}
+                      </span>
                     </InfoListItem>
                     {cat.color && (
                       <InfoListItem>
