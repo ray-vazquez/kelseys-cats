@@ -63,7 +63,7 @@ export class CatService {
    */
   static async listDeletedCats() {
     const deletedCats = await CatModel.findDeleted();
-    
+
     // Attach tags to each deleted cat
     const catsWithTags = await Promise.all(
       deletedCats.map(async (cat) => {
@@ -72,7 +72,7 @@ export class CatService {
           ...cat,
           tags: tags.map((t) => t.name),
         };
-      })
+      }),
     );
 
     return catsWithTags;
@@ -163,16 +163,22 @@ export class CatService {
       age_years: payload.age_years ?? payload.ageyears ?? null,
       sex: payload.sex,
       breed: payload.breed,
-      // Removed: temperament (now uses tag system)
-      // Removed: medical_notes (now uses tag system)
+      bio: payload.bio ?? null,
       good_with_kids: payload.good_with_kids ?? (payload.goodwithkids ? 1 : 0),
       good_with_cats: payload.good_with_cats ?? (payload.goodwithcats ? 1 : 0),
       good_with_dogs: payload.good_with_dogs ?? (payload.goodwithdogs ? 1 : 0),
       is_special_needs:
         payload.is_special_needs ?? (payload.isspecialneeds ? 1 : 0),
       is_senior:
-        payload.is_senior !== undefined ? (payload.is_senior ? 1 : 0) : 
-        (payload.issenior !== undefined ? (payload.issenior ? 1 : 0) : undefined),
+        payload.is_senior !== undefined
+          ? payload.is_senior
+            ? 1
+            : 0
+          : payload.issenior !== undefined
+            ? payload.issenior
+              ? 1
+              : 0
+            : undefined,
       status: payload.status,
       main_image_url: payload.main_image_url ?? payload.mainimageurl,
       featured:
@@ -213,11 +219,10 @@ export class CatService {
         age_years: cat.age_years,
         sex: cat.sex,
         breed: cat.breed,
-        // Removed: temperament (now uses tag system)
+        bio: cat.bio,
         good_with_kids: cat.good_with_kids ? 1 : 0,
         good_with_cats: cat.good_with_cats ? 1 : 0,
         good_with_dogs: cat.good_with_dogs ? 1 : 0,
-        // Removed: medical_notes (now uses tag system)
         is_special_needs: cat.is_special_needs ? 1 : 0,
         is_senior: cat.is_senior ? 1 : 0,
         status: cat.status,
@@ -238,11 +243,10 @@ export class CatService {
         "age_years",
         "sex",
         "breed",
-        // Removed: "temperament",
+        "bio",
         "good_with_kids",
         "good_with_cats",
         "good_with_dogs",
-        // Removed: "medical_notes",
         "is_special_needs",
         "is_senior",
         "status",

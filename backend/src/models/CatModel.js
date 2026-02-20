@@ -53,13 +53,7 @@ export class CatModel {
    * Find all cats with pagination.
    */
   static async findAllPaginated(filters = {}) {
-    const {
-      status,
-      featured,
-      senior,
-      page = 1,
-      limit = 12,
-    } = filters;
+    const { status, featured, senior, page = 1, limit = 12 } = filters;
 
     const conditions = ["deleted_at IS NULL"];
     const params = [];
@@ -134,7 +128,7 @@ export class CatModel {
   static async create(data) {
     const sql = `
       INSERT INTO cats (
-        name, age_years, sex, breed,
+        name, age_years, sex, breed, bio,
         good_with_kids, good_with_cats, good_with_dogs,
         is_special_needs, is_senior, status,
         main_image_url, additional_images, featured, bonded_pair_id
@@ -146,6 +140,7 @@ export class CatModel {
       data.age_years ?? null,
       data.sex ?? "unknown",
       data.breed ?? null,
+      data.bio ?? null,
       data.good_with_kids ? 1 : 0,
       data.good_with_cats ? 1 : 0,
       data.good_with_dogs ? 1 : 0,
@@ -174,6 +169,7 @@ export class CatModel {
       "age_years",
       "sex",
       "breed",
+      "bio",
       "good_with_kids",
       "good_with_cats",
       "good_with_dogs",
@@ -223,7 +219,8 @@ export class CatModel {
    * Soft-delete a cat.
    */
   static async softDelete(id) {
-    const sql = "UPDATE cats SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL";
+    const sql =
+      "UPDATE cats SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL";
     await query(sql, [id]);
   }
 

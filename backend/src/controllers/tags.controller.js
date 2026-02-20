@@ -199,10 +199,6 @@ export async function updateCatTags(req, res) {
     const { id } = req.params;
     const body = req.body;
 
-    console.log("=== TAG UPDATE DEBUG ===");
-    console.log("Cat ID:", id);
-    console.log("Request body:", JSON.stringify(body, null, 2));
-
     // Support both formats: categorized object or simple array
     let tagIds = [];
 
