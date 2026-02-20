@@ -349,7 +349,7 @@ export default function CatDetailPage() {
               </InfoSection>
 
               {/* Intake Information */}
-              {cat.intake_date && (
+              {/* {cat.intake_date && (
                 <InfoSection>
                   <InfoTitle>Additional Information</InfoTitle>
                   <InfoList>
@@ -367,7 +367,7 @@ export default function CatDetailPage() {
                     )}
                   </InfoList>
                 </InfoSection>
-              )}
+              )} */}
 
               {/* Action Buttons */}
               <ActionButtons>

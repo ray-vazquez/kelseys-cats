@@ -65,7 +65,7 @@ mysql -u root -p kelseys_cats < migrations/04_fix_all_available_cats_view.sql
 
 ```bash
 # Test the API
-curl http://localhost:5000/api/debug/sample-cats
+curl http://localhost:3000/api/debug/sample-cats
 
 # Should return cats with names:
 # {
