@@ -581,6 +581,11 @@ export const TextMuted = styled.p`
 `;
 
 export const TextSmall = styled.small`
-  font-size: ${({ theme }) => theme.fontSizes.xs};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.text.secondary};
+`;
+
+export const TextMedium = styled.span`
+  font-size: ${({ theme }) => theme.fontSizes.sm};
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
