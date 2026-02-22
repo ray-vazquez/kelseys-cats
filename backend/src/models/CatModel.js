@@ -132,7 +132,7 @@ export class CatModel {
         good_with_kids, good_with_cats, good_with_dogs,
         is_special_needs, is_senior, status,
         main_image_url, additional_images, featured, bonded_pair_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [

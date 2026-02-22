@@ -19,7 +19,7 @@ import { TagModel } from "../models/TagModel.js";
  * - search: string to search in name, breed, description, age, color
  * - minAge: minimum age in years
  * - maxAge: maximum age in years
- * - gender: male, female, or unknown
+ * - sex: male, female, or unknown
  * - breed: exact breed match (case-insensitive)
  * - color: exact color match (case-insensitive)
  * - size: small, medium, or large
@@ -36,11 +36,11 @@ export async function getAllAvailableCats(req, res) {
       search,
       minAge,
       maxAge,
-      gender,
+      sex,
       breed,
       bio,
-      color,
       size,
+      // color,
       goodWithKids,
       goodWithCats,
       goodWithDogs,
@@ -83,10 +83,10 @@ export async function getAllAvailableCats(req, res) {
       params.push(parseFloat(maxAge));
     }
 
-    // Gender filter
-    if (gender && gender !== "all") {
-      conditions.push("gender = ?");
-      params.push(gender.toLowerCase());
+    // sex filter
+    if (sex && sex !== "all") {
+      conditions.push("sex = ?");
+      params.push(sex.toLowerCase());
     }
 
     // Breed filter (exact match, case-insensitive)
@@ -96,10 +96,10 @@ export async function getAllAvailableCats(req, res) {
     }
 
     // Color filter (exact match, case-insensitive)
-    if (color && color.trim()) {
-      conditions.push("LOWER(color) = LOWER(?)");
-      params.push(color.trim());
-    }
+    // if (color && color.trim()) {
+    //   conditions.push("LOWER(color) = LOWER(?)");
+    //   params.push(color.trim());
+    // }
 
     // Size filter
     if (size && size !== "all") {
@@ -180,9 +180,9 @@ export async function getAllAvailableCats(req, res) {
         search: search || null,
         minAge: minAge || null,
         maxAge: maxAge || null,
-        gender: gender || null,
+        sex: sex || null,
         breed: breed || null,
-        color: color || null,
+        // color: color || null,
         size: size || null,
         goodWithKids: goodWithKids || null,
         goodWithCats: goodWithCats || null,
