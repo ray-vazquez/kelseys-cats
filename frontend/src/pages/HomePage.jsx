@@ -150,14 +150,12 @@ export default function HomePage() {
     http
       .get('/cats/all-available')
       .then((res) => {
-        console.log('Featured foster cats data:', res.data.featured_foster_cats);
         
         // Filter for truly featured cats (featured = true/1 after migration)
         const featured = (res.data.featured_foster_cats || [])
           .filter(cat => cat.featured)
           .slice(0, 12); // Show up to 12 featured cats
           
-        console.log('Filtered featured cats:', featured);
         setFeaturedCats(featured);
       })
       .catch((err) => {

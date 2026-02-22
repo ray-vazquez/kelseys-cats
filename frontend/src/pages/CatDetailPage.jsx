@@ -1,4 +1,4 @@
-// Migrated CatDetailPage - Using Phase 1+2 enhanced components with Image Gallery
+// frontend/src/pages/CatDetailPage.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
@@ -13,7 +13,7 @@ import SectionHero from "../components/Common/SectionHero.jsx";
 import LoadingState from "../components/Common/LoadingState.jsx";
 import EmptyState from "../components/Common/EmptyState.jsx";
 import ImageGallery from "../components/Common/ImageGallery.jsx";
-import http from "../api/http.js";
+import http from "../api/http.js"; 
 
 const DetailGrid = styled.div`
   display: grid;
@@ -116,9 +116,18 @@ export default function CatDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // NEW: grouped tags state
+  const [tagData, setTagData] = useState(null);
+  const [tagsLoading, setTagsLoading] = useState(true);
+  const [tagsError, setTagsError] = useState(null);
+
   useEffect(() => {
     setLoading(true);
     setError(null);
+    setTagsLoading(true);
+    setTagsError(null);
+
+    // fetch core cat data
     http
       .get(`/cats/${id}`)
       .then((res) => setCat(res.data))
@@ -128,12 +137,26 @@ export default function CatDetailPage() {
         setCat(null);
       })
       .finally(() => setLoading(false));
+
+    // fetch grouped tags for this cat
+    http
+      .get(`/tags/cats/${id}`)
+      .then((res) => {
+        // expects: { cat_id, tags, grouped: { temperament: [...], medical: [...] } } [file:3]
+        setTagData(res.data);
+      })
+      .catch((err) => {
+        console.error("Failed to load cat tags", err);
+        // non-fatal: still show page without tags
+        setTagsError("Unable to load personality and medical tags.");
+      })
+      .finally(() => setTagsLoading(false));
   }, [id]);
 
-  // Process tags array and filter out nulls
+  // NOTE: validTags from flat cat.tags is no longer used for display,
+  // but you can keep it if anything else depends on it.
   const validTags = useMemo(() => {
     if (!cat?.tags || !Array.isArray(cat.tags)) return [];
-
     return cat.tags.filter(
       (tag) =>
         tag !== null &&
@@ -213,17 +236,13 @@ export default function CatDetailPage() {
   const isAvailable = cat.status === "available";
   const isAdopted = cat.status === "alumni";
 
-  // Check for senior status: prioritize is_senior column, fallback to age >= 10
   const isSenior =
     !!cat.is_senior || (cat.age_years != null && cat.age_years >= 10);
 
-  // Prepare images array for gallery
   const catImages = [];
   if (cat.main_image_url) {
     catImages.push(cat.main_image_url);
   }
-
-  // Parse additional_images if it's a JSON string
   if (cat.additional_images) {
     try {
       const additionalImages =
@@ -239,17 +258,21 @@ export default function CatDetailPage() {
     }
   }
 
-  // Check if badges should be displayed
-
   const hasBadges =
     !!cat.is_special_needs ||
     isSenior ||
     cat.bonded_pair_id > 0 ||
     !!cat.featured;
 
+  // NEW: derive grouped temperament/medical tags
+  const temperamentTags = tagData?.grouped?.temperament || [];
+  const medicalTags = tagData?.grouped?.medical || [];
+  const hasTemperament = temperamentTags.length > 0;
+  const hasMedical = medicalTags.length > 0;
+
   return (
     <>
-      {/* Hero Section - Compact title for cat names */}
+      {/* Hero Section */}
       <SectionHero
         variant="gradient"
         size="sm"
@@ -289,7 +312,9 @@ export default function CatDetailPage() {
                 <CatTitle>{cat.name}</CatTitle>
                 <CatMeta>
                   {cat.age_years
-                    ? `${Math.floor(cat.age_years)} year${Math.floor(cat.age_years) !== 1 ? "s" : ""} old`
+                    ? `${Math.floor(cat.age_years)} year${
+                        Math.floor(cat.age_years) !== 1 ? "s" : ""
+                      } old`
                     : "Age unknown"}
                   {" · "}
                   {cat.sex || "Unknown"}
@@ -321,12 +346,47 @@ export default function CatDetailPage() {
                 </InfoSection>
               )}
 
-              {/* Personality & Temperament - from tags */}
-              {validTags.length > 0 && (
+              {/* Personality & Temperament (grouped temperament tags) */}
+              {!tagsLoading && hasTemperament && (
                 <InfoSection>
-                  <InfoTitle>Personality & Temperament</InfoTitle>
-                  <InfoText>{validTags.join(", ")}</InfoText>
+                  <InfoTitle>Personality &amp; Temperament</InfoTitle>
+                  <BadgeGroup>
+                    {temperamentTags.map((tag) => (
+                      <Badge key={tag.id} $variant="info">
+                        {tag.name}
+                      </Badge>
+                    ))}
+                  </BadgeGroup>
                 </InfoSection>
+              )}
+
+              {/* Medical Information (grouped medical tags) */}
+              {!tagsLoading && hasMedical && (
+                <InfoSection>
+                  <InfoTitle>Medical Information</InfoTitle>
+                  <BadgeGroup>
+                    {medicalTags.map((tag) => (
+                      <Badge key={tag.id} $variant="info">
+                        {tag.name}
+                      </Badge>
+                    ))}
+                  </BadgeGroup>
+                </InfoSection>
+              )}
+
+              {/* Optional lightweight tags loading state */}
+              {tagsLoading && (
+                <InfoSection>
+                  <InfoTitle>Personality &amp; Temperament</InfoTitle>
+                  <InfoText>Loading tags...</InfoText>
+                </InfoSection>
+              )}
+
+              {/* Optional subtle error when no tags to show */}
+              {!tagsLoading && tagsError && !hasTemperament && !hasMedical && (
+                <Alert $variant="info" style={{ marginBottom: "2rem" }}>
+                  {tagsError}
+                </Alert>
               )}
 
               {/* Good With */}
@@ -347,27 +407,6 @@ export default function CatDetailPage() {
                   </InfoListItem>
                 </InfoList>
               </InfoSection>
-
-              {/* Intake Information */}
-              {/* {cat.intake_date && (
-                <InfoSection>
-                  <InfoTitle>Additional Information</InfoTitle>
-                  <InfoList>
-                    <InfoListItem>
-                      <strong>Intake Date:</strong>
-                      <span>
-                        {new Date(cat.intake_date).toLocaleDateString()}
-                      </span>
-                    </InfoListItem>
-                    {cat.color && (
-                      <InfoListItem>
-                        <strong>Color:</strong>
-                        <span>{cat.color}</span>
-                      </InfoListItem>
-                    )}
-                  </InfoList>
-                </InfoSection>
-              )} */}
 
               {/* Action Buttons */}
               <ActionButtons>

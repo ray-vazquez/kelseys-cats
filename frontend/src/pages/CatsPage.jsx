@@ -313,6 +313,8 @@ export default function CatsPage() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
+
+  
   const [filters, setFilters] = useState({
     minAge: "",
     maxAge: "",
