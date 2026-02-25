@@ -633,7 +633,7 @@ export async function scrapeAndSavePartnerFosterCats() {
       }
 
       try {
-        // Calculate age_years and ensure null instead of undefined
+        // Calculate age_years FIRST
         const age_years = mapAgeToYears(cat.age_text);
 
         // ⚠️ CRITICAL FIX: Sanitize all cat data - convert undefined to null
@@ -642,7 +642,7 @@ export async function scrapeAndSavePartnerFosterCats() {
           adoptapet_id: cat.adoptapet_id ?? null,
           name: cat.name ?? null,
           age_text: cat.age_text ?? null,
-          age_years: cat.age_years ?? null,
+          age_years: age_years ?? null,  // ✅ USE THE CALCULATED VARIABLE
           breed: cat.breed ?? null,
           sex: cat.sex ?? null,
           main_image_url: cat.main_image_url ?? null,
@@ -739,11 +739,13 @@ export async function scrapeAndSavePartnerFosterCats() {
         console.error(`   Error code: ${err.code}`);
         console.error(`   SQL State: ${err.sqlState}`);
         console.error(`   Full error:`, err);
+        // ✅ FIX: Don't reference age_years here - recalculate in catch block
+        const debugAgeYears = mapAgeToYears(cat.age_text);
         console.error(`   Cat data:`, {
           adoptapet_id: cat.adoptapet_id,
           name: cat.name,
           age_text: cat.age_text,
-          age_years: cat.age_years,
+          age_years_calculated: debugAgeYears,
           breed: cat.breed,
           sex: cat.sex,
         });
