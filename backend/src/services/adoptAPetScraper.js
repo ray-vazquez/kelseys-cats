@@ -334,7 +334,8 @@ async function scrapePetDetails(page, url, name) {
  */
 export async function getPartnerFosterCats() {
   try {
-    const cats = await query(
+    // query() returns [rows] — destructure to get rows directly
+    const [cats] = await query(
       `SELECT 
         id,
         adoptapet_id,
@@ -616,8 +617,8 @@ export async function scrapeAndSavePartnerFosterCats() {
       await query("SELECT 1 as test");
       console.log("✅ Database connection OK");
 
-      // Test table exists and is accessible
-      const tableCheck = await query("SELECT COUNT(*) as count FROM vfv_cats");
+      // Test table exists and is accessible — destructure query() return
+      const [tableCheck] = await query("SELECT COUNT(*) as count FROM vfv_cats");
       console.log(
         `✅ vfv_cats table accessible, current count: ${tableCheck[0].count}`,
       );
@@ -636,13 +637,13 @@ export async function scrapeAndSavePartnerFosterCats() {
         // Calculate age_years FIRST
         const age_years = mapAgeToYears(cat.age_text);
 
-        // ⚠️ CRITICAL FIX: Sanitize all cat data - convert undefined to null
+        // Sanitize all cat data - convert undefined to null
         // MySQL2 requires explicit null, not undefined
         const sanitizedCat = {
           adoptapet_id: cat.adoptapet_id ?? null,
           name: cat.name ?? null,
           age_text: cat.age_text ?? null,
-          age_years: age_years ?? null,  // ✅ USE THE CALCULATED VARIABLE
+          age_years: age_years ?? null,
           breed: cat.breed ?? null,
           sex: cat.sex ?? null,
           main_image_url: cat.main_image_url ?? null,
@@ -659,12 +660,13 @@ export async function scrapeAndSavePartnerFosterCats() {
           continue;
         }
 
-        const existing = await query(
+        // ✅ FIX: destructure query() return to get the actual rows array
+        const [existingRows] = await query(
           "SELECT id FROM vfv_cats WHERE adoptapet_id = ?",
           [sanitizedCat.adoptapet_id],
         );
 
-        if (existing.length > 0) {
+        if (existingRows.length > 0) {
           await query(
             `UPDATE vfv_cats SET 
           name = ?,
@@ -686,13 +688,14 @@ export async function scrapeAndSavePartnerFosterCats() {
               sanitizedCat.main_image_url,
               sanitizedCat.adoptapet_url,
               sanitizedCat.description,
-              existing[0].id,
+              existingRows[0].id,
             ],
           );
           updated++;
           console.log(`✏️  Updated: ${cat.name}`);
         } else {
-          const inKelseysCare = await query(
+          // ✅ FIX: destructure query() return for cats table check too
+          const [careRows] = await query(
             `SELECT id FROM cats 
          WHERE status = 'available' 
            AND deleted_at IS NULL
@@ -700,7 +703,7 @@ export async function scrapeAndSavePartnerFosterCats() {
             [`%${sanitizedCat.adoptapet_id}%`],
           );
 
-          if (inKelseysCare.length > 0) {
+          if (careRows.length > 0) {
             console.log(`⏭️  Skipped (already in Kelsey's care): ${cat.name}`);
             skipped++;
             continue;
@@ -739,7 +742,6 @@ export async function scrapeAndSavePartnerFosterCats() {
         console.error(`   Error code: ${err.code}`);
         console.error(`   SQL State: ${err.sqlState}`);
         console.error(`   Full error:`, err);
-        // ✅ FIX: Don't reference age_years here - recalculate in catch block
         const debugAgeYears = mapAgeToYears(cat.age_text);
         console.error(`   Cat data:`, {
           adoptapet_id: cat.adoptapet_id,
@@ -792,7 +794,7 @@ export async function cleanupOldPartnerFosterCats(daysOld = 7) {
     console.log(
       `🧹 Cleaning up partner foster cats not updated in ${daysOld} days...`,
     );
-    const result = await query(
+    const [result] = await query(
       "DELETE FROM vfv_cats WHERE updated_at < DATE_SUB(NOW(), INTERVAL ? DAY)",
       [daysOld],
     );
