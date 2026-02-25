@@ -46,7 +46,6 @@ function mapAgeToYears(ageText) {
 
 /**
  * Classify species using strict guidelines
- * Returns: { species: "CAT" | "DOG" | "UNKNOWN", reasoning: string }
  */
 function classifySpecies(petData) {
   const {
@@ -61,7 +60,6 @@ function classifySpecies(petData) {
 
   const reasons = [];
 
-  // Normalize all text to lowercase for comparison - with null safety
   const nameLower = (name || "").toLowerCase();
   const breedLower = (breed || "").toLowerCase();
   const speciesLower = (species || "").toLowerCase();
@@ -85,58 +83,21 @@ function classifySpecies(petData) {
     }
   }
 
-  // RULE B: Strong text signals in breed, story, name
+  // RULE B: Breed field
   const catBreedTerms = [
-    "domestic shorthair",
-    "domestic longhair",
-    "domestic medium",
-    "tabby",
-    "calico",
-    "tortoiseshell",
-    "tuxedo",
-    "siamese",
-    "maine coon",
-    "bengal",
-    "ragdoll",
-    "persian",
-    "russian blue",
-    "british shorthair",
-    "sphynx",
-    "abyssinian",
+    "domestic shorthair", "domestic longhair", "domestic medium",
+    "tabby", "calico", "tortoiseshell", "tuxedo", "siamese",
+    "maine coon", "bengal", "ragdoll", "persian", "russian blue",
+    "british shorthair", "sphynx", "abyssinian",
   ];
-
   const dogBreedTerms = [
-    "labrador",
-    "retriever",
-    "shepherd",
-    "bulldog",
-    "poodle",
-    "beagle",
-    "terrier",
-    "chihuahua",
-    "pit bull",
-    "husky",
-    "rottweiler",
-    "boxer",
-    "dachshund",
-    "corgi",
-    "pomeranian",
-    "mastiff",
-    "collie",
-    "spaniel",
-    "schnauzer",
-    "great dane",
-    "shepsky",
-    "cattle dog",
-    "hound mix",
-    "lab mix",
-    "shepherd mix",
+    "labrador", "retriever", "shepherd", "bulldog", "poodle",
+    "beagle", "terrier", "chihuahua", "pit bull", "husky",
+    "rottweiler", "boxer", "dachshund", "corgi", "pomeranian",
+    "mastiff", "collie", "spaniel", "schnauzer", "great dane",
+    "shepsky", "cattle dog", "hound mix", "lab mix", "shepherd mix",
   ];
 
-  const catTextTerms = ["cat", "kitten", "feline"];
-  const dogTextTerms = ["dog", "puppy", "canine"];
-
-  // Check breed field
   let breedMatchesCat = catBreedTerms.some((term) => breedLower.includes(term));
   let breedMatchesDog = dogBreedTerms.some((term) => breedLower.includes(term));
 
@@ -144,97 +105,57 @@ function classifySpecies(petData) {
     reasons.push(`Breed "${breed}" is a cat breed`);
     return { species: "CAT", reasoning: reasons.join("; ") };
   }
-
   if (breedMatchesDog && !breedMatchesCat) {
     reasons.push(`Breed "${breed}" is a dog breed`);
     return { species: "DOG", reasoning: reasons.join("; ") };
   }
 
-  // Check story text for explicit species mentions
-  const catPhrases = [
-    "this cat",
-    "the cat",
-    "a cat",
-    "cat who",
-    "cat is",
-    "sweet cat",
-    "this kitten",
-    "the kitten",
-  ];
-  const dogPhrases = [
-    "this dog",
-    "the dog",
-    "a dog",
-    "dog who",
-    "dog is",
-    "sweet dog",
-    "this puppy",
-    "the puppy",
-    "velcro dog",
-    "good dog",
-  ];
+  // RULE C: Story text
+  const catPhrases = ["this cat", "the cat", "a cat", "cat who", "cat is", "sweet cat", "this kitten", "the kitten"];
+  const dogPhrases = ["this dog", "the dog", "a dog", "dog who", "dog is", "sweet dog", "this puppy", "the puppy", "velcro dog", "good dog"];
 
-  let storyMentionsCat = catPhrases.some((phrase) =>
-    storyLower.includes(phrase),
-  );
-  let storyMentionsDog = dogPhrases.some((phrase) =>
-    storyLower.includes(phrase),
-  );
+  let storyMentionsCat = catPhrases.some((phrase) => storyLower.includes(phrase));
+  let storyMentionsDog = dogPhrases.some((phrase) => storyLower.includes(phrase));
 
   if (storyMentionsCat && !storyMentionsDog) {
     reasons.push('Story explicitly refers to pet as "cat"');
     return { species: "CAT", reasoning: reasons.join("; ") };
   }
-
   if (storyMentionsDog && !storyMentionsCat) {
     reasons.push('Story explicitly refers to pet as "dog"');
     return { species: "DOG", reasoning: reasons.join("; ") };
   }
 
-  // RULE C: Image URL cues
-  if (
-    imageUrlLower.includes("cat") ||
-    imageUrlLower.includes("kitten") ||
-    imageUrlLower.includes("nopetphoto_cat")
-  ) {
+  // RULE D: Image URL cues
+  if (imageUrlLower.includes("cat") || imageUrlLower.includes("kitten") || imageUrlLower.includes("nopetphoto_cat")) {
     reasons.push("Image URL contains cat-related keywords");
     return { species: "CAT", reasoning: reasons.join("; ") };
   }
-
-  if (
-    imageUrlLower.includes("dog") ||
-    imageUrlLower.includes("puppy") ||
-    imageUrlLower.includes("nopetphoto_dog")
-  ) {
+  if (imageUrlLower.includes("dog") || imageUrlLower.includes("puppy") || imageUrlLower.includes("nopetphoto_dog")) {
     reasons.push("Image URL contains dog-related keywords");
     return { species: "DOG", reasoning: reasons.join("; ") };
   }
 
-  // Check page text for general cat/dog mentions (weaker signal)
+  // RULE E: Page text frequency
   const catMentions = (pageLower.match(/\bcat\b|\bkitten\b/g) || []).length;
   const dogMentions = (pageLower.match(/\bdog\b|\bpuppy\b/g) || []).length;
 
   if (catMentions > dogMentions && catMentions >= 3) {
-    reasons.push(
-      `Page text mentions "cat/kitten" ${catMentions} times vs "dog/puppy" ${dogMentions} times`,
-    );
+    reasons.push(`Page text mentions "cat/kitten" ${catMentions} times vs "dog/puppy" ${dogMentions} times`);
     return { species: "CAT", reasoning: reasons.join("; ") };
   }
-
   if (dogMentions > catMentions && dogMentions >= 3) {
-    reasons.push(
-      `Page text mentions "dog/puppy" ${dogMentions} times vs "cat/kitten" ${catMentions} times`,
-    );
+    reasons.push(`Page text mentions "dog/puppy" ${dogMentions} times vs "cat/kitten" ${catMentions} times`);
     return { species: "DOG", reasoning: reasons.join("; ") };
   }
 
-  // RULE E: Ambiguity - cannot determine
   reasons.push("Insufficient evidence to classify species");
   return { species: "UNKNOWN", reasoning: reasons.join("; ") };
 }
 
 /**
- * Scrape an individual pet page for detailed information
+ * Scrape an individual pet page for detailed information.
+ * Uses DOM-aware selectors targeting Adopt-a-Pet's .attribute-pair structure.
  */
 async function scrapePetDetails(page, url, name) {
   try {
@@ -244,57 +165,116 @@ async function scrapePetDetails(page, url, name) {
 
     const details = await page.evaluate(() => {
       const result = {
+        // My basic info
         breed: null,
+        color: null,
         age: null,
         sex: null,
-        species: null,
+        hair_length: null,
+        // My details
+        good_with_cats: null,
+        good_with_dogs: null,
+        good_with_kids: null,
+        spayed_neutered: null,
+        // My health
+        shots_current: null,
+        special_needs: null,
+        // My story
         story: null,
+        // For species classification
+        species: null,
         shelterInfo: null,
         pageText: document.body.textContent || "",
       };
 
-      // Find "My basic info" section
-      const basicInfoSection = Array.from(document.querySelectorAll("*")).find(
-        (el) => el.textContent.includes("My basic info"),
-      );
+      // ── MY BASIC INFO ──
+      // Each field is in a .attribute-pair div with .label and .content children
+      const attributePairs = document.querySelectorAll(".attribute-pair");
+      for (const pair of attributePairs) {
+        const labelEl = pair.querySelector(".label");
+        const contentEl = pair.querySelector(".content");
+        if (!labelEl || !contentEl) continue;
 
-      if (basicInfoSection) {
-        const infoText = basicInfoSection.textContent;
+        const label = labelEl.textContent.trim().toLowerCase();
+        const value = contentEl.textContent.trim();
 
-        // Extract breed
-        const breedMatch = infoText.match(/Breed[:\s]+([^\n]+)/i);
-        if (breedMatch) result.breed = breedMatch[1].trim();
+        // Skip empty or placeholder values
+        if (!value || value === "–" || value === "-") continue;
 
-        // Extract age with corruption filtering
-        const ageMatch = infoText.match(/Age[:\s]+([^\n]+)/i);
-        if (ageMatch) {
-          const extractedAge = ageMatch[1].trim();
-          // Filter out corrupted/script content
-          if (
-            extractedAge.length < 50 &&
-            !extractedAge.includes("{") &&
-            !extractedAge.includes("function")
-          ) {
-            result.age = extractedAge;
-          }
+        switch (label) {
+          case "breed":
+            result.breed = value;
+            break;
+          case "color":
+            result.color = value;
+            break;
+          case "age":
+            result.age = value;
+            break;
+          case "sex":
+            result.sex = value.toLowerCase();
+            break;
+          case "hair length":
+            result.hair_length = value.toLowerCase();
+            break;
+          case "species":
+            result.species = value;
+            break;
         }
-        // Extract sex
-        const sexMatch = infoText.match(/Sex[:\s]+([^\n]+)/i);
-        if (sexMatch) result.sex = sexMatch[1].trim().toLowerCase();
       }
 
-      // Find "My story" section
-      const storySection = Array.from(document.querySelectorAll("*")).find(
-        (el) =>
-          el.textContent.includes("My story") ||
-          el.textContent.includes("Here's what the humans"),
-      );
+      // ── MY DETAILS & MY HEALTH ──
+      // These are in .icon-list sections with <span> text inside flex items.
+      // The SVG title tells us if it's a checkmark (positive) or X (negative).
+      const iconItems = document.querySelectorAll(".icon-list .flex.items-center");
+      for (const item of iconItems) {
+        const spanEl = item.querySelector("span");
+        if (!spanEl) continue;
 
-      if (storySection) {
-        result.story = storySection.textContent.trim();
+        const text = spanEl.textContent.trim().toLowerCase();
+        // Check if the icon is a positive checkmark (teal circle) vs negative
+        const svgTitle = item.querySelector("svg title");
+        const isPositive = svgTitle
+          ? svgTitle.textContent.toLowerCase().includes("checkmark")
+          : true; // Default to true if we can't determine
+
+        if (text.includes("good with cats")) {
+          result.good_with_cats = isPositive;
+        } else if (text.includes("good with dogs")) {
+          result.good_with_dogs = isPositive;
+        } else if (text.includes("good with kids") || text.includes("good with children")) {
+          result.good_with_kids = isPositive;
+        } else if (text.includes("spayed") || text.includes("neutered")) {
+          result.spayed_neutered = isPositive;
+        } else if (text.includes("shots current") || text.includes("vaccinations")) {
+          result.shots_current = isPositive;
+        } else if (text.includes("special needs")) {
+          result.special_needs = isPositive;
+        }
       }
 
-      // Look for shelter/rescue organization info
+      // ── MY STORY ──
+      // Story text is in a div after the "My story" h3, inside the same container
+      const storyHeaders = document.querySelectorAll("h3");
+      for (const h3 of storyHeaders) {
+        if (h3.textContent.trim().toLowerCase().includes("my story")) {
+          // The story text is in a sibling div with class containing break-words
+          const container = h3.closest("div.container") || h3.parentElement;
+          if (container) {
+            const storyDiv = container.querySelector(".break-words");
+            if (storyDiv) {
+              const storyText = storyDiv.textContent.trim();
+              // Only save if it's not the placeholder
+              if (!storyText.toLowerCase().includes("this pet has no story")) {
+                result.story = storyText;
+              }
+            }
+          }
+          break;
+        }
+      }
+
+      // ── SHELTER INFO (for species classification) ──
       const shelterInfoEl =
         document.querySelector('[class*="shelter"]') ||
         document.querySelector('[class*="rescue"]') ||
@@ -304,16 +284,8 @@ async function scrapePetDetails(page, url, name) {
             el.textContent.includes("Rescue") ||
             el.textContent.includes("Shelter"),
         );
-
       if (shelterInfoEl) {
         result.shelterInfo = shelterInfoEl.textContent.trim();
-      }
-
-      // Look for explicit species field
-      const speciesMatch =
-        document.body.textContent.match(/Species[:\s]+(\w+)/i);
-      if (speciesMatch) {
-        result.species = speciesMatch[1];
       }
 
       return result;
@@ -321,10 +293,7 @@ async function scrapePetDetails(page, url, name) {
 
     return details;
   } catch (error) {
-    console.error(
-      `      ❌ Error fetching details for ${name}:`,
-      error.message,
-    );
+    console.error(`      ❌ Error fetching details for ${name}:`, error.message);
     return null;
   }
 }
@@ -334,21 +303,14 @@ async function scrapePetDetails(page, url, name) {
  */
 export async function getPartnerFosterCats() {
   try {
-    // query() returns [rows] — destructure to get rows directly
     const [cats] = await query(
       `SELECT 
-        id,
-        adoptapet_id,
-        name,
-        age_text,
-        age_years,
-        breed,
-        sex,
-        main_image_url,
-        adoptapet_url,
-        description,
-        scraped_at,
-        updated_at,
+        id, adoptapet_id, name, age_text, age_years,
+        breed, color, hair_length, sex,
+        good_with_cats, good_with_dogs, good_with_kids,
+        spayed_neutered, shots_current, special_needs,
+        main_image_url, adoptapet_url, description,
+        scraped_at, updated_at,
         'partner_foster' as source,
         'vfv_cats' as from_table
       FROM vfv_cats 
@@ -394,7 +356,6 @@ async function scrapeAllPages(browser) {
   let pageIndex = 1;
 
   while (true) {
-    // Check stop flag
     if (shouldStop) {
       console.log("\n🛑 Stop requested - halting scraper");
       break;
@@ -447,7 +408,6 @@ async function scrapeAllPages(browser) {
     console.log(`   📋 Found ${petLinks.length} pets on page ${pageIndex}`);
 
     for (const pet of petLinks) {
-      // Check stop flag
       if (shouldStop) {
         console.log("\n🛑 Stop requested - halting scraper");
         break;
@@ -469,9 +429,7 @@ async function scrapeAllPages(browser) {
             shelterLower.includes("rescue") ||
             shelterLower.includes("shelter"))
         ) {
-          console.log(
-            `      🚫 Filtered ${pet.name} - Wrong shelter: ${details.shelterInfo.substring(0, 60)}...`,
-          );
+          console.log(`      🚫 Filtered ${pet.name} - Wrong shelter: ${details.shelterInfo.substring(0, 60)}...`);
           filtered.wrongShelter.push(pet.name);
           continue;
         }
@@ -503,18 +461,34 @@ async function scrapeAllPages(browser) {
       }
 
       // It's a cat from VFV!
-      console.log(`      ✅ ${pet.name} - Classified as CAT`);
+      console.log(`      ✅ ${pet.name} - CAT | breed=${details.breed} | color=${details.color} | age=${details.age} | sex=${details.sex}`);
+
+      // Build description from story or generate one
+      let description = details.story;
+      if (!description) {
+        const agePart = details.age ? `${details.age.toLowerCase()} ` : "";
+        const sexPart = details.sex && details.sex !== "unknown" ? `${details.sex} ` : "";
+        const breedPart = details.breed ? `${details.breed} ` : "";
+        description = `${pet.name} is a ${agePart}${sexPart}${breedPart}cat available for adoption through Voice for the Voiceless.`.replace(/\s+/g, " ").trim();
+      }
 
       allCats.push({
         adoptapet_id: pet.adoptapet_id,
         name: pet.name,
         age_text: details.age,
         breed: details.breed || "Domestic Shorthair",
+        color: details.color,
+        hair_length: details.hair_length,
         sex: details.sex || "unknown",
+        good_with_cats: details.good_with_cats,
+        good_with_dogs: details.good_with_dogs,
+        good_with_kids: details.good_with_kids,
+        spayed_neutered: details.spayed_neutered,
+        shots_current: details.shots_current,
+        special_needs: details.special_needs,
         main_image_url: pet.main_image_url,
         adoptapet_url: pet.url,
-        description:
-          `${pet.name} is a ${details.age || ""} ${details.sex !== "unknown" ? details.sex : ""} cat available for adoption through Voice for the Voiceless.`.trim(),
+        description: description,
         classification_reasoning: classification.reasoning,
       });
     }
@@ -567,15 +541,9 @@ async function scrapeAllPages(browser) {
 
   console.log(`\n📦 Total cats scraped: ${allCats.length}`);
   console.log(`\n🚫 Filtered out:`);
-  console.log(
-    `   🐕 Dogs: ${filtered.dogs.length}${filtered.dogs.length > 0 ? " - " + filtered.dogs.join(", ") : ""}`,
-  );
-  console.log(
-    `   ❓ Unknown: ${filtered.unknown.length}${filtered.unknown.length > 0 ? " - " + filtered.unknown.join(", ") : ""}`,
-  );
-  console.log(
-    `   🏠 Wrong shelter: ${filtered.wrongShelter.length}${filtered.wrongShelter.length > 0 ? " - " + filtered.wrongShelter.join(", ") : ""}`,
-  );
+  console.log(`   🐕 Dogs: ${filtered.dogs.length}${filtered.dogs.length > 0 ? " - " + filtered.dogs.join(", ") : ""}`);
+  console.log(`   ❓ Unknown: ${filtered.unknown.length}${filtered.unknown.length > 0 ? " - " + filtered.unknown.join(", ") : ""}`);
+  console.log(`   🏠 Wrong shelter: ${filtered.wrongShelter.length}${filtered.wrongShelter.length > 0 ? " - " + filtered.wrongShelter.join(", ") : ""}`);
 
   await listPage.close();
   await detailPage.close();
@@ -587,7 +555,7 @@ async function scrapeAllPages(browser) {
  */
 export async function scrapeAndSavePartnerFosterCats() {
   let browser;
-  shouldStop = false; // Reset stop flag
+  shouldStop = false;
 
   try {
     console.log("🤖 Scraping Voice for the Voiceless cats from Adopt-a-Pet...");
@@ -612,16 +580,12 @@ export async function scrapeAndSavePartnerFosterCats() {
     let errors = 0;
 
     console.log(`\n💾 Saving ${scrapedCats.length} cats to database...`);
-    // Test database connection
+
     try {
       await query("SELECT 1 as test");
       console.log("✅ Database connection OK");
-
-      // Test table exists and is accessible — destructure query() return
       const [tableCheck] = await query("SELECT COUNT(*) as count FROM vfv_cats");
-      console.log(
-        `✅ vfv_cats table accessible, current count: ${tableCheck[0].count}`,
-      );
+      console.log(`✅ vfv_cats table accessible, current count: ${tableCheck[0].count}`);
     } catch (testErr) {
       console.error("❌ Database connection test failed:", testErr);
       throw new Error("Database not accessible - aborting scrape");
@@ -634,73 +598,67 @@ export async function scrapeAndSavePartnerFosterCats() {
       }
 
       try {
-        // Calculate age_years FIRST
         const age_years = mapAgeToYears(cat.age_text);
 
-        // Sanitize all cat data - convert undefined to null
-        // MySQL2 requires explicit null, not undefined
-        const sanitizedCat = {
+        const s = {
           adoptapet_id: cat.adoptapet_id ?? null,
           name: cat.name ?? null,
           age_text: cat.age_text ?? null,
           age_years: age_years ?? null,
           breed: cat.breed ?? null,
+          color: cat.color ?? null,
+          hair_length: cat.hair_length ?? null,
           sex: cat.sex ?? null,
+          good_with_cats: cat.good_with_cats != null ? (cat.good_with_cats ? 1 : 0) : null,
+          good_with_dogs: cat.good_with_dogs != null ? (cat.good_with_dogs ? 1 : 0) : null,
+          good_with_kids: cat.good_with_kids != null ? (cat.good_with_kids ? 1 : 0) : null,
+          spayed_neutered: cat.spayed_neutered != null ? (cat.spayed_neutered ? 1 : 0) : null,
+          shots_current: cat.shots_current != null ? (cat.shots_current ? 1 : 0) : null,
+          special_needs: cat.special_needs != null ? (cat.special_needs ? 1 : 0) : null,
           main_image_url: cat.main_image_url ?? null,
           adoptapet_url: cat.adoptapet_url ?? null,
           description: cat.description ?? null,
         };
 
-        // Validate required fields
-        if (!sanitizedCat.adoptapet_id || !sanitizedCat.name) {
-          console.log(
-            `⚠️ Skipped ${cat.name || "unknown"} - missing required fields`,
-          );
+        if (!s.adoptapet_id || !s.name) {
+          console.log(`⚠️ Skipped ${cat.name || "unknown"} - missing required fields`);
           skipped++;
           continue;
         }
 
-        // ✅ FIX: destructure query() return to get the actual rows array
         const [existingRows] = await query(
           "SELECT id FROM vfv_cats WHERE adoptapet_id = ?",
-          [sanitizedCat.adoptapet_id],
+          [s.adoptapet_id],
         );
 
         if (existingRows.length > 0) {
           await query(
             `UPDATE vfv_cats SET 
-          name = ?,
-          age_text = ?,
-          age_years = ?,
-          breed = ?,
-          sex = ?,
-          main_image_url = ?,
-          adoptapet_url = ?,
-          description = ?,
-          updated_at = NOW()
-         WHERE id = ?`,
+              name = ?, age_text = ?, age_years = ?,
+              breed = ?, color = ?, hair_length = ?, sex = ?,
+              good_with_cats = ?, good_with_dogs = ?, good_with_kids = ?,
+              spayed_neutered = ?, shots_current = ?, special_needs = ?,
+              main_image_url = ?, adoptapet_url = ?, description = ?,
+              updated_at = NOW()
+            WHERE id = ?`,
             [
-              sanitizedCat.name,
-              sanitizedCat.age_text,
-              sanitizedCat.age_years,
-              sanitizedCat.breed,
-              sanitizedCat.sex,
-              sanitizedCat.main_image_url,
-              sanitizedCat.adoptapet_url,
-              sanitizedCat.description,
+              s.name, s.age_text, s.age_years,
+              s.breed, s.color, s.hair_length, s.sex,
+              s.good_with_cats, s.good_with_dogs, s.good_with_kids,
+              s.spayed_neutered, s.shots_current, s.special_needs,
+              s.main_image_url, s.adoptapet_url, s.description,
               existingRows[0].id,
             ],
           );
           updated++;
-          console.log(`✏️  Updated: ${cat.name}`);
+          console.log(`✏️  Updated: ${cat.name} (breed=${s.breed}, color=${s.color}, age=${s.age_text})`);
         } else {
-          // ✅ FIX: destructure query() return for cats table check too
           const [careRows] = await query(
             `SELECT id FROM cats 
-         WHERE status = 'available' 
-           AND deleted_at IS NULL
-           AND adoptapet_url LIKE ?`,
-            [`%${sanitizedCat.adoptapet_id}%`],
+             WHERE status = 'available' 
+               AND deleted_at IS NULL
+               AND adoptapet_url LIKE ?`,
+            [`%${s.adoptapet_id}%`],
           );
 
           if (careRows.length > 0) {
@@ -711,53 +669,33 @@ export async function scrapeAndSavePartnerFosterCats() {
 
           await query(
             `INSERT INTO vfv_cats (
-          adoptapet_id,
-          name,
-          age_text,
-          age_years,
-          breed,
-          sex,
-          main_image_url,
-          adoptapet_url,
-          description
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              adoptapet_id, name, age_text, age_years,
+              breed, color, hair_length, sex,
+              good_with_cats, good_with_dogs, good_with_kids,
+              spayed_neutered, shots_current, special_needs,
+              main_image_url, adoptapet_url, description
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              sanitizedCat.adoptapet_id,
-              sanitizedCat.name,
-              sanitizedCat.age_text,
-              sanitizedCat.age_years,
-              sanitizedCat.breed,
-              sanitizedCat.sex,
-              sanitizedCat.main_image_url,
-              sanitizedCat.adoptapet_url,
-              sanitizedCat.description,
+              s.adoptapet_id, s.name, s.age_text, s.age_years,
+              s.breed, s.color, s.hair_length, s.sex,
+              s.good_with_cats, s.good_with_dogs, s.good_with_kids,
+              s.spayed_neutered, s.shots_current, s.special_needs,
+              s.main_image_url, s.adoptapet_url, s.description,
             ],
           );
           added++;
-          console.log(`➕ Added: ${cat.name}`);
+          console.log(`➕ Added: ${cat.name} (breed=${s.breed}, color=${s.color}, age=${s.age_text})`);
         }
       } catch (err) {
         console.error(`❌ Error saving cat ${cat.name}:`);
         console.error(`   Error message: ${err.message}`);
         console.error(`   Error code: ${err.code}`);
         console.error(`   SQL State: ${err.sqlState}`);
-        console.error(`   Full error:`, err);
-        const debugAgeYears = mapAgeToYears(cat.age_text);
-        console.error(`   Cat data:`, {
-          adoptapet_id: cat.adoptapet_id,
-          name: cat.name,
-          age_text: cat.age_text,
-          age_years_calculated: debugAgeYears,
-          breed: cat.breed,
-          sex: cat.sex,
-        });
         errors++;
       }
     }
 
-    const statusMsg = shouldStop
-      ? "\n🛑 Scraping stopped by user"
-      : "\n📊 Scraping Summary:";
+    const statusMsg = shouldStop ? "\n🛑 Scraping stopped by user" : "\n📊 Scraping Summary:";
     console.log(statusMsg);
     console.log(`   ➕ Added:   ${added}`);
     console.log(`   ✏️  Updated: ${updated}`);
@@ -767,10 +705,7 @@ export async function scrapeAndSavePartnerFosterCats() {
 
     return {
       success: true,
-      added,
-      updated,
-      skipped,
-      errors,
+      added, updated, skipped, errors,
       total: scrapedCats.length,
       stopped: shouldStop,
       timestamp: new Date().toISOString(),
@@ -779,7 +714,7 @@ export async function scrapeAndSavePartnerFosterCats() {
     console.error("❌ Error scraping Adopt-a-Pet:", error);
     throw error;
   } finally {
-    shouldStop = false; // Reset flag
+    shouldStop = false;
     if (browser) {
       await browser.close();
     }
@@ -791,16 +726,13 @@ export async function scrapeAndSavePartnerFosterCats() {
  */
 export async function cleanupOldPartnerFosterCats(daysOld = 7) {
   try {
-    console.log(
-      `🧹 Cleaning up partner foster cats not updated in ${daysOld} days...`,
-    );
+    console.log(`🧹 Cleaning up partner foster cats not updated in ${daysOld} days...`);
     const [result] = await query(
       "DELETE FROM vfv_cats WHERE updated_at < DATE_SUB(NOW(), INTERVAL ? DAY)",
       [daysOld],
     );
     const deleted = result.affectedRows || 0;
     console.log(`   🗑️  Deleted ${deleted} old cats`);
-
     return { success: true, deleted, daysOld };
   } catch (error) {
     console.error("❌ Error cleaning up old cats:", error);
@@ -814,10 +746,8 @@ export async function cleanupOldPartnerFosterCats(daysOld = 7) {
 export async function runFullScrape() {
   try {
     console.log("🚀 Starting full scrape cycle...\n");
-
     const scrapeResult = await scrapeAndSavePartnerFosterCats();
     const cleanupResult = await cleanupOldPartnerFosterCats(7);
-
     console.log("\n✅ Full scrape completed successfully!");
     return {
       success: true,
