@@ -57,14 +57,14 @@ export class CatsImportService {
         errors.push(`Invalid bonded_pair_id "${row.bonded_pair_id}"`);
       }
 
-      // Support both 'gender' and 'sex' columns for backwards compatibility
-      const gender = row.gender || row.sex || "unknown";
+      // Support both 'sex' and 'sex' columns for backwards compatibility
+      const sex = row.sex || row.sex || "unknown";
 
       const mapped = {
         id,
         name,
         age_years: ageYears,
-        gender: gender, // UPDATED: use gender field
+        sex: sex, // UPDATED: use sex field
         breed: row.breed || null,
         temperament: row.temperament || null,
         good_with_kids:
