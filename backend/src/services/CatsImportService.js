@@ -23,7 +23,9 @@ export class CatsImportService {
     }
 
     const previewRows = [];
+    const csvCatIds = new Set(); // Track all cat IDs in this CSV for bonded pair validation
 
+    // First pass: parse and validate individual rows
     for (let i = 0; i < records.length; i++) {
       const row = records[i];
       const index = i + 2; // account for header row
@@ -40,6 +42,8 @@ export class CatsImportService {
         existing = await CatModel.findById(id);
         if (!existing) {
           errors.push(`No existing cat with id ${id}`);
+        } else {
+          csvCatIds.add(id); // Track existing cat IDs
         }
       }
 
@@ -69,7 +73,7 @@ export class CatsImportService {
         id,
         name,
         age_years: ageYears,
-        sex: sex, // UPDATED: use sex field
+        sex: sex,
         breed: row.breed || null,
         temperament: row.temperament || null,
         good_with_kids:
@@ -83,6 +87,8 @@ export class CatsImportService {
           row.is_special_needs === "1" || row.is_special_needs === "true",
         is_senior:
           row.is_senior === "1" || row.is_senior === "true" || ageYears >= 10,
+        is_deceased:
+          row.is_deceased === "1" || row.is_deceased === "true",
         status: row.status || (existing?.status ?? "available"),
         main_image_url: row.main_image_url || null,
         featured: row.featured === "1" || row.featured === "true",
@@ -99,6 +105,22 @@ export class CatsImportService {
       });
     }
 
+    // Second pass: validate bonded_pair_id references exist in CSV
+    for (const previewRow of previewRows) {
+      const bondedPairId = previewRow.data.bonded_pair_id;
+      if (bondedPairId) {
+        // Check if bonded pair is in this CSV (either as existing ID or will be created)
+        const bondedCatInCsv = previewRows.some(
+          (r) => r.data.id === bondedPairId && r.errors.length === 0
+        );
+        if (!bondedCatInCsv) {
+          previewRow.errors.push(
+            `Bonded pair cat ${bondedPairId} not found in this import`
+          );
+        }
+      }
+    }
+
     return previewRows;
   }
 
@@ -106,10 +128,10 @@ export class CatsImportService {
    * Apply confirmed rows: create or update by id.
    * IMPORTANT: Soft-deletes any existing cats NOT present in the CSV.
    * rows: array of { operation, data }
-   * 
+   *
    * Three-pass strategy to handle bonded_pair_id FK constraints:
-   * 1. Create/update all cats WITHOUT bonded_pair_id
-   * 2. Update bonded_pair_id after all cats exist in DB
+   * 1. Create/update all cats WITHOUT bonded_pair_id (explicitly clear if not in CSV)
+   * 2. Update bonded_pair_id BIDIRECTIONALLY after all cats exist in DB
    * 3. Soft-delete cats not in CSV
    */
   static async applyImport(rows) {
@@ -122,22 +144,27 @@ export class CatsImportService {
 
     // Track IDs present in CSV and bonded pairs to apply later
     const csvIds = new Set();
+    const csvIdToDbId = new Map(); // Map CSV id -> actual DB id (for creates)
     const bondedPairsToUpdate = [];
 
     // PASS 1: Create/update cats WITHOUT bonded_pair_id
+    // Explicitly set bonded_pair_id to null to clear any existing values
     for (const row of rows) {
       if (row.errors && row.errors.length) {
         results.skipped += 1;
         continue;
       }
 
-      // Clone data and remove bonded_pair_id for now
+      // Clone data and extract bonded_pair_id for Pass 2
       const dataWithoutBonded = { ...row.data };
       const bondedPairId = dataWithoutBonded.bonded_pair_id;
-      delete dataWithoutBonded.bonded_pair_id;
+      
+      // Explicitly set to null to clear existing bonded pairs if not in CSV
+      dataWithoutBonded.bonded_pair_id = null;
 
       if (row.operation === "update" && row.data.id) {
         csvIds.add(row.data.id);
+        csvIdToDbId.set(row.data.id, row.data.id);
         await CatModel.update(row.data.id, dataWithoutBonded);
         results.updated += 1;
 
@@ -152,6 +179,7 @@ export class CatsImportService {
         const created = await CatModel.create(dataWithoutBonded);
         if (created && created.id) {
           csvIds.add(created.id);
+          csvIdToDbId.set(created.id, created.id);
 
           // Queue bonded pair update if present
           if (bondedPairId) {
@@ -167,16 +195,29 @@ export class CatsImportService {
       }
     }
 
-    // PASS 2: Update bonded_pair_id now that all cats exist
+    // PASS 2: Update bonded_pair_id BIDIRECTIONALLY now that all cats exist
+    const processedPairs = new Set(); // Track processed pairs to avoid duplicate reverse links
+
     for (const { catId, bondedPairId } of bondedPairsToUpdate) {
       // Verify the bonded pair cat exists and is in the CSV
       if (csvIds.has(bondedPairId)) {
-        await CatModel.update(catId, { bonded_pair_id: bondedPairId });
+        const pairKey = [catId, bondedPairId].sort().join("-");
+
+        if (!processedPairs.has(pairKey)) {
+          // Set cat A -> cat B
+          await CatModel.update(catId, { bonded_pair_id: bondedPairId });
+
+          // Set cat B -> cat A (bidirectional)
+          await CatModel.update(bondedPairId, { bonded_pair_id: catId });
+
+          processedPairs.add(pairKey);
+        }
       } else {
-        // Log warning but don't fail — bonded pair not in import
+        // Bonded pair not in CSV — explicitly clear it
         console.warn(
-          `Warning: Cat ${catId} has bonded_pair_id ${bondedPairId} but that cat is not in the import. Skipping bonded pair assignment.`
+          `Warning: Cat ${catId} has bonded_pair_id ${bondedPairId} but that cat is not in the import. Clearing bonded pair.`
         );
+        await CatModel.update(catId, { bonded_pair_id: null });
       }
     }
 
