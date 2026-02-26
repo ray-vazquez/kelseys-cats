@@ -130,9 +130,9 @@ export class CatModel {
       INSERT INTO cats (
         name, age_years, sex, breed, bio,
         good_with_kids, good_with_cats, good_with_dogs,
-        is_special_needs, is_senior, status,
+        is_special_needs, is_senior, is_deceased, status,
         main_image_url, additional_images, featured, bonded_pair_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
@@ -146,6 +146,7 @@ export class CatModel {
       data.good_with_dogs ? 1 : 0,
       data.is_special_needs ? 1 : 0,
       data.is_senior ? 1 : 0,
+      data.is_deceased ? 1 : 0,
       data.status ?? "available",
       data.main_image_url ?? null,
       data.additional_images ?? null,
@@ -175,6 +176,7 @@ export class CatModel {
       "good_with_dogs",
       "is_special_needs",
       "is_senior",
+      "is_deceased",
       "status",
       "main_image_url",
       "additional_images",
@@ -194,6 +196,7 @@ export class CatModel {
             "good_with_dogs",
             "is_special_needs",
             "is_senior",
+            "is_deceased",
             "featured",
           ].includes(key)
         ) {
