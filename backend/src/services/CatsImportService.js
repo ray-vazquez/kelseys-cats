@@ -50,11 +50,16 @@ export class CatsImportService {
         errors.push(`Invalid age_years "${row.age_years}"`);
       }
 
-      const bondedPairId = row.bonded_pair_id
-        ? Number(row.bonded_pair_id)
-        : null;
-      if (row.bonded_pair_id && Number.isNaN(bondedPairId)) {
-        errors.push(`Invalid bonded_pair_id "${row.bonded_pair_id}"`);
+      // Improved bonded_pair_id parsing: handle empty strings, whitespace, non-positive
+      const rawBonded = (row.bonded_pair_id || "").trim();
+      let bondedPairId = null;
+      if (rawBonded) {
+        const parsed = Number(rawBonded);
+        if (Number.isNaN(parsed) || parsed <= 0 || !Number.isInteger(parsed)) {
+          errors.push(`Invalid bonded_pair_id "${row.bonded_pair_id}"`);
+        } else {
+          bondedPairId = parsed;
+        }
       }
 
       // Support both 'sex' and 'sex' columns for backwards compatibility
@@ -82,7 +87,7 @@ export class CatsImportService {
         main_image_url: row.main_image_url || null,
         featured: row.featured === "1" || row.featured === "true",
         bonded_pair_id: bondedPairId,
-        adoptapet_url: row.adoptapet_url || null, // ADDED: support adoptapet_url
+        adoptapet_url: row.adoptapet_url || null,
       };
 
       previewRows.push({
@@ -101,6 +106,11 @@ export class CatsImportService {
    * Apply confirmed rows: create or update by id.
    * IMPORTANT: Soft-deletes any existing cats NOT present in the CSV.
    * rows: array of { operation, data }
+   * 
+   * Three-pass strategy to handle bonded_pair_id FK constraints:
+   * 1. Create/update all cats WITHOUT bonded_pair_id
+   * 2. Update bonded_pair_id after all cats exist in DB
+   * 3. Soft-delete cats not in CSV
    */
   static async applyImport(rows) {
     const results = {
@@ -110,24 +120,46 @@ export class CatsImportService {
       skipped: 0,
     };
 
-    // Track IDs present in CSV
+    // Track IDs present in CSV and bonded pairs to apply later
     const csvIds = new Set();
+    const bondedPairsToUpdate = [];
 
-    // First pass: create/update cats
+    // PASS 1: Create/update cats WITHOUT bonded_pair_id
     for (const row of rows) {
       if (row.errors && row.errors.length) {
         results.skipped += 1;
         continue;
       }
 
+      // Clone data and remove bonded_pair_id for now
+      const dataWithoutBonded = { ...row.data };
+      const bondedPairId = dataWithoutBonded.bonded_pair_id;
+      delete dataWithoutBonded.bonded_pair_id;
+
       if (row.operation === "update" && row.data.id) {
         csvIds.add(row.data.id);
-        await CatModel.update(row.data.id, row.data);
+        await CatModel.update(row.data.id, dataWithoutBonded);
         results.updated += 1;
+
+        // Queue bonded pair update if present
+        if (bondedPairId) {
+          bondedPairsToUpdate.push({
+            catId: row.data.id,
+            bondedPairId,
+          });
+        }
       } else if (row.operation === "create") {
-        const created = await CatModel.create(row.data);
+        const created = await CatModel.create(dataWithoutBonded);
         if (created && created.id) {
           csvIds.add(created.id);
+
+          // Queue bonded pair update if present
+          if (bondedPairId) {
+            bondedPairsToUpdate.push({
+              catId: created.id,
+              bondedPairId,
+            });
+          }
         }
         results.created += 1;
       } else {
@@ -135,15 +167,26 @@ export class CatsImportService {
       }
     }
 
-    // Second pass: soft-delete cats not in CSV
-    // Get all existing cats from database
+    // PASS 2: Update bonded_pair_id now that all cats exist
+    for (const { catId, bondedPairId } of bondedPairsToUpdate) {
+      // Verify the bonded pair cat exists and is in the CSV
+      if (csvIds.has(bondedPairId)) {
+        await CatModel.update(catId, { bonded_pair_id: bondedPairId });
+      } else {
+        // Log warning but don't fail — bonded pair not in import
+        console.warn(
+          `Warning: Cat ${catId} has bonded_pair_id ${bondedPairId} but that cat is not in the import. Skipping bonded pair assignment.`
+        );
+      }
+    }
+
+    // PASS 3: Soft-delete cats not in CSV
     const allCats = await CatModel.findAll({
       status: null, // Get all statuses
       featured: undefined,
       senior: undefined,
     });
 
-    // Identify cats to delete (in DB but not in CSV)
     for (const cat of allCats) {
       if (!csvIds.has(cat.id)) {
         await CatModel.softDelete(cat.id);
