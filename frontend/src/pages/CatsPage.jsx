@@ -482,6 +482,61 @@ export default function CatsPage() {
     }${hasActiveFilters ? " (filtered)" : ""}`;
   }
 
+  // Helper function to render age display based on source
+  const renderAge = (cat) => {
+    // Featured foster cats (local cats table)
+    if (cat.source === 'featured_foster') {
+      if (typeof cat.age_years === 'number') {
+        if (cat.age_years < 1) {
+          const months = Math.round(cat.age_years * 12);
+          return `${months} month${months === 1 ? '' : 's'} old`;
+        }
+        return `${cat.age_years} year${cat.age_years === 1 ? '' : 's'} old`;
+      }
+      // Fallback: legacy age text field if present
+      if (cat.age) {
+        return cat.age;
+      }
+      return 'Age unknown';
+    }
+
+    // Partner foster cats (VFV / vfv_cats)
+    if (cat.source === 'partner_foster') {
+      // Primary: show Adopt-a-Pet age text exactly as scraped
+      if (cat.age_text && cat.age_text.trim() !== '') {
+        return cat.age_text;
+      }
+
+      // Fallback: if age_text missing but we have numeric age_years, format it
+      if (typeof cat.age_years === 'number') {
+        if (cat.age_years < 1) {
+          const months = Math.round(cat.age_years * 12);
+          return `${months} month${months === 1 ? '' : 's'} old`;
+        }
+        return `${cat.age_years} year${cat.age_years === 1 ? '' : 's'} old`;
+      }
+
+      // Final fallback
+      return 'Age unknown';
+    }
+
+    // Default (in case source is missing or future types are added)
+    if (typeof cat.age_years === 'number') {
+      if (cat.age_years < 1) {
+        const months = Math.round(cat.age_years * 12);
+        return `${months} month${months === 1 ? '' : 's'} old`;
+      }
+      return `${cat.age_years} year${cat.age_years === 1 ? '' : 's'} old`;
+    }
+    if (cat.age) {
+      return cat.age;
+    }
+    if (cat.age_text) {
+      return cat.age_text;
+    }
+    return 'Age unknown';
+  };
+
   return (
     <>
       <SectionHero
@@ -763,12 +818,7 @@ export default function CatsPage() {
                     <CardBody>
                       <CardTitle>{cat.name}</CardTitle>
                       <TextMuted>
-                        {cat.age_years
-                          ? `${Math.floor(cat.age_years)} year${
-                              Math.floor(cat.age_years) !== 1 ? "s" : ""
-                            } old`
-                          : cat.age || "Age unknown"}{" "}
-                        · {cat.breed || "Mixed breed"}
+                        {renderAge(cat)} · {cat.breed || "Mixed breed"}
                       </TextMuted>
                       {(cat.is_special_needs === 1 ||
                         cat.is_senior === 1 ||
