@@ -30,17 +30,60 @@ function extractAdoptaPetId(url) {
 }
 
 /**
- * Helper: map Adopt-a-Pet age text → numeric years
+ * Maps age text from Adopt-a-Pet to numeric years.
+ * Handles both categorical ages (Baby, Young, Adult, Senior) and numeric ages (1 year, 6 months).
+ * 
+ * @param {string} ageText - Raw age text from Adopt-a-Pet (e.g., "1 year", "Young", "6 months")
+ * @returns {number|null} - Age in years (decimal), or null if unknown
+ * 
+ * Examples:
+ * - "Baby" → 0.5
+ * - "Young" → 2
+ * - "1 year" → 1
+ * - "6 months" → 0.5
+ * - "18 months" → 1.5
+ * - "2 years old" → 2
+ * - "" → null
+ * - "Unknown" → null
  */
 function mapAgeToYears(ageText) {
-  if (!ageText) return null;
-  const t = ageText.toLowerCase();
-
-  if (t.includes("baby") || t.includes("kitten")) return 0.5;
-  if (t.includes("young")) return 2;
-  if (t.includes("adult")) return 5;
-  if (t.includes("senior")) return 10;
-
+  if (!ageText || ageText.trim() === '') return null;
+  
+  const normalized = ageText.toLowerCase().trim();
+  
+  // Handle explicit "unknown" cases
+  if (normalized === 'unknown' || normalized === 'n/a') {
+    return null;
+  }
+  
+  // Try numeric parsing first
+  // Pattern matches: "1 year", "6 months", "1 year 6 months", "2 years old"
+  const yearMatch = normalized.match(/(\d+)\s*(?:year|yr|y)(?:s)?(?:\s+old)?/i);
+  const monthMatch = normalized.match(/(\d+)\s*(?:month|mo|m)(?:s)?(?:\s+old)?/i);
+  
+  if (yearMatch || monthMatch) {
+    let years = 0;
+    
+    if (yearMatch) {
+      years += parseInt(yearMatch[1], 10);
+    }
+    
+    if (monthMatch) {
+      const months = parseInt(monthMatch[1], 10);
+      years += months / 12;
+    }
+    
+    // Round to 1 decimal place (e.g., 1.5 years, 0.5 years)
+    return Math.round(years * 10) / 10;
+  }
+  
+  // Fall back to category mapping (backward compatibility)
+  if (normalized.includes('baby') || normalized.includes('kitten')) return 0.5;
+  if (normalized.includes('young')) return 2;
+  if (normalized.includes('adult')) return 5;
+  if (normalized.includes('senior')) return 10;
+  
+  // If no match, return null
   return null;
 }
 
