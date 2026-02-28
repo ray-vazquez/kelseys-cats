@@ -12,6 +12,7 @@ import {
 import SectionHero from "../components/Common/SectionHero.jsx";
 import LoadingState from "../components/Common/LoadingState.jsx";
 import EmptyState from "../components/Common/EmptyState.jsx";
+import ErrorState from "../components/Common/ErrorState.jsx";
 import ImageGallery from "../components/Common/ImageGallery.jsx";
 import http from "../api/http.js"; 
 
@@ -121,7 +122,7 @@ export default function CatDetailPage() {
   const [tagsLoading, setTagsLoading] = useState(true);
   const [tagsError, setTagsError] = useState(null);
 
-  useEffect(() => {
+  const fetchCat = () => {
     setLoading(true);
     setError(null);
     setTagsLoading(true);
@@ -133,7 +134,7 @@ export default function CatDetailPage() {
       .then((res) => setCat(res.data))
       .catch((err) => {
         console.error("Failed to load cat", err);
-        setError("Unable to load cat details. Please try again.");
+        setError("We couldn't load this cat's details. Please try again.");
         setCat(null);
       })
       .finally(() => setLoading(false));
@@ -151,6 +152,10 @@ export default function CatDetailPage() {
         setTagsError("Unable to load personality and medical tags.");
       })
       .finally(() => setTagsLoading(false));
+  };
+
+  useEffect(() => {
+    fetchCat();
   }, [id]);
 
   // NOTE: validTags from flat cat.tags is no longer used for display,
@@ -206,16 +211,12 @@ export default function CatDetailPage() {
         />
         <Section $padding="lg">
           <Container>
-            {error && (
-              <Alert $variant="danger" style={{ marginBottom: "2rem" }}>
-                {error}
-              </Alert>
-            )}
-            <EmptyState
+            <ErrorState
               icon="🐱"
               iconSize="lg"
               title="Cat not found"
-              description="This cat may have been adopted or is no longer available. Check out our other wonderful cats looking for homes!"
+              message={error || "This cat may have been adopted or is no longer available. Check out our other wonderful cats looking for homes!"}
+              onRetry={error ? fetchCat : undefined}
               actions={
                 <>
                   <ButtonLink to="/cats" $variant="primary">
