@@ -685,7 +685,7 @@ export default function CatsPage() {
               </AdvancedFiltersContainer>
             </FilterSection>
           </FilterWrapper>
-
+{/* 
           {hasActiveFilters && getActiveFilterLabels().length > 0 && (
             <ActiveFiltersBar>
               {getActiveFilterLabels().map((filter) => (
@@ -699,7 +699,7 @@ export default function CatsPage() {
                 </FilterBadge>
               ))}
             </ActiveFiltersBar>
-          )}
+          )} */}
 
           {/* Error state */}
           {error ? (
