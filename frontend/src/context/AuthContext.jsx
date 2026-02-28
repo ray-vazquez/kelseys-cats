@@ -4,6 +4,7 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // NEW: track if we've checked localStorage yet
 
   useEffect(() => {
     const token = window.localStorage.getItem('kc_token');
@@ -11,6 +12,7 @@ export function AuthProvider({ children }) {
     if (token && userJson) {
       setUser(JSON.parse(userJson));
     }
+    setLoading(false); // Done checking localStorage
   }, []);
 
   function loginUser(token, userInfo) {
@@ -30,6 +32,7 @@ export function AuthProvider({ children }) {
       value={{
         user,
         isAuthenticated: !!user,
+        loading,
         loginUser,
         logoutUser
       }}
