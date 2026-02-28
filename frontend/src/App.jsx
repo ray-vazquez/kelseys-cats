@@ -13,6 +13,7 @@ import AdminCatEditPage from './pages/AdminCatEditPage.jsx';
 import AdminDeletedCatsPage from './pages/AdminDeletedCatsPage.jsx';
 import AdminScraperPage from './pages/AdminScraperPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
+import AdminNotFoundPage from './pages/AdminNotFoundPage.jsx';
 import PublicNavbar from './components/Layout/PublicNavbar.jsx';
 import AdminNavbar from './components/Layout/AdminNavbar.jsx';
 import Footer from './components/Layout/Footer.jsx';
@@ -149,7 +150,16 @@ export default function App() {
             </AdminLayout>
           }
         />
-        {/* Catch-all 404 route - MUST BE LAST */}
+        {/* Admin catch-all - MUST come before public catch-all */}
+        <Route
+          path="/admin/*"
+          element={
+            <AdminLayout>
+              <AdminNotFoundPage />
+            </AdminLayout>
+          }
+        />
+        {/* Public catch-all 404 route - MUST BE LAST */}
         <Route
           path="*"
           element={
