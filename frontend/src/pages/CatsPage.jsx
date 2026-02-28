@@ -22,6 +22,7 @@ import {
 } from "../components/Common/StyledComponents.js";
 import SectionHero from "../components/Common/SectionHero.jsx";
 import LoadingState from "../components/Common/LoadingState.jsx";
+import ErrorState from "../components/Common/ErrorState.jsx";
 import { NoCatsFound } from "../components/Common/EmptyState.jsx";
 import http from "../api/http.js";
 import PaginationControls from "../components/Common/PaginationControls.jsx";
@@ -310,6 +311,7 @@ export default function CatsPage() {
     total: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -329,8 +331,9 @@ export default function CatsPage() {
 
   const page = Number(searchParams.get("page") || "1");
 
-  useEffect(() => {
+  const fetchCats = () => {
     setLoading(true);
+    setError(null);
 
     const params = new URLSearchParams();
 
@@ -354,6 +357,7 @@ export default function CatsPage() {
       .then((res) => setData(res.data))
       .catch((err) => {
         console.error("Failed to load cats", err);
+        setError("We couldn't load the cats. Please check your connection and try again.");
         setData({
           featured_foster_cats: [],
           partner_foster_cats: [],
@@ -361,6 +365,10 @@ export default function CatsPage() {
         });
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchCats();
   }, [searchQuery, filters]);
 
   const filteredCats = useMemo(() => {
@@ -693,12 +701,13 @@ export default function CatsPage() {
             </ActiveFiltersBar>
           )}
 
-          {/* ResultsCount below filters kept for extra clarity when there ARE results */}
-          {/* {!loading && filteredCats.length > 0 && (
-            <ResultsCount>{statsText}</ResultsCount>
-          )} */}
-
-          {loading ? (
+          {/* Error state */}
+          {error ? (
+            <ErrorState
+              message={error}
+              onRetry={fetchCats}
+            />
+          ) : loading ? (
             <Grid $cols={3} $mdCols={2}>
               {Array.from({ length: 6 }).map((_, i) => (
                 <Card key={i}>
