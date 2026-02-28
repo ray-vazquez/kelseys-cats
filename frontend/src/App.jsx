@@ -32,6 +32,30 @@ function AdminLayout({ children }) {
   );
 }
 
+// Special layout for admin 404 - shows different content based on auth
+function AdminNotFoundLayout() {
+  const { isAuthenticated } = useAuth();
+  
+  if (isAuthenticated) {
+    // Logged in: show admin 404 with admin navbar
+    return (
+      <>
+        <AdminNavbar />
+        <AdminNotFoundPage />
+      </>
+    );
+  }
+  
+  // Not logged in: show public 404 (they're trying to access admin area without auth)
+  return (
+    <>
+      <PublicNavbar />
+      <NotFoundPage />
+      <Footer />
+    </>
+  );
+}
+
 function PublicLayout({ children }) {
   return (
     <>
@@ -150,14 +174,10 @@ export default function App() {
             </AdminLayout>
           }
         />
-        {/* Admin catch-all - MUST come before public catch-all */}
+        {/* Admin catch-all - shows 404 without redirect */}
         <Route
           path="/admin/*"
-          element={
-            <AdminLayout>
-              <AdminNotFoundPage />
-            </AdminLayout>
-          }
+          element={<AdminNotFoundLayout />}
         />
         {/* Public catch-all 404 route - MUST BE LAST */}
         <Route
