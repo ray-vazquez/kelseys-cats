@@ -17,13 +17,25 @@ import AdminNotFoundPage from './pages/AdminNotFoundPage.jsx';
 import PublicNavbar from './components/Layout/PublicNavbar.jsx';
 import AdminNavbar from './components/Layout/AdminNavbar.jsx';
 import Footer from './components/Layout/Footer.jsx';
+import LoadingState from './components/Common/LoadingState.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 
 function AdminLayout({ children }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+  
+  // Wait for auth to initialize before deciding
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <LoadingState message="Checking authentication..." />
+      </div>
+    );
+  }
+  
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
   }
+  
   return (
     <>
       <AdminNavbar />
@@ -34,7 +46,16 @@ function AdminLayout({ children }) {
 
 // Special layout for admin 404 - shows different content based on auth
 function AdminNotFoundLayout() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+  
+  // Wait for auth to initialize
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <LoadingState message="Loading..." />
+      </div>
+    );
+  }
   
   if (isAuthenticated) {
     // Logged in: show admin 404 with admin navbar
