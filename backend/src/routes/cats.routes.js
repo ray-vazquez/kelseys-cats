@@ -23,6 +23,7 @@ import {
 import {
   getAllAvailableCats,
   getPartnerFostersOnly,
+  getPartnerCatById,
   scrapePartnerFosters,
   getPartnerFostersInfo
 } from "../controllers/shelterCats.controller.js";
@@ -37,6 +38,7 @@ router.get("/", listCats);
 router.get("/all-available", getAllAvailableCats); // Featured + Partner fosters (deduplicated via view)
 router.get("/partner-fosters", getPartnerFostersOnly); // Only partner fosters
 router.get("/partner-fosters-info", getPartnerFostersInfo); // Partner foster database info
+router.get("/partner/:id", getPartnerCatById); // Partner cat detail page (MUST be before /:id)
 router.get("/:id", getCat);
 router.get("/:id/images", getCatImages); // Get additional images
 
