@@ -847,14 +847,11 @@ export default function CatsPage() {
                           </ButtonLink>
                         ) : (
                           <ButtonLink
-                            as="a"
-                            href={cat.adoptapet_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            to={`/cats/partner/${cat.id}`}
                             $variant="primary"
                             $fullWidth
                           >
-                            View on Adopt-a-Pet →
+                            View Details
                           </ButtonLink>
                         )}
                       </div>
