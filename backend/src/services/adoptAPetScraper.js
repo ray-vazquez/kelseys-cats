@@ -88,6 +88,109 @@ function mapAgeToYears(ageText) {
 }
 
 /**
+ * Validate scraped cat data
+ * Returns validation result with errors array
+ */
+function validateScrapedCat(catData) {
+  const errors = [];
+  const warnings = [];
+  
+  // Critical fields
+  if (!catData.name || catData.name.trim() === '') {
+    errors.push('Missing name');
+  }
+  
+  if (!catData.adoptapet_id) {
+    errors.push('Missing adoptapet_id');
+  }
+  
+  // Age validation
+  if (!catData.age_text || catData.age_text.trim() === '') {
+    warnings.push('Missing age_text');
+  }
+  
+  const age_years = mapAgeToYears(catData.age_text);
+  if (age_years === null && catData.age_text && 
+      !['unknown', 'n/a', ''].includes(catData.age_text.toLowerCase().trim())) {
+    warnings.push(`Could not parse age_years from age_text: "${catData.age_text}"`);
+  }
+  
+  // Image validation
+  if (!catData.main_image_url) {
+    errors.push('Missing main_image_url');
+  } else if (!catData.main_image_url.startsWith('http')) {
+    errors.push(`Invalid image URL: ${catData.main_image_url}`);
+  }
+  
+  // New fields (should be boolean or null)
+  if (catData.spayed_neutered === undefined) {
+    warnings.push('Missing spayed_neutered (undefined)');
+  }
+  
+  if (catData.shots_current === undefined) {
+    warnings.push('Missing shots_current (undefined)');
+  }
+  
+  // URL validation
+  if (!catData.adoptapet_url || !catData.adoptapet_url.startsWith('http')) {
+    errors.push('Invalid adoptapet_url');
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    cat: catData
+  };
+}
+
+/**
+ * Generate validation report from scraped cats
+ */
+function generateValidationReport(scrapedCats) {
+  const results = scrapedCats.map(cat => validateScrapedCat(cat));
+  
+  const valid = results.filter(r => r.valid);
+  const invalid = results.filter(r => !r.valid);
+  const withWarnings = results.filter(r => r.warnings.length > 0);
+  
+  console.log('\n📊 Validation Report:');
+  console.log(`   ✅ Valid: ${valid.length}`);
+  console.log(`   ❌ Invalid: ${invalid.length}`);
+  console.log(`   ⚠️  With warnings: ${withWarnings.length}`);
+  
+  if (invalid.length > 0) {
+    console.log('\n❌ Invalid Cats:');
+    invalid.forEach(result => {
+      console.log(`   - ${result.cat.name || 'Unknown'}: ${result.errors.join(', ')}`);
+    });
+  }
+  
+  if (withWarnings.length > 0 && withWarnings.length <= 5) {
+    console.log('\n⚠️  Warnings:');
+    withWarnings.slice(0, 5).forEach(result => {
+      console.log(`   - ${result.cat.name}: ${result.warnings.join(', ')}`);
+    });
+  }
+  
+  const errorRate = invalid.length / results.length;
+  const shouldAbort = errorRate > 0.1; // Abort if >10% invalid
+  
+  return {
+    total: results.length,
+    valid: valid.length,
+    invalid: invalid.length,
+    withWarnings: withWarnings.length,
+    errorRate,
+    shouldAbort,
+    invalidCats: invalid.map(r => ({
+      name: r.cat.name,
+      errors: r.errors
+    }))
+  };
+}
+
+/**
  * Classify species using strict guidelines
  */
 function classifySpecies(petData) {
@@ -617,6 +720,25 @@ export async function scrapeAndSavePartnerFosterCats() {
 
     const scrapedCats = await scrapeAllPages(browser);
 
+    // Generate validation report
+    const validationReport = generateValidationReport(scrapedCats);
+
+    if (validationReport.shouldAbort) {
+      console.error(`\n❌ VALIDATION FAILED: ${(validationReport.errorRate * 100).toFixed(1)}% error rate`);
+      console.error(`   This exceeds the 10% threshold. Aborting save to prevent bad data.`);
+      console.error(`   Fix scraper issues and try again.`);
+      
+      return {
+        success: false,
+        error: 'Validation failed - too many errors',
+        validation: validationReport,
+        total: scrapedCats.length,
+        timestamp: new Date().toISOString()
+      };
+    }
+
+    console.log(`\n✅ Validation passed - proceeding to save ${validationReport.valid} valid cats`);
+
     let added = 0;
     let updated = 0;
     let skipped = 0;
@@ -750,6 +872,7 @@ export async function scrapeAndSavePartnerFosterCats() {
       success: true,
       added, updated, skipped, errors,
       total: scrapedCats.length,
+      validation: validationReport,
       stopped: shouldStop,
       timestamp: new Date().toISOString(),
     };
