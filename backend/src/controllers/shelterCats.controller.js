@@ -224,6 +224,83 @@ export async function getPartnerFostersOnly(req, res) {
 }
 
 /**
+ * GET /api/cats/partner/:id
+ * Get detailed information for a single partner foster cat
+ * Used by partner cat detail pages
+ */
+export async function getPartnerCatById(req, res) {
+  try {
+    const { id } = req.params;
+    
+    // Validate ID is a number
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({
+        error: 'Invalid cat ID',
+        message: 'Cat ID must be a number'
+      });
+    }
+    
+    // Query vfv_cats table directly for full details
+    const [rows] = await query(
+      `SELECT 
+        id,
+        adoptapet_id,
+        name,
+        age_text,
+        age_years,
+        sex,
+        breed,
+        color,
+        hair_length,
+        description,
+        good_with_cats,
+        good_with_dogs,
+        good_with_kids,
+        spayed_neutered,
+        shots_current,
+        special_needs,
+        main_image_url,
+        adoptapet_url,
+        scraped_at AS created_at,
+        updated_at
+      FROM vfv_cats 
+      WHERE id = ?
+      LIMIT 1`,
+      [parseInt(id)]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        error: 'Partner cat not found',
+        message: `No partner foster cat found with ID ${id}`
+      });
+    }
+    
+    const cat = rows[0];
+    
+    // Add source field for consistency
+    cat.source = 'partner_foster';
+    
+    // Fetch tags if applicable (partner cats may not have tags, but check anyway)
+    try {
+      const tags = await TagModel.findTagsForCat(cat.id);
+      cat.tags = tags.map(t => t.name);
+    } catch (err) {
+      console.error(`Failed to fetch tags for partner cat ${cat.id}:`, err);
+      cat.tags = [];
+    }
+    
+    res.json(cat);
+  } catch (error) {
+    console.error('Error fetching partner cat by ID:', error);
+    res.status(500).json({
+      error: 'Failed to fetch partner cat',
+      message: error.message
+    });
+  }
+}
+
+/**
  * POST /api/cats/scrape-partner-fosters
  * Manually scrape Adopt-a-Pet and save to database
  * Admin only - use this to refresh partner foster cat data
