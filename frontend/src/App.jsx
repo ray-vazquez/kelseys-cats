@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import HomePage from './pages/HomePage.jsx';
 import CatsPage from './pages/CatsPage.jsx';
 import CatDetailPage from './pages/CatDetailPage.jsx';
+import PartnerCatDetailPage from './pages/PartnerCatDetailPage.jsx';
 import AlumniPage from './pages/AlumniPage.jsx';
 import AlumniDetailPage from './pages/AlumniDetailPage.jsx';
 import AdoptionPage from './pages/AdoptionPage.jsx';
@@ -104,6 +105,15 @@ export default function App() {
           element={
             <PublicLayout>
               <CatsPage />
+            </PublicLayout>
+          }
+        />
+        {/* Partner cat detail - MUST come before /cats/:id */}
+        <Route
+          path="/cats/partner/:id"
+          element={
+            <PublicLayout>
+              <PartnerCatDetailPage />
             </PublicLayout>
           }
         />
