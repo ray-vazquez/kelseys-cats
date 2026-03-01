@@ -183,15 +183,29 @@ export default function AdminScraperPage() {
       const response = await http.post('/admin/scrape/full');
       setLastResult(response.data);
       
+      // Handle nested data structure (response.data.data or response.data.scrape)
+      const scrapeData = response.data.data?.scrape || response.data.scrape;
+      const cleanupData = response.data.data?.cleanup || response.data.cleanup;
+      
       addLog('✅ Scrape completed successfully!', 'success');
-      addLog(`📦 Total cats scraped: ${response.data.scrape.total}`, 'info');
-      addLog(`➕ Added: ${response.data.scrape.added}`, 'success');
-      addLog(`✏️ Updated: ${response.data.scrape.updated}`, 'info');
-      addLog(`⏭️ Skipped: ${response.data.scrape.skipped}`, 'info');
-      if (response.data.scrape.errors > 0) {
-        addLog(`❌ Errors: ${response.data.scrape.errors}`, 'error');
+      addLog(`📦 Total cats scraped: ${scrapeData?.total || 0}`, 'info');
+      addLog(`➕ Added: ${scrapeData?.added || 0}`, 'success');
+      addLog(`✏️ Updated: ${scrapeData?.updated || 0}`, 'info');
+      addLog(`⏭️ Skipped: ${scrapeData?.skipped || 0}`, 'info');
+      if (scrapeData?.errors > 0) {
+        addLog(`❌ Errors: ${scrapeData.errors}`, 'error');
       }
-      addLog(`🗑️ Cleaned up: ${response.data.cleanup.deleted} old entries`, 'info');
+      
+      // Show validation stats if available
+      if (scrapeData?.validation) {
+        const val = scrapeData.validation;
+        addLog(`📊 Validation: ${val.valid}/${val.total} valid (${((1 - val.errorRate) * 100).toFixed(1)}%)`, 'info');
+        if (val.withWarnings > 0) {
+          addLog(`⚠️  Warnings: ${val.withWarnings}`, 'warning');
+        }
+      }
+      
+      addLog(`🗑️ Cleaned up: ${cleanupData?.deleted || 0} old entries`, 'info');
       addLog('✅ Full scrape cycle complete!', 'success');
       
       await fetchStatus();
@@ -215,13 +229,25 @@ export default function AdminScraperPage() {
       const response = await http.post('/admin/scrape/adoptapet');
       setLastResult(response.data);
       
+      // Handle both response formats: direct data or nested under .data
+      const scrapeData = response.data.data || response.data;
+      
       addLog('✅ Scrape completed!', 'success');
-      addLog(`📦 Total cats scraped: ${response.data.total}`, 'info');
-      addLog(`➕ Added: ${response.data.added}`, 'success');
-      addLog(`✏️ Updated: ${response.data.updated}`, 'info');
-      addLog(`⏭️ Skipped: ${response.data.skipped}`, 'info');
-      if (response.data.errors > 0) {
-        addLog(`❌ Errors: ${response.data.errors}`, 'error');
+      addLog(`📦 Total cats scraped: ${scrapeData?.total || 0}`, 'info');
+      addLog(`➕ Added: ${scrapeData?.added || 0}`, 'success');
+      addLog(`✏️ Updated: ${scrapeData?.updated || 0}`, 'info');
+      addLog(`⏭️ Skipped: ${scrapeData?.skipped || 0}`, 'info');
+      if (scrapeData?.errors > 0) {
+        addLog(`❌ Errors: ${scrapeData.errors}`, 'error');
+      }
+      
+      // Show validation stats if available
+      if (scrapeData?.validation) {
+        const val = scrapeData.validation;
+        addLog(`📊 Validation: ${val.valid}/${val.total} valid (${((1 - val.errorRate) * 100).toFixed(1)}%)`, 'info');
+        if (val.withWarnings > 0) {
+          addLog(`⚠️  Warnings: ${val.withWarnings}`, 'warning');
+        }
       }
       
       await fetchStatus();
@@ -243,7 +269,7 @@ export default function AdminScraperPage() {
     try {
       const response = await http.post('/admin/scrape/cleanup', { daysOld: 7 });
       addLog('✅ Cleanup completed!', 'success');
-      addLog(`🗑️ Deleted ${response.data.deleted} old entries`, 'info');
+      addLog(`🗑️ Deleted ${response.data.deleted || 0} old entries`, 'info');
       
       await fetchStatus();
     } catch (err) {
@@ -380,26 +406,26 @@ export default function AdminScraperPage() {
                   <StatBox>
                     <div className="label">Added</div>
                     <div className="value" style={{ color: '#059669' }}>
-                      {lastResult.scrape?.added || lastResult.added || 0}
+                      {lastResult.scrape?.added || lastResult.data?.scrape?.added || lastResult.added || 0}
                     </div>
                   </StatBox>
                   <StatBox>
                     <div className="label">Updated</div>
                     <div className="value" style={{ color: '#0284c7' }}>
-                      {lastResult.scrape?.updated || lastResult.updated || 0}
+                      {lastResult.scrape?.updated || lastResult.data?.scrape?.updated || lastResult.updated || 0}
                     </div>
                   </StatBox>
                   <StatBox>
                     <div className="label">Skipped</div>
                     <div className="value" style={{ color: '#6b7280' }}>
-                      {lastResult.scrape?.skipped || lastResult.skipped || 0}
+                      {lastResult.scrape?.skipped || lastResult.data?.scrape?.skipped || lastResult.skipped || 0}
                     </div>
                   </StatBox>
-                  {lastResult.cleanup && (
+                  {(lastResult.cleanup || lastResult.data?.cleanup) && (
                     <StatBox>
                       <div className="label">Cleaned Up</div>
                       <div className="value" style={{ color: '#dc2626' }}>
-                        {lastResult.cleanup.deleted || 0}
+                        {lastResult.cleanup?.deleted || lastResult.data?.cleanup?.deleted || 0}
                       </div>
                     </StatBox>
                   )}
