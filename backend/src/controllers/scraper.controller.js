@@ -142,8 +142,8 @@ export async function stopScraperEndpoint(req, res, next) {
  */
 export async function getScraperStatus(req, res, next) {
   try {
-    // Get latest scraped cats
-    const latestCats = await query(
+    // Get latest scraped cats (destructure mysql2 result array)
+    const [latestCatsRows] = await query(
       `SELECT 
         COUNT(*) as total_cats,
         MAX(scraped_at) as last_scraped,
@@ -152,22 +152,27 @@ export async function getScraperStatus(req, res, next) {
     );
     
     // Get cats in Kelsey's care
-    const kelseysCats = await query(
+    const [kelseysCatsRows] = await query(
       `SELECT COUNT(*) as count
        FROM cats
        WHERE status = 'available' AND deleted_at IS NULL`
     );
     
     // Get count of old cats (not updated in 7 days)
-    const oldCats = await query(
+    const [oldCatsRows] = await query(
       `SELECT COUNT(*) as count
        FROM vfv_cats 
        WHERE updated_at < DATE_SUB(NOW(), INTERVAL 7 DAY)`
     );
     
+    // Extract first row from each result
+    const latestCats = latestCatsRows[0];
+    const kelseysCats = kelseysCatsRows[0];
+    const oldCats = oldCatsRows[0];
+    
     // Format last scrape time
-    const lastScrapeTime = latestCats[0]?.last_updated 
-      ? new Date(latestCats[0].last_updated).toLocaleString('en-US', {
+    const lastScrapeTime = latestCats?.last_updated 
+      ? new Date(latestCats.last_updated).toLocaleString('en-US', {
           month: 'short',
           day: 'numeric',
           year: 'numeric',
@@ -179,10 +184,10 @@ export async function getScraperStatus(req, res, next) {
     
     res.json({
       success: true,
-      totalPartnerCats: latestCats[0]?.total_cats || 0,
-      catsInKelseysCare: kelseysCats[0]?.count || 0,
+      totalPartnerCats: latestCats?.total_cats || 0,
+      catsInKelseysCare: kelseysCats?.count || 0,
       lastScrapeTime: lastScrapeTime,
-      oldCatsCount: oldCats[0]?.count || 0
+      oldCatsCount: oldCats?.count || 0
     });
   } catch (error) {
     console.error('Error in getScraperStatus controller:', error);
