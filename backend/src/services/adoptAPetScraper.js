@@ -29,63 +29,6 @@ function extractAdoptaPetId(url) {
   return match ? match[1] : null;
 }
 
-/**
- * Maps age text from Adopt-a-Pet to numeric years.
- * Handles both categorical ages (Baby, Young, Adult, Senior) and numeric ages (1 year, 6 months).
- * 
- * @param {string} ageText - Raw age text from Adopt-a-Pet (e.g., "1 year", "Young", "6 months")
- * @returns {number|null} - Age in years (decimal), or null if unknown
- * 
- * Examples:
- * - "Baby" → 0.5
- * - "Young" → 2
- * - "1 year" → 1
- * - "6 months" → 0.5
- * - "18 months" → 1.5
- * - "2 years old" → 2
- * - "" → null
- * - "Unknown" → null
- */
-function mapAgeToYears(ageText) {
-  if (!ageText || ageText.trim() === '') return null;
-  
-  const normalized = ageText.toLowerCase().trim();
-  
-  // Handle explicit "unknown" cases
-  if (normalized === 'unknown' || normalized === 'n/a') {
-    return null;
-  }
-  
-  // Try numeric parsing first
-  // Pattern matches: "1 year", "6 months", "1 year 6 months", "2 years old"
-  const yearMatch = normalized.match(/(\d+)\s*(?:year|yr|y)(?:s)?(?:\s+old)?/i);
-  const monthMatch = normalized.match(/(\d+)\s*(?:month|mo|m)(?:s)?(?:\s+old)?/i);
-  
-  if (yearMatch || monthMatch) {
-    let years = 0;
-    
-    if (yearMatch) {
-      years += parseInt(yearMatch[1], 10);
-    }
-    
-    if (monthMatch) {
-      const months = parseInt(monthMatch[1], 10);
-      years += months / 12;
-    }
-    
-    // Round to 1 decimal place (e.g., 1.5 years, 0.5 years)
-    return Math.round(years * 10) / 10;
-  }
-  
-  // Fall back to category mapping (backward compatibility)
-  if (normalized.includes('baby') || normalized.includes('kitten')) return 0.5;
-  if (normalized.includes('young')) return 2;
-  if (normalized.includes('adult')) return 5;
-  if (normalized.includes('senior')) return 10;
-  
-  // If no match, return null
-  return null;
-}
 
 /**
  * Validate scraped cat data
@@ -108,13 +51,7 @@ function validateScrapedCat(catData) {
   if (!catData.age_text || catData.age_text.trim() === '') {
     warnings.push('Missing age_text');
   }
-  
-  const age_years = mapAgeToYears(catData.age_text);
-  if (age_years === null && catData.age_text && 
-      !['unknown', 'n/a', ''].includes(catData.age_text.toLowerCase().trim())) {
-    warnings.push(`Could not parse age_years from age_text: "${catData.age_text}"`);
-  }
-  
+
   // Image validation
   if (!catData.main_image_url) {
     errors.push('Missing main_image_url');
@@ -451,7 +388,7 @@ export async function getPartnerFosterCats() {
   try {
     const [cats] = await query(
       `SELECT 
-        id, adoptapet_id, name, age_text, age_years,
+        id, adoptapet_id, name, age_text,
         breed, color, hair_length, sex,
         good_with_cats, good_with_dogs, good_with_kids,
         spayed_neutered, shots_current, special_needs,
@@ -763,13 +700,10 @@ export async function scrapeAndSavePartnerFosterCats() {
       }
 
       try {
-        const age_years = mapAgeToYears(cat.age_text);
-
-        const s = {
+           const s = {
           adoptapet_id: cat.adoptapet_id ?? null,
           name: cat.name ?? null,
           age_text: cat.age_text ?? null,
-          age_years: age_years ?? null,
           breed: cat.breed ?? null,
           color: cat.color ?? null,
           hair_length: cat.hair_length ?? null,
@@ -799,7 +733,7 @@ export async function scrapeAndSavePartnerFosterCats() {
         if (existingRows.length > 0) {
           await query(
             `UPDATE vfv_cats SET 
-              name = ?, age_text = ?, age_years = ?,
+              name = ?, age_text = ?,
               breed = ?, color = ?, hair_length = ?, sex = ?,
               good_with_cats = ?, good_with_dogs = ?, good_with_kids = ?,
               spayed_neutered = ?, shots_current = ?, special_needs = ?,
@@ -807,7 +741,7 @@ export async function scrapeAndSavePartnerFosterCats() {
               updated_at = NOW()
             WHERE id = ?`,
             [
-              s.name, s.age_text, s.age_years,
+              s.name, s.age_text,
               s.breed, s.color, s.hair_length, s.sex,
               s.good_with_cats, s.good_with_dogs, s.good_with_kids,
               s.spayed_neutered, s.shots_current, s.special_needs,
@@ -834,14 +768,14 @@ export async function scrapeAndSavePartnerFosterCats() {
 
           await query(
             `INSERT INTO vfv_cats (
-              adoptapet_id, name, age_text, age_years,
+              adoptapet_id, name, age_text,
               breed, color, hair_length, sex,
               good_with_cats, good_with_dogs, good_with_kids,
               spayed_neutered, shots_current, special_needs,
               main_image_url, adoptapet_url, description
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              s.adoptapet_id, s.name, s.age_text, s.age_years,
+              s.adoptapet_id, s.name, s.age_text,
               s.breed, s.color, s.hair_length, s.sex,
               s.good_with_cats, s.good_with_dogs, s.good_with_kids,
               s.spayed_neutered, s.shots_current, s.special_needs,

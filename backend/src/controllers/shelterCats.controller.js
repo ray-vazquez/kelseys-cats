@@ -247,7 +247,6 @@ export async function getPartnerCatById(req, res) {
         adoptapet_id,
         name,
         age_text,
-        age_years,
         sex,
         breed,
         color,
