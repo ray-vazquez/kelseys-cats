@@ -128,7 +128,7 @@ export class CatModel {
   static async create(data) {
     const sql = `
       INSERT INTO cats (
-        name, age_years, sex, breed, bio,
+        name, age_text, sex, breed, bio,
         good_with_kids, good_with_cats, good_with_dogs,
         is_special_needs, is_senior, is_deceased, status,
         main_image_url, additional_images, featured, bonded_pair_id
@@ -137,7 +137,7 @@ export class CatModel {
 
     const params = [
       data.name,
-      data.age_years ?? null,
+      data.age_text ?? null,
       data.sex ?? "unknown",
       data.breed ?? null,
       data.bio ?? null,
@@ -167,7 +167,7 @@ export class CatModel {
 
     const allowed = [
       "name",
-      "age_years",
+      "age_text",
       "sex",
       "breed",
       "bio",
