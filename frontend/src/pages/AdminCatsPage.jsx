@@ -1,4 +1,3 @@
-// AdminCatsPage - Enhanced with status filters and delete confirmation modal - FIXED SPACING
 import React, { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
@@ -17,19 +16,31 @@ import PaginationControls from "../components/Common/PaginationControls.jsx";
 import CsvImportModal from "../components/Admin/CsvImportModal.jsx";
 
 const PageWrapper = styled.div`
-  padding: ${({ theme }) => theme.spacing[8]} 0;
+  padding: ${({ theme }) => theme.spacing[5]} 0 ${({ theme }) => theme.spacing[8]};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding-top: ${({ theme }) => theme.spacing[4]};
+  }
 `;
 
-const Header = styled.div`
+const Header = styled.header`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing[5]};
+  gap: ${({ theme }) => theme.spacing[3]};
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
+
+  h1 {
+    margin: 0;
+    font-size: ${({ theme }) => theme.fontSizes["2xl"]};
+  }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    align-items: flex-start;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     flex-direction: column;
-    align-items: stretch;
-    gap: ${({ theme }) => theme.spacing[4]};
   }
 `;
 
@@ -39,72 +50,96 @@ const ButtonGroup = styled.div`
   flex-wrap: wrap;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    width: 100%;
+
+    & > * {
+      flex: 1 1 auto;
+    }
+  }
+`;
+
+const FilterSection = styled.section`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing[3]};
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  background: ${({ theme }) => theme.colors.neutral[50]};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    align-items: flex-start;
     flex-direction: column;
   }
 `;
 
-const FilterSection = styled.div`
-  background: ${({ theme }) => theme.colors.light};
-  padding: ${({ theme }) => theme.spacing[4]};
-  border-radius: ${({ theme }) => theme.borderRadius.base};
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-`;
-
-const FilterHeader = styled.div`
+const FilterControls = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing[3]};
-`;
-
-const FilterLabel = styled.div`
-  font-weight: ${({ theme }) => theme.fontWeights.semibold};
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-`;
-
-const DeletedCatsLink = styled(Button)`
-  font-size: ${({ theme }) => theme.fontSizes.xs};
-  padding: ${({ theme }) => theme.spacing[1]} ${({ theme }) => theme.spacing[3]};
-`;
-
-const FilterGroup = styled.div`
-  display: flex;
-  flex-direction: row;
   gap: ${({ theme }) => theme.spacing[3]};
   flex-wrap: wrap;
 `;
 
+const FilterLabel = styled.span`
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+`;
+
+const FilterGroup = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing[3]};
+  flex-wrap: wrap;
+`;
+
+const TableRegion = styled.div`
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+`;
+
 const Table = styled.table`
   width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
 
   th,
   td {
     padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
-    border-bottom: 1px solid ${({ theme }) => theme.colors.light};
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
     text-align: left;
     font-size: ${({ theme }) => theme.fontSizes.sm};
+    vertical-align: middle;
   }
 
   th {
     font-weight: ${({ theme }) => theme.fontWeights.semibold};
     color: ${({ theme }) => theme.colors.secondary};
     background-color: ${({ theme }) => theme.colors.neutral[50]};
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
   }
 
   tbody tr:hover {
     background-color: ${({ theme }) => theme.colors.light};
   }
+
+  td:nth-child(1),
+  td:nth-child(4),
+  td:nth-child(5) {
+    white-space: nowrap;
+  }
 `;
 
 const StatusBadge = styled.span`
   display: inline-block;
-  padding: 0.25rem 0.5rem;
+  padding: 2px ${({ theme }) => theme.spacing[2]};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.fontSizes.xs};
   text-transform: uppercase;
@@ -112,40 +147,33 @@ const StatusBadge = styled.span`
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   background-color: ${({ $status, theme }) => {
     switch ($status) {
-      case 'available':
-        return theme.colors.success;
-      case 'adopted':
-      case 'alumni':
-        return theme.colors.info;
-      case 'pending':
-        return theme.colors.warning;
-      case 'hold':
-        return '#000000'; // Black background for hold
-      default:
-        return theme.colors.light;
+      case "available": return theme.colors.success;
+      case "adopted":
+      case "alumni": return theme.colors.info;
+      case "pending": return theme.colors.warning;
+      case "hold": return "#000000";
+      default: return theme.colors.light;
     }
   }};
-  color: ${({ $status }) => {
-    // All status badges use white text for consistency and readability
-    switch ($status) {
-      case 'available':
-      case 'adopted':
-      case 'alumni':
-      case 'pending':
-      case 'hold':
-        return '#ffffff';
-      default:
-        return '#374151'; // Gray-700 for default
-    }
-  }};
+  color: ${({ $status }) =>
+    ["available", "adopted", "alumni", "pending", "hold"].includes($status)
+      ? "#ffffff"
+      : "#374151"};
 `;
 
 const ActionsCell = styled.td`
+  width: 1%;
   white-space: nowrap;
 
   & > *:not(:last-child) {
-    margin-right: ${({ theme }) => theme.spacing[3]};
+    margin-right: ${({ theme }) => theme.spacing[2]};
   }
+`;
+
+const CountText = styled.p`
+  margin: 0 0 ${({ theme }) => theme.spacing[2]};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
 `;
 
 const ToastContainer = styled.div`
@@ -165,41 +193,30 @@ const ToastContainer = styled.div`
 
 const EmptyState = styled.div`
   text-align: center;
-  padding: ${({ theme }) => theme.spacing[12]} ${({ theme }) => theme.spacing[6]};
+  padding: ${({ theme }) => theme.spacing[8]} ${({ theme }) => theme.spacing[4]};
   color: ${({ theme }) => theme.colors.text.secondary};
-  
+
   p {
-    font-size: ${({ theme }) => theme.fontSizes.lg};
-    margin-bottom: ${({ theme }) => theme.spacing[4]};
+    margin: 0;
+  }
+
+  p + p {
+    margin-top: ${({ theme }) => theme.spacing[2]};
   }
 `;
 
 export default function AdminCatsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [data, setData] = useState({
-    items: [],
-    total: 0,
-    page: 1,
-    limit: 20,
-  });
+  const [data, setData] = useState({ items: [], total: 0, page: 1, limit: 20 });
   const [loading, setLoading] = useState(true);
   const [showImportModal, setShowImportModal] = useState(false);
   const [toasts, setToasts] = useState([]);
-  
-  // Delete confirmation state
-  const [deleteModal, setDeleteModal] = useState({
-    isOpen: false,
-    cat: null,
-    loading: false
-  });
-  
-  // Status filters
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, cat: null, loading: false });
   const [showAvailable, setShowAvailable] = useState(true);
   const [showPending, setShowPending] = useState(true);
   const [showHold, setShowHold] = useState(true);
   const [showAlumni, setShowAlumni] = useState(false);
-
   const page = Number(searchParams.get("page") || "1");
 
   useEffect(() => {
@@ -208,11 +225,11 @@ export default function AdminCatsPage() {
   }, [page, showAvailable, showPending, showHold, showAlumni]);
 
   const addToast = (toast) => {
-    const id = Date.now().toString();
+    const toastId = Date.now().toString();
     setToasts(prev => [...prev, {
-      id,
+      id: toastId,
       ...toast,
-      onClose: () => setToasts(prev => prev.filter(t => t.id !== id))
+      onClose: () => setToasts(prev => prev.filter(t => t.id !== toastId))
     }]);
   };
 
@@ -222,30 +239,22 @@ export default function AdminCatsPage() {
       const params = new URLSearchParams();
       params.set("page", String(currentPage));
       params.set("limit", String(data.limit));
-      
-      // Build status filter - only add if at least one is selected
       const statuses = [];
-      if (showAvailable) statuses.push('available');
-      if (showPending) statuses.push('pending');
-      if (showHold) statuses.push('hold');
-      if (showAlumni) statuses.push('alumni');
-      
-      // If specific statuses selected, add to query; otherwise fetch all
-      if (statuses.length > 0 && statuses.length < 4) {
-        params.set("status", statuses.join(','));
-      }
-      
+      if (showAvailable) statuses.push("available");
+      if (showPending) statuses.push("pending");
+      if (showHold) statuses.push("hold");
+      if (showAlumni) statuses.push("alumni");
+      if (statuses.length > 0 && statuses.length < 4) params.set("status", statuses.join(","));
+
       const res = await http.get(`/cats?${params.toString()}`);
       setData(res.data);
     } catch (err) {
       console.error("Failed to load cats", err);
-      const errorMessage = err.response?.data?.message || "Unable to load cats.";
-      setData((prev) => ({ ...prev, items: [], total: 0 }));
-      
+      setData(prev => ({ ...prev, items: [], total: 0 }));
       addToast({
-        title: 'Error Loading Cats',
-        message: errorMessage,
-        variant: 'error',
+        title: "Error Loading Cats",
+        message: err.response?.data?.message || "Unable to load cats.",
+        variant: "error",
         duration: 0
       });
     } finally {
@@ -254,58 +263,47 @@ export default function AdminCatsPage() {
   }
 
   function handlePageChange(nextPage) {
-    setSearchParams((prev) => {
+    setSearchParams(prev => {
       const p = new URLSearchParams(prev);
       p.set("page", String(nextPage));
       return p;
     });
   }
 
+  function setStatusFilter(setter) {
+    setter(value => !value);
+    if (page !== 1) setSearchParams({});
+  }
+
   function openDeleteModal(cat) {
-    setDeleteModal({
-      isOpen: true,
-      cat,
-      loading: false
-    });
+    setDeleteModal({ isOpen: true, cat, loading: false });
   }
 
   function closeDeleteModal() {
-    if (!deleteModal.loading) {
-      setDeleteModal({
-        isOpen: false,
-        cat: null,
-        loading: false
-      });
-    }
+    if (!deleteModal.loading) setDeleteModal({ isOpen: false, cat: null, loading: false });
   }
 
   async function confirmDelete() {
     if (!deleteModal.cat) return;
-    
     setDeleteModal(prev => ({ ...prev, loading: true }));
-    
+
     try {
       await http.delete(`/cats/${deleteModal.cat.id}`);
-      
       addToast({
-        title: 'Cat Moved to Deleted',
+        title: "Cat Moved to Deleted",
         message: `${deleteModal.cat.name} has been moved to Deleted Cats. You can restore it from there.`,
-        variant: 'info',
+        variant: "info",
         duration: 5000
       });
-      
-      closeDeleteModal();
+      setDeleteModal({ isOpen: false, cat: null, loading: false });
       loadCats(page);
     } catch (err) {
       console.error("Delete failed", err);
-      const errorMessage = err.response?.data?.message || "Failed to delete cat";
-      
       setDeleteModal(prev => ({ ...prev, loading: false }));
-      
       addToast({
-        title: 'Delete Failed',
-        message: errorMessage,
-        variant: 'error',
+        title: "Delete Failed",
+        message: err.response?.data?.message || "Failed to delete cat",
+        variant: "error",
         duration: 0
       });
     }
@@ -313,53 +311,29 @@ export default function AdminCatsPage() {
 
   async function handleDownloadCsv() {
     try {
-      addToast({
-        title: 'Downloading...',
-        message: 'Preparing CSV export',
-        variant: 'info',
-        duration: 3000
-      });
-
-      const res = await http.get("/cats/export/csv", {
-        responseType: "blob",
-      });
-
+      const res = await http.get("/cats/export/csv", { responseType: "blob" });
       const blob = new Blob([res.data], { type: "text/csv;charset=utf-8;" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `kelseys-cats-export-${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute("download", `kelseys-cats-export-${new Date().toISOString().split("T")[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-
-      addToast({
-        title: 'Success!',
-        message: 'CSV file downloaded successfully',
-        variant: 'success',
-        duration: 5000
-      });
+      addToast({ title: "CSV Downloaded", message: "Export completed successfully", variant: "success", duration: 4000 });
     } catch (err) {
-      console.error("CSV export failed", err);
-      const errorMessage = err.response?.data?.message || "Failed to download CSV";
-      
       addToast({
-        title: 'Export Failed',
-        message: errorMessage,
-        variant: 'error',
+        title: "Export Failed",
+        message: err.response?.data?.message || "Failed to download CSV",
+        variant: "error",
         duration: 0
       });
     }
   }
 
   function handleImportSuccess() {
-    addToast({
-      title: 'Import Successful!',
-      message: 'Cats have been imported from CSV',
-      variant: 'success',
-      duration: 5000
-    });
+    addToast({ title: "Import Successful", message: "Cats have been imported from CSV", variant: "success", duration: 5000 });
     loadCats(page);
   }
 
@@ -368,171 +342,102 @@ export default function AdminCatsPage() {
       <PageWrapper>
         <Container $density="compact">
           <Header>
-            <h1 style={{ marginBottom: 0 }}>Manage Cats</h1>
+            <h1>Manage Cats</h1>
             <ButtonGroup>
-              <Button
-                as={Link}
-                to="/admin/cats/new"
-                data-tour="add-cat-button"
-              >
-                Add New Cat
-              </Button>
-              <Button
-                $variant="outline"
-                onClick={() => setShowImportModal(true)}
-              >
-                Import CSV
-              </Button>
-              <Button
-                $variant="outline"
-                onClick={handleDownloadCsv}
-                data-tour="csv-buttons"
-              >
-                Download CSV
-              </Button>
+              <Button as={Link} to="/admin/cats/new" $size="sm">Add New Cat</Button>
+              <Button $variant="outline" $size="sm" onClick={() => setShowImportModal(true)}>Import CSV</Button>
+              <Button $variant="outline" $size="sm" onClick={handleDownloadCsv}>Download CSV</Button>
             </ButtonGroup>
           </Header>
 
           {showImportModal && (
-            <CsvImportModal
-              onClose={() => setShowImportModal(false)}
-              onImported={handleImportSuccess}
-            />
+            <CsvImportModal onClose={() => setShowImportModal(false)} onImported={handleImportSuccess} />
           )}
 
-          {/* Status Filters */}
-          <FilterSection>
-            <FilterHeader>
-              <FilterLabel>Filter by Status</FilterLabel>
-              <DeletedCatsLink
-                $variant="outline"
-                $size="sm"
-                onClick={() => navigate('/admin/cats/deleted')}
-              >
-                🗑️ View Deleted Cats
-              </DeletedCatsLink>
-            </FilterHeader>
-            <FilterGroup>
-              <CheckboxLabel>
-                <Checkbox
-                  checked={showAvailable}
-                  onChange={(e) => setShowAvailable(e.target.checked)}
-                />
-                Available
-              </CheckboxLabel>
-              <CheckboxLabel>
-                <Checkbox
-                  checked={showPending}
-                  onChange={(e) => setShowPending(e.target.checked)}
-                />
-                Pending
-              </CheckboxLabel>
-              <CheckboxLabel>
-                <Checkbox
-                  checked={showHold}
-                  onChange={(e) => setShowHold(e.target.checked)}
-                />
-                Hold
-              </CheckboxLabel>
-              <CheckboxLabel>
-                <Checkbox
-                  checked={showAlumni}
-                  onChange={(e) => setShowAlumni(e.target.checked)}
-                />
-                Alumni
-              </CheckboxLabel>
-            </FilterGroup>
+          <FilterSection aria-label="Cat status filters">
+            <FilterControls>
+              <FilterLabel>Show status:</FilterLabel>
+              <FilterGroup>
+                <CheckboxLabel>
+                  <Checkbox checked={showAvailable} onChange={() => setStatusFilter(setShowAvailable)} />
+                  Available
+                </CheckboxLabel>
+                <CheckboxLabel>
+                  <Checkbox checked={showPending} onChange={() => setStatusFilter(setShowPending)} />
+                  Pending
+                </CheckboxLabel>
+                <CheckboxLabel>
+                  <Checkbox checked={showHold} onChange={() => setStatusFilter(setShowHold)} />
+                  Hold
+                </CheckboxLabel>
+                <CheckboxLabel>
+                  <Checkbox checked={showAlumni} onChange={() => setStatusFilter(setShowAlumni)} />
+                  Alumni
+                </CheckboxLabel>
+              </FilterGroup>
+            </FilterControls>
+            <Button $variant="outline" $size="sm" onClick={() => navigate("/admin/cats/deleted")}>
+              View Deleted Cats
+            </Button>
           </FilterSection>
 
-          {loading && (
-            <CenteredSpinner>
-              <Spinner aria-label="Loading cats" />
-            </CenteredSpinner>
-          )}
-
-          {!loading && (
+          {loading ? (
+            <CenteredSpinner><Spinner aria-label="Loading cats" /></CenteredSpinner>
+          ) : data.items.length === 0 ? (
+            <EmptyState>
+              <p><strong>No cats found with the selected filters.</strong></p>
+              <p>Adjust the status filters to broaden the list.</p>
+            </EmptyState>
+          ) : (
             <>
-              {data.items.length === 0 ? (
-                <EmptyState>
-                  <p>🐱</p>
-                  <p>No cats found with the selected filters.</p>
-                  <p style={{ fontSize: '0.875rem' }}>Try adjusting your filter settings.</p>
-                </EmptyState>
-              ) : (
-                <>
-                  <p style={{ marginBottom: '1rem', color: '#666' }}>
-                    Showing {data.items.length} of {data.total} cats
-                  </p>
-                  <Table data-tour="cats-table">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Status</th>
-                        <th>Featured</th>
-                        <th>Updated</th>
-                        <th>Actions</th>
+              <CountText>Showing {data.items.length} of {data.total} cats</CountText>
+              <TableRegion tabIndex="0" aria-label="Cats table, horizontally scrollable on narrow screens">
+                <Table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Name</th>
+                      <th>Status</th>
+                      <th>Featured</th>
+                      <th>Updated</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.items.map(cat => (
+                      <tr key={cat.id}>
+                        <td>{cat.id}</td>
+                        <td><strong>{cat.name}</strong></td>
+                        <td><StatusBadge $status={cat.status}>{cat.status}</StatusBadge></td>
+                        <td>{cat.featured ? "Yes" : "No"}</td>
+                        <td>{cat.updated_at ? new Date(cat.updated_at).toLocaleDateString() : "—"}</td>
+                        <ActionsCell>
+                          <Button as={Link} $variant="outline" $size="sm" to={`/admin/cats/${cat.id}/edit`}>Edit</Button>
+                          <Button $variant="danger" $size="sm" onClick={() => openDeleteModal(cat)}>Delete</Button>
+                        </ActionsCell>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {data.items.map((cat) => (
-                        <tr key={cat.id}>
-                          <td>{cat.id}</td>
-                          <td>{cat.name}</td>
-                          <td>
-                            <StatusBadge $status={cat.status}>{cat.status}</StatusBadge>
-                          </td>
-                          <td>{cat.featured ? "Yes" : "No"}</td>
-                          <td>
-                            {cat.updated_at
-                              ? new Date(cat.updated_at).toLocaleDateString()
-                              : ""}
-                          </td>
-                          <ActionsCell>
-                            <Button
-                              as={Link}
-                              $variant="outline"
-                              $size="sm"
-                              to={`/admin/cats/${cat.id}/edit`}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              $variant="danger"
-                              $size="sm"
-                              onClick={() => openDeleteModal(cat)}
-                            >
-                              Delete
-                            </Button>
-                          </ActionsCell>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </>
-              )}
-
-              {data.total > data.limit && (
-                <PaginationControls
-                  density="compact"
-                  page={data.page}
-                  limit={data.limit}
-                  total={data.total}
-                  onPageChange={handlePageChange}
-                />
-              )}
+                    ))}
+                  </tbody>
+                </Table>
+              </TableRegion>
+              <PaginationControls
+                density="compact"
+                page={data.page}
+                limit={data.limit}
+                total={data.total}
+                onPageChange={handlePageChange}
+              />
             </>
           )}
         </Container>
       </PageWrapper>
 
-      {/* Delete Confirmation Modal */}
       <ConfirmationModal
         isOpen={deleteModal.isOpen}
         onClose={closeDeleteModal}
         onConfirm={confirmDelete}
         title="Delete Cat"
-        message={deleteModal.cat ? `Are you sure you want to delete "${deleteModal.cat.name}"? This will move the cat to Deleted Cats. You may restore it later from the Deleted Cats page.` : ''}
+        message={deleteModal.cat ? `Are you sure you want to delete "${deleteModal.cat.name}"? This moves the cat to Deleted Cats, where it can be restored later.` : ""}
         confirmText="Delete"
         cancelText="Cancel"
         variant="danger"
@@ -540,11 +445,8 @@ export default function AdminCatsPage() {
         loading={deleteModal.loading}
       />
 
-      {/* Toast Notifications */}
       <ToastContainer>
-        {toasts.map((toast) => (
-          <Toast key={toast.id} {...toast} />
-        ))}
+        {toasts.map(toast => <Toast key={toast.id} {...toast} />)}
       </ToastContainer>
     </>
   );

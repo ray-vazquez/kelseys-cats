@@ -20,30 +20,30 @@ import TagSelector from "../components/Admin/TagSelector.jsx";
 import http from "../api/http.js";
 
 const PageWrapper = styled.div`
-  padding: ${({ theme }) => theme.spacing[8]} 0;
+  padding: ${({ theme }) => theme.spacing[5]} 0 ${({ theme }) => theme.spacing[8]};
 
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: ${({ theme }) => theme.spacing[6]} 0;
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding-top: ${({ theme }) => theme.spacing[4]};
   }
 `;
 
-const PageTitle = styled.h2`
-  font-size: ${({ theme }) => theme.fontSizes["3xl"]};
+const PageTitle = styled.h1`
+  font-size: ${({ theme }) => theme.fontSizes["2xl"]};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0 0 ${({ theme }) => theme.spacing[4]} 0;
 `;
 
 const FormCard = styled(Card)`
-  max-width: 800px;
+  max-width: 960px;
   margin: 0 auto;
 `;
 
-const TagsSection = styled.div`
-  border: 2px solid ${({ theme }) => theme.colors.border};
+const TagsSection = styled.section`
+  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.base};
-  padding: ${({ theme }) => theme.spacing[4]};
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
+  padding: ${({ theme }) => theme.spacing[3]};
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing[3]};
@@ -56,11 +56,11 @@ const TagsTitle = styled.h4`
   margin: 0 0 ${({ theme }) => theme.spacing[1]} 0;
 `;
 
-const ImagesSection = styled.div`
-  border: 2px solid ${({ theme }) => theme.colors.border};
+const ImagesSection = styled.section`
+  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.base};
-  padding: ${({ theme }) => theme.spacing[4]};
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
+  padding: ${({ theme }) => theme.spacing[3]};
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
 `;
 
 const ImageList = styled.div`
@@ -161,6 +161,38 @@ const ImagePosition = styled.span`
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
 `;
 
+const ImageActions = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing[1]};
+  align-items: center;
+  flex-shrink: 0;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    align-self: stretch;
+  }
+`;
+
+const MoveButton = styled.button`
+  min-width: 34px;
+  min-height: 34px;
+  padding: ${({ theme }) => theme.spacing[1]} ${({ theme }) => theme.spacing[2]};
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.text.primary};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.focus};
+    outline-offset: 2px;
+  }
+`;
+
 const RemoveButton = styled.button`
   background: ${({ theme }) => theme.colors.danger};
   color: white;
@@ -173,8 +205,18 @@ const RemoveButton = styled.button`
   transition: background ${({ theme }) => theme.transitions.fast};
   flex-shrink: 0;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: ${({ theme }) => theme.colors.dangerHover};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.focus};
+    outline-offset: 2px;
   }
 `;
 
@@ -665,6 +707,24 @@ export default function AdminCatEditPage({ mode }) {
     setDragOverIndex(null);
   };
 
+  function moveImage(index, direction) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= formData.additional_images.length) return;
+
+    setFormData((prev) => {
+      const images = [...prev.additional_images];
+      [images[index], images[targetIndex]] = [images[targetIndex], images[index]];
+      return { ...prev, additional_images: images };
+    });
+
+    addToast({
+      title: "Images Reordered",
+      message: `Moved image to position ${targetIndex + 1}`,
+      variant: "info",
+      duration: 2000,
+    });
+  }
+
   function prepareFormData(data) {
     const cleaned = {};
     for (const [key, value] of Object.entries(data)) {
@@ -844,9 +904,10 @@ export default function AdminCatEditPage({ mode }) {
 
               <form onSubmit={handleSubmit}>
                 <FormGroup $density="compact">
-                  <Label>Name *</Label>
+                  <Label htmlFor="cat-name">Name *</Label>
                   <NameFieldWrapper>
                     <Input $density="compact"
+                      id="cat-name"
                       type="text"
                       name="name"
                       value={formData.name}
@@ -861,8 +922,9 @@ export default function AdminCatEditPage({ mode }) {
                 </FormGroup>
 
                 <FormGroup $density="compact">
-                  <Label>Age (years)</Label>
+                  <Label htmlFor="cat-age">Age (years)</Label>
                   <Input $density="compact"
+                    id="cat-age"
                     type="number"
                     step="1"
                     min="1"
@@ -875,8 +937,9 @@ export default function AdminCatEditPage({ mode }) {
                 </FormGroup>
 
                 <FormGroup $density="compact">
-                  <Label>Sex</Label>
+                  <Label htmlFor="cat-sex">Sex</Label>
                   <Select $density="compact"
+                    id="cat-sex"
                     name="sex"
                     value={formData.sex}
                     onChange={handleChange}
@@ -889,8 +952,9 @@ export default function AdminCatEditPage({ mode }) {
                 </FormGroup>
 
                 <FormGroup $density="compact">
-                  <Label>Breed</Label>
+                  <Label htmlFor="cat-breed">Breed</Label>
                   <Input $density="compact"
+                    id="cat-breed"
                     type="text"
                     name="breed"
                     value={formData.breed}
@@ -901,8 +965,9 @@ export default function AdminCatEditPage({ mode }) {
                 </FormGroup>
 
                 <FormGroup $density="compact">
-                  <Label>Bio</Label>
+                  <Label htmlFor="cat-bio">Bio</Label>
                   <Textarea $density="compact"
+                    id="cat-bio"
                     rows={4}
                     name="bio"
                     value={formData.bio}
@@ -967,7 +1032,9 @@ export default function AdminCatEditPage({ mode }) {
 
                   <AddImageSection>
                     <Input $density="compact"
-                      type="text"
+                      id="main-image-url"
+                      aria-label="Main image URL"
+                      type="url"
                       value={mainImageUrlInput}
                       onChange={(e) => setMainImageUrlInput(e.target.value)}
                       disabled={loading}
@@ -1008,7 +1075,7 @@ export default function AdminCatEditPage({ mode }) {
                   {formData.additional_images.length > 0 && (
                     <>
                       <ReorderHint>
-                        Drag and drop images to reorder them in the gallery
+                        Drag images to reorder, or use the Move earlier / Move later buttons.
                       </ReorderHint>
                       <ImageList>
                         {formData.additional_images.map((url, index) => (
@@ -1043,12 +1110,31 @@ export default function AdminCatEditPage({ mode }) {
                               </ImagePosition>
                               <ImageUrl>{url}</ImageUrl>
                             </ImageInfo>
-                            <RemoveButton
-                              type="button"
-                              onClick={() => handleRemoveImage(index)}
-                            >
-                              Remove
-                            </RemoveButton>
+                            <ImageActions>
+                              <MoveButton
+                                type="button"
+                                onClick={() => moveImage(index, -1)}
+                                disabled={loading || index === 0}
+                                aria-label={`Move image ${index + 1} earlier`}
+                              >
+                                ↑
+                              </MoveButton>
+                              <MoveButton
+                                type="button"
+                                onClick={() => moveImage(index, 1)}
+                                disabled={loading || index === formData.additional_images.length - 1}
+                                aria-label={`Move image ${index + 1} later`}
+                              >
+                                ↓
+                              </MoveButton>
+                              <RemoveButton
+                                type="button"
+                                onClick={() => handleRemoveImage(index)}
+                                disabled={loading}
+                              >
+                                Remove
+                              </RemoveButton>
+                            </ImageActions>
                           </ImageItem>
                         ))}
                       </ImageList>
@@ -1073,7 +1159,9 @@ export default function AdminCatEditPage({ mode }) {
 
                   <AddImageSection>
                     <Input $density="compact"
-                      type="text"
+                      id="additional-image-url"
+                      aria-label="Additional image URL"
+                      type="url"
                       value={newImageUrl}
                       onChange={(e) => setNewImageUrl(e.target.value)}
                       placeholder="https://example.com/image.jpg"
@@ -1097,8 +1185,9 @@ export default function AdminCatEditPage({ mode }) {
                 </ImagesSection>
 
                 <FormGroup $density="compact">
-                  <Label>Status</Label>
+                  <Label htmlFor="cat-status">Status</Label>
                   <Select $density="compact"
+                    id="cat-status"
                     name="status"
                     value={formData.status}
                     onChange={handleChange}

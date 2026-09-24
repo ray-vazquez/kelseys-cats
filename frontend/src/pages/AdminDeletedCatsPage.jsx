@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import {
   Container,
-  Section,
   Card,
   CardBody,
   CardTitle,
@@ -17,17 +16,21 @@ import { hardDeleteCat, fetchDeletedCats } from '../api/catsApi.js';
 import http from '../api/http.js';
 import { useNavigate } from 'react-router-dom';
 
-const PageHeader = styled.div`
+const PageWrapper = styled.div`
+  padding: ${({ theme }) => theme.spacing[5]} 0 ${({ theme }) => theme.spacing[8]};
+`;
+
+const PageHeader = styled.header`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
   flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing[4]};
+  gap: ${({ theme }) => theme.spacing[2]};
 `;
 
 const PageTitle = styled.h1`
-  font-size: ${({ theme }) => theme.fontSizes['3xl']};
+  font-size: ${({ theme }) => theme.fontSizes['2xl']};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
@@ -36,14 +39,14 @@ const PageTitle = styled.h1`
 const CatList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing[4]};
+  gap: ${({ theme }) => theme.spacing[3]};
 `;
 
 const CatItem = styled(Card)`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: ${({ theme }) => theme.spacing[6]};
+  padding: ${({ theme }) => theme.spacing[3]};
   gap: ${({ theme }) => theme.spacing[4]};
   
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
@@ -221,8 +224,8 @@ export default function AdminDeletedCatsPage() {
 
   return (
     <>
-      <Section $padding="lg">
-        <Container>
+      <PageWrapper>
+        <Container $density="compact">
           <PageHeader>
             <PageTitle>🗑️ Deleted Cats</PageTitle>
             <Button 
@@ -326,7 +329,7 @@ export default function AdminDeletedCatsPage() {
             </>
           )}
         </Container>
-      </Section>
+      </PageWrapper>
 
       {/* Hard Delete Confirmation Modal */}
       <ConfirmationModal
