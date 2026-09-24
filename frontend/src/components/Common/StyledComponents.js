@@ -86,19 +86,29 @@ export const Card = styled.div`
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   box-shadow: ${({ theme }) => theme.shadows.sm};
   overflow: hidden;
-  transition: all ${({ theme }) => theme.transitions.base};
   border: 1px solid ${({ theme }) => theme.colors.border};
 
-  ${({ $hover }) => $hover !== false && css`
+  ${({ $interactive }) => $interactive && css`
+    transition:
+      transform ${({ theme }) => theme.transitions.base},
+      box-shadow ${({ theme }) => theme.transitions.base},
+      border-color ${({ theme }) => theme.transitions.base};
+    cursor: pointer;
+
     &:hover {
       transform: translateY(-4px);
       box-shadow: ${({ theme }) => theme.shadows.lg};
       border-color: ${({ theme }) => theme.colors.primary};
     }
-  `}
 
-  ${({ $clickable }) => $clickable && css`
-    cursor: pointer;
+    &:focus-visible {
+      outline: 2px solid ${({ theme }) => theme.colors.focus};
+      outline-offset: 2px;
+    }
+
+    &:hover img {
+      transform: scale(1.05);
+    }
   `}
 `;
 
@@ -108,9 +118,6 @@ export const CardImage = styled.img`
   object-fit: cover;
   transition: transform ${({ theme }) => theme.transitions.slow};
 
-  ${Card}:hover & {
-    transform: scale(1.05);
-  }
 `;
 
 export const CardBody = styled.div`
@@ -594,7 +601,6 @@ export const Divider = styled.hr`
 export const TextMuted = styled.p`
   color: ${({ theme }) => theme.colors.text.secondary};
   font-size: ${({ theme }) => theme.fontSizes.sm};
-  margin-bottom: ${({ theme }) => theme.spacing[2]};
 `;
 
 export const TextSmall = styled.small`

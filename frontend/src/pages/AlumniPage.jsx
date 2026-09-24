@@ -239,7 +239,7 @@ export default function AlumniPage() {
                   const isSenior = cat.is_senior || (cat.age_years && cat.age_years >= 10);
                   
                   return (
-                    <Card key={cat.id} $hover $flexColumn>
+                    <Card key={cat.id} $flexColumn>
                       {cat.main_image_url && (
                         <CardImage
                           src={cat.main_image_url}
