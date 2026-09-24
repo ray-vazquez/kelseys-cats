@@ -413,6 +413,10 @@ const inputStyles = css`
     $density === 'compact'
       ? `${theme.spacing[2]} ${theme.spacing[3]}`
       : `${theme.spacing[3]} ${theme.spacing[4]}`};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: ${({ theme }) => `${theme.spacing[3]} ${theme.spacing[4]}`};
+  }
   font-size: ${({ theme }) => theme.fontSizes.base};
   line-height: ${({ theme }) => theme.lineHeights.normal};
   color: ${({ theme }) => theme.colors.text.primary};
