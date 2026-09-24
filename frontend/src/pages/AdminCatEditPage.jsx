@@ -20,10 +20,10 @@ import TagSelector from "../components/Admin/TagSelector.jsx";
 import http from "../api/http.js";
 
 const PageWrapper = styled.div`
-  padding: ${({ theme }) => theme.spacing[12]} 0;
+  padding: ${({ theme }) => theme.spacing[8]} 0;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: ${({ theme }) => theme.spacing[8]} 0;
+    padding: ${({ theme }) => theme.spacing[6]} 0;
   }
 `;
 
@@ -31,7 +31,7 @@ const PageTitle = styled.h2`
   font-size: ${({ theme }) => theme.fontSizes["3xl"]};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 ${({ theme }) => theme.spacing[6]} 0;
+  margin: 0 0 ${({ theme }) => theme.spacing[4]} 0;
 `;
 
 const FormCard = styled(Card)`
@@ -42,8 +42,8 @@ const FormCard = styled(Card)`
 const TagsSection = styled.div`
   border: 2px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.base};
-  padding: ${({ theme }) => theme.spacing[5]};
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  padding: ${({ theme }) => theme.spacing[4]};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing[3]};
@@ -59,8 +59,8 @@ const TagsTitle = styled.h4`
 const ImagesSection = styled.div`
   border: 2px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.base};
-  padding: ${({ theme }) => theme.spacing[5]};
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  padding: ${({ theme }) => theme.spacing[4]};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
 `;
 
 const ImageList = styled.div`
@@ -192,9 +192,9 @@ const ButtonGroup = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: ${({ theme }) => theme.spacing[3]};
-  padding-top: ${({ theme }) => theme.spacing[6]};
+  padding-top: ${({ theme }) => theme.spacing[4]};
   border-top: 1px solid ${({ theme }) => theme.colors.border};
-  margin-top: ${({ theme }) => theme.spacing[6]};
+  margin-top: ${({ theme }) => theme.spacing[4]};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     flex-direction: column;
@@ -813,9 +813,9 @@ export default function AdminCatEditPage({ mode }) {
   if (loadingData) {
     return (
       <PageWrapper>
-        <Container>
+        <Container $density="compact">
           <FormCard>
-            <CardBody>
+            <CardBody $density="compact">
               <p>Loading cat data...</p>
             </CardBody>
           </FormCard>
@@ -843,10 +843,10 @@ export default function AdminCatEditPage({ mode }) {
               )}
 
               <form onSubmit={handleSubmit}>
-                <FormGroup>
+                <FormGroup $density="compact">
                   <Label>Name *</Label>
                   <NameFieldWrapper>
-                    <Input
+                    <Input $density="compact"
                       type="text"
                       name="name"
                       value={formData.name}
@@ -860,9 +860,9 @@ export default function AdminCatEditPage({ mode }) {
                   </NameFieldWrapper>
                 </FormGroup>
 
-                <FormGroup>
+                <FormGroup $density="compact">
                   <Label>Age (years)</Label>
-                  <Input
+                  <Input $density="compact"
                     type="number"
                     step="1"
                     min="1"
@@ -874,9 +874,9 @@ export default function AdminCatEditPage({ mode }) {
                   />
                 </FormGroup>
 
-                <FormGroup>
+                <FormGroup $density="compact">
                   <Label>Sex</Label>
-                  <Select
+                  <Select $density="compact"
                     name="sex"
                     value={formData.sex}
                     onChange={handleChange}
@@ -888,9 +888,9 @@ export default function AdminCatEditPage({ mode }) {
                   </Select>
                 </FormGroup>
 
-                <FormGroup>
+                <FormGroup $density="compact">
                   <Label>Breed</Label>
-                  <Input
+                  <Input $density="compact"
                     type="text"
                     name="breed"
                     value={formData.breed}
@@ -900,9 +900,9 @@ export default function AdminCatEditPage({ mode }) {
                   />
                 </FormGroup>
 
-                <FormGroup>
+                <FormGroup $density="compact">
                   <Label>Bio</Label>
-                  <Textarea
+                  <Textarea $density="compact"
                     rows={4}
                     name="bio"
                     value={formData.bio}
@@ -917,7 +917,7 @@ export default function AdminCatEditPage({ mode }) {
                 </FormGroup>
 
                 {/* REPLACED: Temperament textarea with TagSelector */}
-                <FormGroup>
+                <FormGroup $density="compact">
                   <TagSelector
                     category="temperament"
                     value={temperamentTags}
@@ -931,7 +931,7 @@ export default function AdminCatEditPage({ mode }) {
                 </FormGroup>
 
                 {/* REPLACED: Medical notes textarea with TagSelector */}
-                <FormGroup>
+                <FormGroup $density="compact">
                   <TagSelector
                     category="medical"
                     value={medicalTags}
@@ -966,7 +966,7 @@ export default function AdminCatEditPage({ mode }) {
                   <OrDivider>or enter URL manually</OrDivider>
 
                   <AddImageSection>
-                    <Input
+                    <Input $density="compact"
                       type="text"
                       value={mainImageUrlInput}
                       onChange={(e) => setMainImageUrlInput(e.target.value)}
@@ -1072,7 +1072,7 @@ export default function AdminCatEditPage({ mode }) {
                   <OrDivider>or add URL manually</OrDivider>
 
                   <AddImageSection>
-                    <Input
+                    <Input $density="compact"
                       type="text"
                       value={newImageUrl}
                       onChange={(e) => setNewImageUrl(e.target.value)}
@@ -1096,9 +1096,9 @@ export default function AdminCatEditPage({ mode }) {
                   </AddImageSection>
                 </ImagesSection>
 
-                <FormGroup>
+                <FormGroup $density="compact">
                   <Label>Status</Label>
-                  <Select
+                  <Select $density="compact"
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
