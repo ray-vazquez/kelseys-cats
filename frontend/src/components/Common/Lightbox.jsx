@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 
 const LightboxOverlay = styled.div`
@@ -171,6 +171,10 @@ const ImageCounter = styled.div`
 `;
 
 export default function Lightbox({ images, currentIndex, onClose, onNext, onPrev }) {
+  const dialogRef = useRef(null);
+  const closeButtonRef = useRef(null);
+  const previousFocusRef = useRef(null);
+
   const handleKeyDown = useCallback(
     (e) => {
       if (e.key === 'Escape') onClose();
@@ -181,12 +185,36 @@ export default function Lightbox({ images, currentIndex, onClose, onNext, onPrev
   );
 
   useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
+    previousFocusRef.current = document.activeElement;
+    closeButtonRef.current?.focus();
     document.body.style.overflow = 'hidden';
 
+    const handleDialogKeyDown = (event) => {
+      handleKeyDown(event);
+
+      if (event.key !== 'Tab' || !dialogRef.current) return;
+      const focusable = dialogRef.current.querySelectorAll(
+        'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleDialogKeyDown);
+
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'unset';
+      document.removeEventListener('keydown', handleDialogKeyDown);
+      document.body.style.overflow = '';
+      previousFocusRef.current?.focus?.();
     };
   }, [handleKeyDown]);
 
@@ -199,9 +227,15 @@ export default function Lightbox({ images, currentIndex, onClose, onNext, onPrev
   const hasNext = currentIndex < images.length - 1;
 
   return (
-    <LightboxOverlay onClick={onClose}>
+    <LightboxOverlay
+      ref={dialogRef}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Image viewer"
+    >
       <LightboxContent onClick={(e) => e.stopPropagation()}>
-        <CloseButton onClick={onClose} aria-label="Close lightbox">
+        <CloseButton ref={closeButtonRef} onClick={onClose} aria-label="Close lightbox">
           ×
         </CloseButton>
 
