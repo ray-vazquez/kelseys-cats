@@ -17,14 +17,14 @@ import PaginationControls from "../components/Common/PaginationControls.jsx";
 import CsvImportModal from "../components/Admin/CsvImportModal.jsx";
 
 const PageWrapper = styled.div`
-  padding: ${({ theme }) => theme.spacing[12]} 0;
+  padding: ${({ theme }) => theme.spacing[8]} 0;
 `;
 
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  margin-bottom: ${({ theme }) => theme.spacing[5]};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     flex-direction: column;
@@ -45,9 +45,9 @@ const ButtonGroup = styled.div`
 
 const FilterSection = styled.div`
   background: ${({ theme }) => theme.colors.light};
-  padding: ${({ theme }) => theme.spacing[6]};
+  padding: ${({ theme }) => theme.spacing[4]};
   border-radius: ${({ theme }) => theme.borderRadius.base};
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
   border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
@@ -74,7 +74,7 @@ const DeletedCatsLink = styled(Button)`
 const FilterGroup = styled.div`
   display: flex;
   flex-direction: row;
-  gap: ${({ theme }) => theme.spacing[4]};
+  gap: ${({ theme }) => theme.spacing[3]};
   flex-wrap: wrap;
 `;
 
@@ -85,7 +85,7 @@ const Table = styled.table`
 
   th,
   td {
-    padding: ${({ theme }) => theme.spacing[3]};
+    padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
     border-bottom: 1px solid ${({ theme }) => theme.colors.light};
     text-align: left;
     font-size: ${({ theme }) => theme.fontSizes.sm};
@@ -365,9 +365,9 @@ export default function AdminCatsPage() {
   return (
     <>
       <PageWrapper>
-        <Container>
+        <Container $density="compact">
           <Header>
-            <h1>Manage Cats</h1>
+            <h1 style={{ marginBottom: 0 }}>Manage Cats</h1>
             <ButtonGroup>
               <Button
                 as={Link}

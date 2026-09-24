@@ -18,7 +18,8 @@ export const Container = styled.div`
     return theme.containerSizes.xl;
   }};
   margin: 0 auto;
-  padding: 0 ${({ theme }) => theme.spacing[6]};
+  padding: 0 ${({ theme, $density }) =>
+    $density === 'compact' ? theme.spacing[4] : theme.spacing[6]};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     padding: 0 ${({ theme }) => theme.spacing[4]};
@@ -49,7 +50,14 @@ export const Flex = styled.div`
 `;
 
 export const Section = styled.section`
-  padding: ${({ theme, $padding }) => {
+  padding: ${({ theme, $padding, $density }) => {
+    if ($density === 'compact') {
+      if ($padding === 'lg') return `${theme.spacing[10]} 0`;
+      if ($padding === 'md') return `${theme.spacing[8]} 0`;
+      if ($padding === 'sm') return `${theme.spacing[6]} 0`;
+      if ($padding === 'xs') return `${theme.spacing[4]} 0`;
+      return `${theme.spacing[8]} 0`;
+    }
     if ($padding === 'lg') return `${theme.spacing[20]} 0`;
     if ($padding === 'md') return `${theme.spacing[16]} 0`;
     if ($padding === 'sm') return `${theme.spacing[12]} 0`;
@@ -106,7 +114,8 @@ export const CardImage = styled.img`
 `;
 
 export const CardBody = styled.div`
-  padding: ${({ theme, $padding }) => theme.spacing[$padding] || theme.spacing[6]};
+  padding: ${({ theme, $padding, $density }) =>
+    theme.spacing[$padding] || ($density === 'compact' ? theme.spacing[4] : theme.spacing[6])};
 `;
 
 export const CardTitle = styled.h3`
@@ -375,7 +384,8 @@ export const Badge = styled.span`
 /* ========== FORM COMPONENTS ========== */
 
 export const FormGroup = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  margin-bottom: ${({ theme, $density }) =>
+    $density === 'compact' ? theme.spacing[4] : theme.spacing[6]};
 
   &:last-child {
     margin-bottom: 0;
@@ -399,7 +409,14 @@ export const Label = styled.label`
 
 const inputStyles = css`
   width: 100%;
-  padding: ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[4]};
+  padding: ${({ theme, $density }) =>
+    $density === 'compact'
+      ? `${theme.spacing[2]} ${theme.spacing[3]}`
+      : `${theme.spacing[3]} ${theme.spacing[4]}`};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    padding: ${({ theme }) => `${theme.spacing[3]} ${theme.spacing[4]}`};
+  }
   font-size: ${({ theme }) => theme.fontSizes.base};
   line-height: ${({ theme }) => theme.lineHeights.normal};
   color: ${({ theme }) => theme.colors.text.primary};
