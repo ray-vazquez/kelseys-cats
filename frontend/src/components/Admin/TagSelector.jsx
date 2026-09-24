@@ -1,7 +1,7 @@
 // frontend/src/components/Admin/TagSelector.jsx
 // Multi-select tag component for temperament and medical notes
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import styled from 'styled-components';
 import http from '../../api/http';
 
@@ -47,7 +47,7 @@ const TagsContainer = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.base};
   min-height: 100px;
-  background: ${({ theme }) => theme.colors.background.secondary};
+  background: ${({ theme }) => theme.colors.background};
 `;
 
 const DropdownContainer = styled.div`
@@ -69,14 +69,25 @@ const Dropdown = styled.div`
   margin-top: ${({ theme }) => theme.spacing[1]};
 `;
 
-const DropdownItem = styled.div`
+const DropdownItem = styled.button.attrs({ type: 'button' })`
+  width: 100%;
   padding: ${({ theme }) => theme.spacing[3]};
+  border: 0;
+  background: transparent;
+  color: ${({ theme }) => theme.colors.text.primary};
+  text-align: left;
   cursor: pointer;
   transition: background ${({ theme }) => theme.transitions.fast};
   font-size: ${({ theme }) => theme.fontSizes.sm};
   
-  &:hover {
-    background: ${({ theme }) => theme.colors.background.secondary};
+  &:hover,
+  &:focus-visible {
+    background: ${({ theme }) => theme.colors.background};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.focus};
+    outline-offset: -2px;
   }
   
   ${({ $selected, theme }) => $selected && `
@@ -92,7 +103,7 @@ const Tag = styled.span`
   padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
   background: ${({ theme, $variant }) => {
     if ($variant === 'temperament') return theme.colors.primary;
-    if ($variant === 'medical') return theme.colors.warning || '#f59e0b'; // Fallback to orange
+    if ($variant === 'medical') return theme.colors.warning;
     return theme.colors.secondary;
   }};
   color: ${({ theme }) => theme.colors.white};
@@ -158,6 +169,8 @@ export default function TagSelector({
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [error, setError] = useState(null);
+  const inputId = useId();
+  const searchInputRef = useRef(null);
 
   // Fetch available tags for this category
   useEffect(() => {
@@ -204,9 +217,17 @@ export default function TagSelector({
     setShowDropdown(true);
   };
 
-  const handleSearchBlur = () => {
-    // Delay to allow click events on dropdown items
-    setTimeout(() => setShowDropdown(false), 200);
+  const handleContainerBlur = (event) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      setShowDropdown(false);
+    }
+  };
+
+  const handleContainerKeyDown = (event) => {
+    if (event.key === 'Escape' && showDropdown) {
+      setShowDropdown(false);
+      searchInputRef.current?.focus();
+    }
   };
 
   if (loading) {
@@ -229,25 +250,32 @@ export default function TagSelector({
 
   return (
     <SelectorWrapper>
-      <Label>
+      <Label htmlFor={inputId}>
         {label}
         <CategoryBadge>{availableTags.length} available</CategoryBadge>
       </Label>
 
       {/* Search/Add Input */}
-      <DropdownContainer>
+      <DropdownContainer
+        onBlur={handleContainerBlur}
+        onKeyDown={handleContainerKeyDown}
+      >
         <SearchInput
+          ref={searchInputRef}
+          id={inputId}
           type="text"
           placeholder={placeholder}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={handleSearchFocus}
-          onBlur={handleSearchBlur}
+          aria-expanded={showDropdown && filteredTags.length > 0}
+          aria-controls={showDropdown && filteredTags.length > 0 ? `${inputId}-options` : undefined}
+          autoComplete="off"
         />
         
         {/* Dropdown with available tags */}
         {showDropdown && filteredTags.length > 0 && (
-          <Dropdown>
+          <Dropdown id={`${inputId}-options`}>
             {filteredTags.map(tag => (
               <DropdownItem
                 key={tag.id}

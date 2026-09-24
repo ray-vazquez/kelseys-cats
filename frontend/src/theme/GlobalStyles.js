@@ -27,7 +27,6 @@ export const GlobalStyles = createGlobalStyle`
     line-height: ${({ theme }) => theme.lineHeights.normal};
     color: ${({ theme }) => theme.colors.text.primary};
     background-color: ${({ theme }) => theme.colors.background};
-    overflow-x: hidden;
   }
 
   /* Typography - Headings */

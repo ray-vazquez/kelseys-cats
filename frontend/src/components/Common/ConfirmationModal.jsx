@@ -77,6 +77,16 @@ export default function ConfirmationModal({
   const modalRef = useRef(null);
   const cancelRef = useRef(null);
   const previousFocusRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  const loadingRef = useRef(loading);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -85,8 +95,8 @@ export default function ConfirmationModal({
     cancelRef.current?.focus();
 
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape' && !loading) {
-        onClose();
+      if (event.key === 'Escape' && !loadingRef.current) {
+        onCloseRef.current();
         return;
       }
 
@@ -112,7 +122,7 @@ export default function ConfirmationModal({
       document.removeEventListener('keydown', handleKeyDown);
       previousFocusRef.current?.focus?.();
     };
-  }, [isOpen, loading, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
