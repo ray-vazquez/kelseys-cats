@@ -1,4 +1,5 @@
 import React from 'react';
+import styled from 'styled-components';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import HomePage from './pages/HomePage.jsx';
 import CatsPage from './pages/CatsPage.jsx';
@@ -21,6 +22,15 @@ import Footer from './components/Layout/Footer.jsx';
 import LoadingState from './components/Common/LoadingState.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 
+const AdminSurface = styled.main`
+  font-family: ${({ theme }) => theme.fonts.body};
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: ${({ theme }) => theme.fonts.body};
+    letter-spacing: ${({ theme }) => theme.letterSpacings.normal};
+  }
+`;
+
 function AdminLayout({ children }) {
   const { isAuthenticated, loading } = useAuth();
   
@@ -40,7 +50,7 @@ function AdminLayout({ children }) {
   return (
     <>
       <AdminNavbar />
-      {children}
+      <AdminSurface>{children}</AdminSurface>
     </>
   );
 }
@@ -63,7 +73,7 @@ function AdminNotFoundLayout() {
     return (
       <>
         <AdminNavbar />
-        <AdminNotFoundPage />
+        <AdminSurface><AdminNotFoundPage /></AdminSurface>
       </>
     );
   }
