@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { Button, Spinner } from "../Common/StyledComponents.js";
 import http from "../../api/http.js";
@@ -70,14 +70,25 @@ const FooterRight = styled.div`
   gap: ${({ theme }) => theme.spacing[3]};
 `;
 
+const TableRegion = styled.div`
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  margin-top: ${({ theme }) => theme.spacing[6]};
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.focus};
+    outline-offset: 2px;
+  }
+`;
+
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  margin-top: ${({ theme }) => theme.spacing[6]};
+  min-width: 640px;
   font-size: ${({ theme }) => theme.fontSizes.sm};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.base};
-  overflow: hidden;
 
   th,
   td {
@@ -199,6 +210,45 @@ export default function CsvImportModal({ onClose, onImported }) {
   const [step, setStep] = useState("upload"); // 'upload' | 'preview' | 'summary'
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState(null);
+  const modalRef = useRef(null);
+  const closeButtonRef = useRef(null);
+  const previousFocusRef = useRef(null);
+
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement;
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape" && !loading) {
+        onClose();
+        return;
+      }
+
+      if (event.key !== "Tab" || !modalRef.current) return;
+
+      const focusable = modalRef.current.querySelectorAll(
+        'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previousFocusRef.current?.focus?.();
+    };
+  }, [loading, onClose]);
 
   function handleFileChange(e) {
     const f = e.target.files?.[0];
@@ -290,21 +340,28 @@ export default function CsvImportModal({ onClose, onImported }) {
   }
 
   function handleClose() {
-    onClose();
+    if (!loading) onClose();
   }
 
   return (
     <Backdrop onClick={(e) => e.target === e.currentTarget && handleClose()}>
       <Modal
+        ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="csv-import-title"
         aria-busy={loading}
-        aria-label="Importing, please wait"
       >
         <ModalHeader>
           <ModalTitle id="csv-import-title">Import Cats from CSV</ModalTitle>
-          <Button $variant="ghost" $size="sm" onClick={handleClose}>
+          <Button
+            ref={closeButtonRef}
+            type="button"
+            $variant="ghost"
+            $size="sm"
+            onClick={handleClose}
+            disabled={loading}
+          >
             Close
           </Button>
         </ModalHeader>
@@ -339,7 +396,11 @@ export default function CsvImportModal({ onClose, onImported }) {
                 won't be imported unless fixed in the CSV.
               </InfoText>
               {error && <ErrorText>{error}</ErrorText>}
-              <Table>
+              <TableRegion
+                tabIndex="0"
+                aria-label="CSV import preview table, horizontally scrollable on narrow screens"
+              >
+                <Table>
                 <thead>
                   <tr>
                     <th style={{ width: '40px' }}>
@@ -401,7 +462,8 @@ export default function CsvImportModal({ onClose, onImported }) {
                     </tr>
                   ))}
                 </tbody>
-              </Table>
+                </Table>
+              </TableRegion>
             </>
           )}
 
