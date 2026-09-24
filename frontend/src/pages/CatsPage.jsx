@@ -796,7 +796,6 @@ export default function CatsPage() {
                   <Card
                     key={`${cat.source}-${cat.id}`}
                     $flexColumn
-                    $hover
                     style={{ position: "relative" }}
                   >
                     <SourceBadge
