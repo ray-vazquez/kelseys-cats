@@ -19,7 +19,7 @@ import { Link } from "react-router-dom";
 
 const SectionTitle = styled.h2`
   text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing[12]};
+  margin-bottom: ${({ theme }) => theme.spacing[8]};
   color: ${({ theme }) => theme.colors.text.primary};
   font-size: ${({ theme }) => theme.fontSizes["4xl"]};
 `;
