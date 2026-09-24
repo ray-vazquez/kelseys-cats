@@ -30,7 +30,7 @@ const ErrorIcon = styled.div`
   }};
   margin-bottom: ${({ theme }) => theme.spacing[4]};
   border-radius: 50%;
-  background-color: ${({ theme }) => theme.colors.error?.light || '#fee'};
+  background-color: ${({ theme }) => theme.colors.dangerLight};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -39,7 +39,7 @@ const ErrorIcon = styled.div`
     if ($size === 'lg') return '48px';
     return '32px';
   }};
-  color: ${({ theme }) => theme.colors.error?.main || '#c41e3a'};
+  color: ${({ theme }) => theme.colors.danger};
 `;
 
 const ErrorTitle = styled.h3`
@@ -105,7 +105,7 @@ export default function ErrorState({
       {(onRetry || actions) && (
         <ErrorActions>
           {onRetry && (
-            <Button onClick={onRetry} variant="primary">
+            <Button onClick={onRetry} $variant="primary">
               {retryText}
             </Button>
           )}
