@@ -191,6 +191,24 @@ const ToastContainer = styled.div`
   }
 `;
 
+const LoadErrorPanel = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing[3]};
+  padding: ${({ theme }) => theme.spacing[3]};
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
+  border: 1px solid ${({ theme }) => theme.colors.danger};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
+  background: ${({ theme }) => theme.colors.dangerLight};
+  color: ${({ theme }) => theme.colors.text.primary};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+`;
+
 const EmptyState = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing[8]} ${({ theme }) => theme.spacing[4]};
@@ -210,6 +228,7 @@ export default function AdminCatsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState({ items: [], total: 0, page: 1, limit: 20 });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [toasts, setToasts] = useState([]);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, cat: null, loading: false });
@@ -235,6 +254,7 @@ export default function AdminCatsPage() {
 
   async function loadCats(currentPage) {
     setLoading(true);
+    setLoadError(null);
     try {
       const params = new URLSearchParams();
       params.set("page", String(currentPage));
@@ -250,10 +270,12 @@ export default function AdminCatsPage() {
       setData(res.data);
     } catch (err) {
       console.error("Failed to load cats", err);
+      const message = err.response?.data?.message || "Unable to load cats.";
       setData(prev => ({ ...prev, items: [], total: 0 }));
+      setLoadError(message);
       addToast({
         title: "Error Loading Cats",
-        message: err.response?.data?.message || "Unable to load cats.",
+        message,
         variant: "error",
         duration: 0
       });
@@ -383,6 +405,13 @@ export default function AdminCatsPage() {
 
           {loading ? (
             <CenteredSpinner><Spinner aria-label="Loading cats" /></CenteredSpinner>
+          ) : loadError ? (
+            <LoadErrorPanel role="alert">
+              <span><strong>Unable to load cats.</strong> {loadError}</span>
+              <Button type="button" $variant="outline" $size="sm" onClick={() => loadCats(page)}>
+                Try Again
+              </Button>
+            </LoadErrorPanel>
           ) : data.items.length === 0 ? (
             <EmptyState>
               <p><strong>No cats found with the selected filters.</strong></p>
