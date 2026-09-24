@@ -12,9 +12,13 @@ const GalleryContainer = styled.div`
   }
 `;
 
-const MainImage = styled.div`
+const MainImage = styled.button.attrs({ type: 'button' })`
   position: relative;
   width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: inherit;
   aspect-ratio: 1;
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   overflow: hidden;
@@ -25,6 +29,11 @@ const MainImage = styled.div`
 
   &:hover {
     transform: scale(1.02);
+  }
+
+  &:focus-visible {
+    outline: 3px solid ${({ theme }) => theme.colors.focus};
+    outline-offset: 3px;
   }
 
   img {
@@ -44,8 +53,11 @@ const ThumbnailGrid = styled.div`
   }
 `;
 
-const Thumbnail = styled.div`
+const Thumbnail = styled.button.attrs({ type: 'button' })`
   position: relative;
+  width: 100%;
+  padding: 0;
+  background: transparent;
   aspect-ratio: 1;
   border-radius: ${({ theme }) => theme.borderRadius.base};
   overflow: hidden;
@@ -58,6 +70,11 @@ const Thumbnail = styled.div`
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
     transform: scale(1.05);
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.focus};
+    outline-offset: 2px;
   }
 
   img {
@@ -121,7 +138,7 @@ export default function ImageGallery({ images, alt }) {
   if (formattedImages.length === 0) {
     return (
       <GalleryContainer>
-        <MainImage>
+        <MainImage as="div">
           <Placeholder>🐱</Placeholder>
         </MainImage>
       </GalleryContainer>
@@ -154,7 +171,10 @@ export default function ImageGallery({ images, alt }) {
   return (
     <>
       <GalleryContainer>
-        <MainImage onClick={() => openLightbox(currentIndex)}>
+        <MainImage
+          onClick={() => openLightbox(currentIndex)}
+          aria-label={`Enlarge ${currentImage.alt || alt || 'cat image'}`}
+        >
           <img src={currentImage.url} alt={currentImage.alt || alt} />
           <ZoomIndicator>
             🔍 Click to enlarge
@@ -168,6 +188,8 @@ export default function ImageGallery({ images, alt }) {
                 key={index}
                 $active={index === currentIndex}
                 onClick={() => setCurrentIndex(index)}
+                aria-label={`Show image ${index + 1} of ${formattedImages.length}`}
+                aria-pressed={index === currentIndex}
               >
                 <img src={image.url} alt={image.alt || `${alt} ${index + 1}`} />
               </Thumbnail>
