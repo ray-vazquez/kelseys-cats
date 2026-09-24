@@ -86,8 +86,8 @@ const Badge = styled.span`
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-size: ${({ theme }) => theme.fontSizes.xs};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
-  background: ${({ status }) => status === 'running' ? '#dbeafe' : '#e5e7eb'};
-  color: ${({ status }) => status === 'running' ? '#1e40af' : '#374151'};
+  background: ${({ $status }) => $status === 'running' ? '#dbeafe' : '#e5e7eb'};
+  color: ${({ $status }) => $status === 'running' ? '#1e40af' : '#374151'};
 `;
 
 const ErrorBox = styled.div`
@@ -243,7 +243,7 @@ export default function AdminScraperPage() {
         <Panel aria-labelledby="scraper-status-title">
           <PanelTitle id="scraper-status-title">Current status</PanelTitle>
           <StatusGrid>
-            <Stat><div className="label">State</div><div className="value"><Badge status={loading ? 'running' : 'idle'}>{loading ? 'Running' : 'Idle'}</Badge></div></Stat>
+            <Stat><div className="label">State</div><div className="value"><Badge $status={loading ? 'running' : 'idle'}>{loading ? 'Running' : 'Idle'}</Badge></div></Stat>
             <Stat><div className="label">Total partner cats</div><div className="value">{status?.totalPartnerCats ?? '—'}</div></Stat>
             <Stat><div className="label">In Kelsey’s care</div><div className="value">{status?.catsInKelseysCare ?? '—'}</div></Stat>
             <Stat><div className="label">Last scrape</div><div className="value" style={{fontSize:'0.875rem'}}>{status?.lastScrapeTime || 'Never'}</div></Stat>
