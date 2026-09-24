@@ -31,10 +31,10 @@ const DetailGrid = styled.div`
 const DetailContent = styled.div``;
 
 const CatHeader = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  margin-bottom: ${({ theme }) => theme.spacing[5]};
 `;
 
-const CatTitle = styled.h1`
+const CatTitle = styled.h2`
   font-size: ${({ theme }) => theme.fontSizes["4xl"]};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   margin-bottom: ${({ theme }) => theme.spacing[3]};
@@ -56,8 +56,8 @@ const BadgeGroup = styled.div`
 `;
 
 const InfoSection = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
-  padding: ${({ theme }) => theme.spacing[6]};
+  margin-bottom: ${({ theme }) => theme.spacing[5]};
+  padding: ${({ theme }) => theme.spacing[5]};
   background: ${({ theme }) => theme.colors.light};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   border-left: 4px solid ${({ theme }) => theme.colors.primary};
@@ -66,7 +66,7 @@ const InfoSection = styled.div`
 const InfoTitle = styled.h3`
   font-size: ${({ theme }) => theme.fontSizes.xl};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
@@ -102,8 +102,8 @@ const InfoListItem = styled.li`
 const ActionButtons = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing[4]};
-  margin-top: ${({ theme }) => theme.spacing[8]};
-  padding-top: ${({ theme }) => theme.spacing[8]};
+  margin-top: ${({ theme }) => theme.spacing[5]};
+  padding-top: ${({ theme }) => theme.spacing[5]};
   border-top: 2px solid ${({ theme }) => theme.colors.border};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
@@ -180,7 +180,7 @@ export default function CatDetailPage() {
           title="Loading..."
           compactTitle
         />
-        <Section $padding="lg">
+        <Section $padding="md">
           <Container>
             <DetailGrid>
               <div>
