@@ -33,6 +33,20 @@ const PageContainer = styled.div`
   margin: 0 auto;
 `;
 
+const ScraperInfo = styled.div`
+  color: #0c4a6e;
+  line-height: 1.7;
+
+  p + p {
+    margin-top: ${({ theme }) => theme.spacing[2]};
+  }
+
+  .schedule-note {
+    margin-top: ${({ theme }) => theme.spacing[4]};
+    font-size: 14px;
+  }
+`;
+
 const ControlPanel = styled.div`
   background: ${({ theme }) => theme.colors.light};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
@@ -325,14 +339,14 @@ export default function AdminScraperPage() {
             {/* Info - Moved to top */}
             <StatusCard style={{ background: '#f0f9ff', borderColor: '#bae6fd' }}>
               <Title>ℹ️ About the Scraper</Title>
-              <div style={{ color: '#0c4a6e', lineHeight: '1.7' }}>
+              <ScraperInfo>
                 <p><strong>Full Scrape:</strong> Scrapes all VFV cats from Adopt-a-Pet, saves to database, and removes old entries (7+ days)</p>
                 <p><strong>Scrape Only:</strong> Only fetches and updates cat data without cleanup</p>
                 <p><strong>Cleanup Only:</strong> Removes partner foster cats not updated in 7+ days</p>
-                <p style={{ marginTop: '1rem', fontSize: '14px' }}>
+                <p className="schedule-note">
                   ⏰ <strong>Automatic scraping runs daily at 3:00 AM EST</strong>
                 </p>
-              </div>
+              </ScraperInfo>
             </StatusCard>
 
             {/* Control Panel */}
