@@ -9,13 +9,16 @@ const UploaderContainer = styled.div`
   gap: ${({ theme }) => theme.spacing[3]};
 `;
 
-const DropZone = styled.div`
+const DropZone = styled.button`
   border: 2px dashed ${({ theme, $isDragging, $hasError }) => 
     $hasError ? theme.colors.danger : 
     $isDragging ? theme.colors.primary : 
     theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.base};
   padding: ${({ theme }) => theme.spacing[6]};
+  width: 100%;
+  font: inherit;
+  color: inherit;
   text-align: center;
   cursor: pointer;
   transition: all ${({ theme }) => theme.transitions.base};
@@ -25,6 +28,11 @@ const DropZone = styled.div`
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
     background: ${({ theme }) => `${theme.colors.primary}05`};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.focus};
+    outline-offset: 2px;
   }
 
   ${({ $disabled }) => $disabled && `
@@ -498,6 +506,7 @@ export default function ImageUploader({
 
       {showUploadZone && (
         <DropZone
+          type="button"
           onClick={handleClick}
           onDragEnter={handleDragEnter}
           onDragOver={handleDragOver}
