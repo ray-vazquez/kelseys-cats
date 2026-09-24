@@ -33,7 +33,7 @@ const CatHeader = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing[8]};
 `;
 
-const CatTitle = styled.h1`
+const CatTitle = styled.h2`
   font-size: ${({ theme }) => theme.fontSizes['4xl']};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   margin-bottom: ${({ theme }) => theme.spacing[3]};
@@ -124,7 +124,7 @@ export default function AlumniDetailPage() {
           title="Loading..."
           compactTitle
         />
-        <Section $padding="lg">
+        <Section $padding="md">
           <Container>
             <DetailGrid>
               <div>
@@ -149,7 +149,7 @@ export default function AlumniDetailPage() {
           title="Alumni Not Found"
           compactTitle
         />
-        <Section $padding="lg">
+        <Section $padding="md">
           <Container>
             {error && (
               <Alert $variant="danger" style={{ marginBottom: '2rem' }}>
@@ -197,7 +197,7 @@ export default function AlumniDetailPage() {
       />
 
       {/* Main Content */}
-      <Section $padding="lg">
+      <Section $padding="md">
         <Container>
           <Alert $variant="success" style={{ marginBottom: '2rem' }}>
             🎉 {cat.name} has found their forever home!
