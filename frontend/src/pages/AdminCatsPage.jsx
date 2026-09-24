@@ -94,6 +94,7 @@ const Table = styled.table`
   th {
     font-weight: ${({ theme }) => theme.fontWeights.semibold};
     color: ${({ theme }) => theme.colors.secondary};
+    background-color: ${({ theme }) => theme.colors.neutral[50]};
   }
 
   tbody tr:hover {
