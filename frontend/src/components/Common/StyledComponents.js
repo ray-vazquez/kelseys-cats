@@ -500,26 +500,26 @@ export const Alert = styled.div`
       case 'success':
         return css`
           background-color: ${theme.colors.successLight};
-          color: ${theme.colors.successDark};
+          color: ${theme.colors.successHover};
           border-color: ${theme.colors.success};
         `;
       case 'warning':
         return css`
           background-color: ${theme.colors.warningLight};
-          color: ${theme.colors.warningDark};
+          color: ${theme.colors.warningHover};
           border-color: ${theme.colors.warning};
         `;
       case 'danger':
         return css`
           background-color: ${theme.colors.dangerLight};
-          color: ${theme.colors.dangerDark};
+          color: ${theme.colors.dangerHover};
           border-color: ${theme.colors.danger};
         `;
       case 'info':
       default:
         return css`
           background-color: ${theme.colors.infoLight};
-          color: ${theme.colors.infoDark};
+          color: ${theme.colors.infoHover};
           border-color: ${theme.colors.info};
         `;
     }
