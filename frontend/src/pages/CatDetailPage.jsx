@@ -63,6 +63,14 @@ const InfoSection = styled.div`
   border-left: 4px solid ${({ theme }) => theme.colors.primary};
 `;
 
+const CompactInfoSection = styled(InfoSection)`
+  padding: ${({ theme }) => theme.spacing[4]} 0;
+  background: transparent;
+  border-radius: 0;
+  border-left: 0;
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
 const InfoTitle = styled.h3`
   font-size: ${({ theme }) => theme.fontSizes.xl};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
@@ -349,7 +357,7 @@ export default function CatDetailPage() {
 
               {/* Personality & Temperament (grouped temperament tags) */}
               {!tagsLoading && hasTemperament && (
-                <InfoSection>
+                <CompactInfoSection>
                   <InfoTitle>Personality &amp; Temperament</InfoTitle>
                   <BadgeGroup>
                     {temperamentTags.map((tag) => (
@@ -358,12 +366,12 @@ export default function CatDetailPage() {
                       </Badge>
                     ))}
                   </BadgeGroup>
-                </InfoSection>
+                </CompactInfoSection>
               )}
 
               {/* Medical Information (grouped medical tags) */}
               {!tagsLoading && hasMedical && (
-                <InfoSection>
+                <CompactInfoSection>
                   <InfoTitle>Medical Information</InfoTitle>
                   <BadgeGroup>
                     {medicalTags.map((tag) => (
@@ -372,15 +380,15 @@ export default function CatDetailPage() {
                       </Badge>
                     ))}
                   </BadgeGroup>
-                </InfoSection>
+                </CompactInfoSection>
               )}
 
               {/* Optional lightweight tags loading state */}
               {tagsLoading && (
-                <InfoSection>
+                <CompactInfoSection>
                   <InfoTitle>Personality &amp; Temperament</InfoTitle>
                   <InfoText>Loading tags...</InfoText>
-                </InfoSection>
+                </CompactInfoSection>
               )}
 
               {/* Optional subtle error when no tags to show */}
@@ -391,7 +399,7 @@ export default function CatDetailPage() {
               )}
 
               {/* Good With */}
-              <InfoSection>
+              <CompactInfoSection>
                 <InfoTitle>Good With</InfoTitle>
                 <InfoList>
                   <InfoListItem>
@@ -407,7 +415,7 @@ export default function CatDetailPage() {
                     <span>{cat.good_with_dogs ? "✅ Yes" : "❌ No"}</span>
                   </InfoListItem>
                 </InfoList>
-              </InfoSection>
+              </CompactInfoSection>
 
               {/* Action Buttons */}
               <ActionButtons>
