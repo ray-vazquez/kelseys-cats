@@ -3,9 +3,30 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { Container, Section } from '../components/Common/StyledComponents.js';
-import SectionHero from '../components/Common/SectionHero.jsx';
+import { Container } from '../components/Common/StyledComponents.js';
 import http from '../api/http.js';
+
+const PageShell = styled.div`
+  padding: ${({ theme }) => theme.spacing[8]} 0;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    padding: ${({ theme }) => theme.spacing[6]} 0;
+  }
+`;
+
+const PageHeader = styled.header`
+  margin-bottom: ${({ theme }) => theme.spacing[5]};
+
+  h1 {
+    font-size: ${({ theme }) => theme.fontSizes['3xl']};
+    margin-bottom: ${({ theme }) => theme.spacing[1]};
+  }
+
+  p {
+    color: ${({ theme }) => theme.colors.text.secondary};
+    margin: 0;
+  }
+`;
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -15,20 +36,21 @@ const PageContainer = styled.div`
 const ControlPanel = styled.div`
   background: ${({ theme }) => theme.colors.light};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  padding: ${({ theme }) => theme.spacing[8]};
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  padding: ${({ theme }) => theme.spacing[3]};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme.spacing[4]};
+  gap: ${({ theme }) => theme.spacing[2]};
   flex-wrap: wrap;
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
 `;
 
 const Button = styled.button`
-  padding: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]};
+  min-height: 40px;
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[4]};
   background: ${({ theme, variant }) => 
     variant === 'danger' ? theme.colors.danger :
     variant === 'secondary' ? theme.colors.lightHover :
@@ -59,8 +81,8 @@ const Button = styled.button`
 const StatusCard = styled.div`
   background: white;
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  padding: ${({ theme }) => theme.spacing[6]};
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  padding: ${({ theme }) => theme.spacing[4]};
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
   border: 2px solid ${({ theme }) => theme.colors.border};
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 `;
@@ -68,8 +90,8 @@ const StatusCard = styled.div`
 const StatusGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: ${({ theme }) => theme.spacing[4]};
-  margin-top: ${({ theme }) => theme.spacing[4]};
+  gap: ${({ theme }) => theme.spacing[3]};
+  margin-top: ${({ theme }) => theme.spacing[3]};
 `;
 
 const StatBox = styled.div`
@@ -94,7 +116,7 @@ const StatBox = styled.div`
 const LogContainer = styled.div`
   background: #1e1e1e;
   color: #d4d4d4;
-  padding: ${({ theme }) => theme.spacing[6]};
+  padding: ${({ theme }) => theme.spacing[4]};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 13px;
@@ -135,7 +157,7 @@ const Title = styled.h2`
   font-size: ${({ theme }) => theme.fontSizes.xl};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
 `;
 
 export default function AdminScraperPage() {
@@ -293,17 +315,13 @@ export default function AdminScraperPage() {
   };
 
   return (
-    <>
-      <SectionHero
-        variant="gradient"
-        size="sm"
-        title="Scraper Control Panel"
-        subtitle="Manage Voice for the Voiceless cat imports from Adopt-a-Pet"
-      />
-
-      <Section $padding="lg">
-        <Container>
-          <PageContainer>
+    <PageShell>
+      <Container $density="compact">
+        <PageContainer>
+          <PageHeader>
+            <h1>Scraper Control Panel</h1>
+            <p>Manage Voice for the Voiceless cat imports from Adopt-a-Pet</p>
+          </PageHeader>
             {/* Info - Moved to top */}
             <StatusCard style={{ background: '#f0f9ff', borderColor: '#bae6fd' }}>
               <Title>ℹ️ About the Scraper</Title>
@@ -454,9 +472,8 @@ export default function AdminScraperPage() {
                 </LogContainer>
               </StatusCard>
             )}
-          </PageContainer>
-        </Container>
-      </Section>
-    </>
+        </PageContainer>
+      </Container>
+    </PageShell>
   );
 }
