@@ -829,9 +829,9 @@ export default function AdminCatEditPage({ mode }) {
   return (
     <>
       <PageWrapper>
-        <Container>
+        <Container $density="compact">
           <FormCard>
-            <CardBody>
+            <CardBody $density="compact">
               <PageTitle>
                 {mode === "create" ? "Add New Cat" : "Edit Cat"}
               </PageTitle>
@@ -953,7 +953,7 @@ export default function AdminCatEditPage({ mode }) {
                     the main gallery image.
                   </StatusHint>
 
-                  <FormGroup style={{ marginTop: "1rem" }}>
+                  <FormGroup $density="compact" style={{ marginTop: "1rem" }}>
                     <ImageUploader
                       mode="single"
                       onUploadComplete={handleMainImageUpload}
