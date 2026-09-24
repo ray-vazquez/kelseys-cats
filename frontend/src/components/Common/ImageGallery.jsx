@@ -84,6 +84,16 @@ const Thumbnail = styled.button.attrs({ type: 'button' })`
   }
 `;
 
+const PlaceholderFrame = styled.div`
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  overflow: hidden;
+  box-shadow: ${({ theme }) => theme.shadows.lg};
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
+`;
+
 const Placeholder = styled.div`
   width: 100%;
   height: 100%;
@@ -138,9 +148,9 @@ export default function ImageGallery({ images, alt }) {
   if (formattedImages.length === 0) {
     return (
       <GalleryContainer>
-        <MainImage as="div">
+        <PlaceholderFrame>
           <Placeholder>🐱</Placeholder>
-        </MainImage>
+        </PlaceholderFrame>
       </GalleryContainer>
     );
   }
