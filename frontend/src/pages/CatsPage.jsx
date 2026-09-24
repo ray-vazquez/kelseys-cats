@@ -201,7 +201,7 @@ const ActiveFiltersBar = styled.div`
   gap: ${({ theme }) => theme.spacing[2]};
   margin-bottom: ${({ theme }) => theme.spacing[4]};
   padding: ${({ theme }) => theme.spacing[3]};
-  background: ${({ theme }) => theme.colors.background.secondary};
+  background: ${({ theme }) => theme.colors.light};
   border-radius: ${({ theme }) => theme.borderRadius.base};
 `;
 
@@ -262,7 +262,7 @@ const StatsBar = styled.div`
   justify-content:;
   gap: ${({ theme }) => theme.spacing[8]};
   padding-bottom: ${({ theme }) => theme.spacing[4]};
-  background: ${({ theme }) => theme.colors.background.secondary};
+  background: ${({ theme }) => theme.colors.light};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
@@ -277,7 +277,7 @@ const StatItem = styled.div`
   .stat-value {
     font-size: ${({ theme }) => theme.fontSizes["3xl"]};
     font-weight: ${({ theme }) => theme.fontWeights.bold};
-    color: ${({ theme }) => theme.colors.primary.main};
+    color: ${({ theme }) => theme.colors.primary};
     display: block;
   }
 

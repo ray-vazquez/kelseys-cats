@@ -24,7 +24,7 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  margin-bottom: ${({ theme }) => theme.spacing[8]};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     flex-direction: column;
@@ -81,11 +81,11 @@ const FilterGroup = styled.div`
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
 
   th,
   td {
-    padding: ${({ theme }) => theme.spacing.sm};
+    padding: ${({ theme }) => theme.spacing[3]};
     border-bottom: 1px solid ${({ theme }) => theme.colors.light};
     text-align: left;
     font-size: ${({ theme }) => theme.fontSizes.sm};

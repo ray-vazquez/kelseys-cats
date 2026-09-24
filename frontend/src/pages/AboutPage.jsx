@@ -55,15 +55,15 @@ const ContentSection = styled.div`
       content: "✓";
       position: absolute;
       left: 0;
-      color: ${({ theme }) => theme.colors.primary.main};
+      color: ${({ theme }) => theme.colors.primary};
       font-weight: bold;
     }
   }
 `;
 
 const HighlightBox = styled.div`
-  background: ${({ theme }) => theme.colors.background.secondary};
-  border-left: 4px solid ${({ theme }) => theme.colors.primary.main};
+  background: ${({ theme }) => theme.colors.light};
+  border-left: 4px solid ${({ theme }) => theme.colors.primary};
   padding: ${({ theme }) => theme.spacing[6]};
   margin: ${({ theme }) => theme.spacing[8]} 0;
   border-radius: ${({ theme }) => theme.borderRadius.md};
@@ -100,13 +100,13 @@ const BadgeExample = styled.div`
     margin-bottom: ${({ theme }) => theme.spacing[3]};
     
     &.featured {
-      background: ${({ theme }) => theme.colors.success?.light || '#d1fae5'};
-      color: ${({ theme }) => theme.colors.success?.dark || '#065f46'};
+      background: ${({ theme }) => theme.colors.successLight};
+      color: ${({ theme }) => theme.colors.successHover};
     }
     
     &.partner {
-      background: ${({ theme }) => theme.colors.info?.light || '#dbeafe'};
-      color: ${({ theme }) => theme.colors.info?.dark || '#1e40af'};
+      background: ${({ theme }) => theme.colors.infoLight};
+      color: ${({ theme }) => theme.colors.infoHover};
     }
   }
   
