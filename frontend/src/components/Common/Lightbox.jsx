@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 
 const LightboxOverlay = styled.div`
@@ -174,15 +174,15 @@ export default function Lightbox({ images, currentIndex, onClose, onNext, onPrev
   const dialogRef = useRef(null);
   const closeButtonRef = useRef(null);
   const previousFocusRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  const onNextRef = useRef(onNext);
+  const onPrevRef = useRef(onPrev);
 
-  const handleKeyDown = useCallback(
-    (e) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowRight' && onNext) onNext();
-      if (e.key === 'ArrowLeft' && onPrev) onPrev();
-    },
-    [onClose, onNext, onPrev]
-  );
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    onNextRef.current = onNext;
+    onPrevRef.current = onPrev;
+  }, [onClose, onNext, onPrev]);
 
   useEffect(() => {
     previousFocusRef.current = document.activeElement;
@@ -190,7 +190,9 @@ export default function Lightbox({ images, currentIndex, onClose, onNext, onPrev
     document.body.style.overflow = 'hidden';
 
     const handleDialogKeyDown = (event) => {
-      handleKeyDown(event);
+      if (event.key === 'Escape') onCloseRef.current?.();
+      if (event.key === 'ArrowRight') onNextRef.current?.();
+      if (event.key === 'ArrowLeft') onPrevRef.current?.();
 
       if (event.key !== 'Tab' || !dialogRef.current) return;
       const focusable = dialogRef.current.querySelectorAll(
@@ -216,7 +218,7 @@ export default function Lightbox({ images, currentIndex, onClose, onNext, onPrev
       document.body.style.overflow = '';
       previousFocusRef.current?.focus?.();
     };
-  }, [handleKeyDown]);
+  }, []);
 
   if (!images || images.length === 0 || currentIndex < 0 || currentIndex >= images.length) {
     return null;
