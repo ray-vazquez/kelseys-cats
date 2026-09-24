@@ -21,7 +21,7 @@ import http from '../api/http.js';
 const DetailGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: ${({ theme }) => theme.spacing[12]};
+  gap: ${({ theme }) => theme.spacing[10]};
   align-items: start;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
@@ -33,10 +33,10 @@ const DetailGrid = styled.div`
 const DetailContent = styled.div``;
 
 const CatHeader = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  margin-bottom: ${({ theme }) => theme.spacing[5]};
 `;
 
-const CatTitle = styled.h1`
+const CatTitle = styled.h2`
   font-size: ${({ theme }) => theme.fontSizes['4xl']};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   margin-bottom: ${({ theme }) => theme.spacing[3]};
@@ -77,8 +77,8 @@ const PartnerBanner = styled.div`
 `;
 
 const InfoSection = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
-  padding: ${({ theme }) => theme.spacing[6]};
+  margin-bottom: ${({ theme }) => theme.spacing[5]};
+  padding: ${({ theme }) => theme.spacing[5]};
   background: ${({ theme }) => theme.colors.light};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   border-left: 4px solid ${({ theme, $borderColor }) => $borderColor || theme.colors.primary};
@@ -150,8 +150,8 @@ const InfoListItem = styled.li`
 const ActionButtons = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing[4]};
-  margin-top: ${({ theme }) => theme.spacing[8]};
-  padding-top: ${({ theme }) => theme.spacing[8]};
+  margin-top: ${({ theme }) => theme.spacing[5]};
+  padding-top: ${({ theme }) => theme.spacing[5]};
   border-top: 2px solid ${({ theme }) => theme.colors.border};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
@@ -240,7 +240,7 @@ export default function PartnerCatDetailPage() {
           title="Loading..."
           compactTitle
         />
-        <Section $padding="lg">
+        <Section $padding="md">
           <Container>
             <DetailGrid>
               <div>
@@ -269,7 +269,7 @@ export default function PartnerCatDetailPage() {
           title="Cat Not Found"
           compactTitle
         />
-        <Section $padding="lg">
+        <Section $padding="md">
           <Container>
             <ErrorState
               icon="🐱"
@@ -315,7 +315,7 @@ export default function PartnerCatDetailPage() {
       />
 
       {/* Main Content */}
-      <Section $padding="lg">
+      <Section $padding="md">
         <Container>
           {/* Partner Foster Banner */}
           <PartnerBanner>
