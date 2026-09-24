@@ -213,14 +213,24 @@ export default function CsvImportModal({ onClose, onImported }) {
   const modalRef = useRef(null);
   const closeButtonRef = useRef(null);
   const previousFocusRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  const loadingRef = useRef(loading);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
 
   useEffect(() => {
     previousFocusRef.current = document.activeElement;
     closeButtonRef.current?.focus();
 
     const handleKeyDown = (event) => {
-      if (event.key === "Escape" && !loading) {
-        onClose();
+      if (event.key === "Escape" && !loadingRef.current) {
+        onCloseRef.current();
         return;
       }
 
@@ -248,7 +258,7 @@ export default function CsvImportModal({ onClose, onImported }) {
       document.removeEventListener("keydown", handleKeyDown);
       previousFocusRef.current?.focus?.();
     };
-  }, [loading, onClose]);
+  }, []);
 
   function handleFileChange(e) {
     const f = e.target.files?.[0];
