@@ -6,22 +6,22 @@ import { useAuth } from '../../context/AuthContext.jsx';
 
 const Nav = styled.nav`
   background-color: ${({ theme }) => theme.colors.secondary};
-  padding: ${({ theme }) => theme.spacing[4]} 0;
+  padding: ${({ theme }) => theme.spacing[3]} 0;
   box-shadow: ${({ theme }) => theme.shadows.base};
 `;
 
 const NavContainer = styled.div`
   max-width: 1140px;
   margin: 0 auto;
-  padding: 0 ${({ theme }) => theme.spacing[6]};
+  padding: 0 ${({ theme }) => theme.spacing[4]};
   display: flex;
   justify-content: space-between;
   align-items: center;
 `;
 
 const Brand = styled(Link)`
-  font-family: ${({ theme }) => theme.fonts.heading};
-  font-size: ${({ theme }) => theme.fontSizes['2xl']};
+  font-family: ${({ theme }) => theme.fonts.body};
+  font-size: ${({ theme }) => theme.fontSizes.xl};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   color: ${({ theme }) => theme.colors.white};
   text-decoration: none;
@@ -34,12 +34,18 @@ const Brand = styled(Link)`
 
 const NavLinks = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme.spacing[6]};
+  gap: ${({ theme }) => theme.spacing[4]};
   align-items: center;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    gap: ${({ theme }) => theme.spacing[2]};
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
 `;
 
 const NavLink = styled(Link)`
-  font-family: ${({ theme }) => theme.fonts.heading};
+  font-family: ${({ theme }) => theme.fonts.body};
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   text-transform: uppercase;
