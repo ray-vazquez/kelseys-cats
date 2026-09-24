@@ -142,7 +142,7 @@ const AdoptBtn = styled(Link)`
   }
 
   &:focus-visible {
-    outline: 2px solid ({ theme }) => theme.colors.primaryLight;
+    outline: 2px solid ${({ theme }) => theme.colors.primaryLight};
     outline-offset: 2px;
   }
 `;
