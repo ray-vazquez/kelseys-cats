@@ -37,7 +37,6 @@ export const GlobalStyles = createGlobalStyle`
     line-height: ${({ theme }) => theme.lineHeights.tight};
     letter-spacing: ${({ theme }) => theme.letterSpacings.tight};
     color: ${({ theme }) => theme.colors.text.primary};
-    margin-bottom: ${({ theme }) => theme.spacing[4]};
   }
 
   h1 {
@@ -74,24 +73,14 @@ export const GlobalStyles = createGlobalStyle`
 
   /* Typography - Paragraphs */
   p {
-    margin-bottom: ${({ theme }) => theme.spacing[4]};
     line-height: ${({ theme }) => theme.lineHeights.relaxed};
     color: ${({ theme }) => theme.colors.text.primary};
-
-    &:last-child {
-      margin-bottom: 0;
-    }
   }
 
   /* Typography - Lists */
   ul, ol {
-    margin-bottom: ${({ theme }) => theme.spacing[4]};
     padding-left: ${({ theme }) => theme.spacing[6]};
     line-height: ${({ theme }) => theme.lineHeights.relaxed};
-  }
-
-  li {
-    margin-bottom: ${({ theme }) => theme.spacing[2]};
   }
 
   /* Typography - Links */
@@ -174,7 +163,6 @@ export const GlobalStyles = createGlobalStyle`
     max-width: 100%;
     height: auto;
     display: block;
-    border-radius: ${({ theme }) => theme.borderRadius.base};
   }
 
   /* Buttons & Form Elements */
@@ -213,21 +201,21 @@ export const GlobalStyles = createGlobalStyle`
 
   /* Tables */
   table {
-    width: 100%;
     border-collapse: collapse;
-    margin-bottom: ${({ theme }) => theme.spacing[4]};
   }
 
-  th, td {
-    padding: ${({ theme }) => theme.spacing[3]};
-    text-align: left;
-    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  }
+  /* Reduced motion baseline */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
 
-  th {
-    font-weight: ${({ theme }) => theme.fontWeights.semibold};
-    color: ${({ theme }) => theme.colors.text.primary};
-    background-color: ${({ theme }) => theme.colors.neutral[50]};
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   /* Focus-visible polyfill for better keyboard navigation */
