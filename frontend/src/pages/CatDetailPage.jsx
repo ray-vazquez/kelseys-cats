@@ -209,7 +209,7 @@ export default function CatDetailPage() {
           title="Cat Not Found"
           compactTitle
         />
-        <Section $padding="lg">
+        <Section $padding="md">
           <Container>
             <ErrorState
               icon="🐱"
@@ -289,7 +289,7 @@ export default function CatDetailPage() {
       />
 
       {/* Main Content */}
-      <Section $padding="lg">
+      <Section $padding="md">
         <Container>
           {/* Status Alert */}
           {!isAvailable && (
