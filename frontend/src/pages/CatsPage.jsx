@@ -30,12 +30,16 @@ import PaginationControls from "../components/Common/PaginationControls.jsx";
 // Fixed wrapper - no margin change
 const FilterWrapper = styled.div`
   position: relative;
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    margin-bottom: ${({ theme }) => theme.spacing[4]};
+  }
 `;
 
 const FilterSection = styled.div`
   background: ${({ theme }) => theme.colors.white};
-  padding: ${({ theme }) => theme.spacing[6]};
+  padding: ${({ theme }) => theme.spacing[5]};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   box-shadow: ${({ theme }) => theme.shadows.sm};
   border: 1px solid ${({ theme }) => theme.colors.border};
@@ -84,46 +88,22 @@ const SearchInput = styled(Input)`
   }
 `;
 
-// Overlay that blocks content behind when expanded - like select dropdown behavior
-const FilterOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 50;
-  opacity: ${({ $isOpen }) => ($isOpen ? "1" : "0")};
-  pointer-events: ${({ $isOpen }) => ($isOpen ? "auto" : "none")};
-  transition: opacity 0.3s ease-in-out;
-  backdrop-filter: blur(2px);
-`;
-
-// Advanced filters now use absolute positioning to overlay content
 const AdvancedFiltersContainer = styled.div`
-  position: ${({ $isOpen }) => ($isOpen ? "absolute" : "relative")};
-  top: ${({ $isOpen }) => ($isOpen ? "100%" : "auto")};
-  left: ${({ $isOpen }) => ($isOpen ? "0" : "auto")};
-  right: ${({ $isOpen }) => ($isOpen ? "0" : "auto")};
-  max-height: ${({ $isOpen }) => ($isOpen ? "600px" : "0")};
+  max-height: ${({ $isOpen }) => ($isOpen ? "1000px" : "0")};
   opacity: ${({ $isOpen }) => ($isOpen ? "1" : "0")};
-  overflow: ${({ $isOpen }) => ($isOpen ? "visible" : "hidden")};
+  overflow: hidden;
+  visibility: ${({ $isOpen }) => ($isOpen ? "visible" : "hidden")};
   transition:
-    max-height 0.3s ease-in-out,
-    opacity 0.3s ease-in-out;
-  background: ${({ theme, $isOpen }) =>
-    $isOpen ? theme.colors.white : "transparent"};
-  z-index: ${({ $isOpen }) => ($isOpen ? "60" : "1")};
+    max-height 0.25s ease-in-out,
+    opacity 0.2s ease-in-out;
+  margin-top: ${({ $isOpen, theme }) => ($isOpen ? theme.spacing[4] : "0")};
+  padding-top: ${({ $isOpen, theme }) => ($isOpen ? theme.spacing[4] : "0")};
+  border-top: ${({ $isOpen, theme }) =>
+    $isOpen ? `1px solid ${theme.colors.border}` : "0"};
 
-  ${({ $isOpen, theme }) =>
-    $isOpen &&
-    `
-    margin-top: ${theme.spacing[2]};
-    padding: ${theme.spacing[6]};
-    border-radius: ${theme.borderRadius.lg};
-    box-shadow: ${theme.shadows.lg};
-    border: 1px solid ${theme.colors.border};
-  `}
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 
 const FilterGrid = styled.div`
@@ -226,12 +206,12 @@ const FilterBadge = styled(Badge)`
 const ResultsCount = styled.p`
   font-size: ${({ theme }) => theme.fontSizes.sm};
   color: ${({ theme }) => theme.colors.text.secondary};
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
-  text-align: center;
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
+  text-align: left;
 `;
 
 const CardBody = styled.div`
-  padding: ${({ theme }) => theme.spacing[6]};
+  padding: ${({ theme }) => theme.spacing[5]};
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -259,16 +239,10 @@ const StatsBarContainer = styled.div`
 
 const StatsBar = styled.div`
   display: flex;
-  justify-content:;
-  gap: ${({ theme }) => theme.spacing[8]};
-  padding-bottom: ${({ theme }) => theme.spacing[4]};
-  background: ${({ theme }) => theme.colors.light};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    flex-direction: column;
-    gap: ${({ theme }) => theme.spacing[4]};
-  }
+  flex-wrap: wrap;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[6]};
+  padding-bottom: ${({ theme }) => theme.spacing[3]};
 `;
 
 const StatItem = styled.div`
@@ -300,6 +274,11 @@ const ExpandToggle = styled.button`
 
   &:hover {
     text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.focus};
+    outline-offset: 3px;
   }
 `;
 
@@ -370,6 +349,19 @@ export default function CatsPage() {
   useEffect(() => {
     fetchCats();
   }, [searchQuery, filters]);
+
+  useEffect(() => {
+    if (!showAdvancedFilters) return undefined;
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setShowAdvancedFilters(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [showAdvancedFilters]);
 
   const filteredCats = useMemo(() => {
     return [
@@ -541,7 +533,7 @@ export default function CatsPage() {
     <>
       <SectionHero
         variant="gradient"
-        size="md"
+        size="sm"
         title="Adoptable Cats"
         subtitle="Find your perfect feline companion from cats in our care and other VFV foster homes"
         actions={
@@ -553,14 +545,6 @@ export default function CatsPage() {
 
       <Section $padding="sm">
         <Container>
-          {/* Background stats area with stable height */}
-
-          {/* Overlay to block content when filters expanded */}
-          <FilterOverlay
-            $isOpen={showAdvancedFilters}
-            onClick={() => setShowAdvancedFilters(false)}
-          />
-
           <FilterWrapper>
             <FilterSection $isExpanded={showAdvancedFilters}>
               <FilterTitle>
@@ -568,6 +552,8 @@ export default function CatsPage() {
                 <ExpandToggle
                   type="button"
                   onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  aria-expanded={showAdvancedFilters}
+                  aria-controls="advanced-cat-filters"
                 >
                   {showAdvancedFilters ? "▲ Hide" : "▼ Show"} Advanced Filters
                 </ExpandToggle>
@@ -603,12 +589,13 @@ export default function CatsPage() {
               {/* NEW: Compact stats line above the search bar */}
               <SearchHeader>
                 <SearchStatsLine>
-                  <TextSmall>{statsText}</TextSmall>
+                  <TextSmall role="status" aria-live="polite">{statsText}</TextSmall>
                 </SearchStatsLine>
 
                 <SearchBar>
                   <SearchInput
-                    type="text"
+                    type="search"
+                    aria-label="Search adoptable cats"
                     placeholder="Search by name, breed, bio, temperament, or medical notes..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -625,8 +612,11 @@ export default function CatsPage() {
                 </SearchBar>
               </SearchHeader>
 
-              {/* Advanced filters with overlay behavior */}
-              <AdvancedFiltersContainer $isOpen={showAdvancedFilters}>
+              <AdvancedFiltersContainer
+                id="advanced-cat-filters"
+                $isOpen={showAdvancedFilters}
+                aria-hidden={!showAdvancedFilters}
+              >
                 <FilterGrid>
                   <FilterGroup>
                     <FilterLabel>Age Range (years)</FilterLabel>
@@ -636,6 +626,7 @@ export default function CatsPage() {
                         min="0"
                         step="1"
                         placeholder="Min"
+                        aria-label="Minimum age in years"
                         value={filters.minAge}
                         onChange={(e) =>
                           handleFilterChange("minAge", e.target.value)
@@ -647,6 +638,7 @@ export default function CatsPage() {
                         min="0"
                         step="1"
                         placeholder="Max"
+                        aria-label="Maximum age in years"
                         value={filters.maxAge}
                         onChange={(e) =>
                           handleFilterChange("maxAge", e.target.value)
@@ -656,8 +648,9 @@ export default function CatsPage() {
                   </FilterGroup>
 
                   <FilterGroup>
-                    <FilterLabel>sex</FilterLabel>
+                    <FilterLabel>Sex</FilterLabel>
                     <Select
+                      aria-label="Sex"
                       value={filters.sex}
                       onChange={(e) =>
                         handleFilterChange("sex", e.target.value)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 
@@ -140,6 +140,11 @@ const AdoptBtn = styled(Link)`
   &:active {
     transform: translateY(0);
   }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.primaryLight};
+    outline-offset: 2px;
+  }
 `;
 
 const HamburgerBtn = styled.button`
@@ -234,6 +239,11 @@ const MobileNavLink = styled(Link)`
     text-decoration: none;
   }
 
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.primaryLight};
+    outline-offset: 2px;
+  }
+
   &:last-of-type {
     border-bottom: none;
   }
@@ -264,6 +274,7 @@ export default function PublicNavbar() {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const menuButtonRef = useRef(null);
 
   const isHome = location.pathname === '/';
 
@@ -279,6 +290,20 @@ export default function PublicNavbar() {
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setMobileOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [mobileOpen]);
 
   const isActive = (path) =>
     path === '/'
@@ -320,6 +345,7 @@ export default function PublicNavbar() {
           </NavRight>
 
           <HamburgerBtn
+            ref={menuButtonRef}
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileOpen}
             aria-controls="mobile-nav"

@@ -31,10 +31,10 @@ const DetailGrid = styled.div`
 const DetailContent = styled.div``;
 
 const CatHeader = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  margin-bottom: ${({ theme }) => theme.spacing[5]};
 `;
 
-const CatTitle = styled.h1`
+const CatTitle = styled.h2`
   font-size: ${({ theme }) => theme.fontSizes["4xl"]};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   margin-bottom: ${({ theme }) => theme.spacing[3]};
@@ -56,17 +56,25 @@ const BadgeGroup = styled.div`
 `;
 
 const InfoSection = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
-  padding: ${({ theme }) => theme.spacing[6]};
+  margin-bottom: ${({ theme }) => theme.spacing[5]};
+  padding: ${({ theme }) => theme.spacing[5]};
   background: ${({ theme }) => theme.colors.light};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   border-left: 4px solid ${({ theme }) => theme.colors.primary};
 `;
 
+const CompactInfoSection = styled(InfoSection)`
+  padding: ${({ theme }) => theme.spacing[4]} 0;
+  background: transparent;
+  border-radius: 0;
+  border-left: 0;
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
 const InfoTitle = styled.h3`
   font-size: ${({ theme }) => theme.fontSizes.xl};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
@@ -102,8 +110,8 @@ const InfoListItem = styled.li`
 const ActionButtons = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing[4]};
-  margin-top: ${({ theme }) => theme.spacing[8]};
-  padding-top: ${({ theme }) => theme.spacing[8]};
+  margin-top: ${({ theme }) => theme.spacing[5]};
+  padding-top: ${({ theme }) => theme.spacing[5]};
   border-top: 2px solid ${({ theme }) => theme.colors.border};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
@@ -180,7 +188,7 @@ export default function CatDetailPage() {
           title="Loading..."
           compactTitle
         />
-        <Section $padding="lg">
+        <Section $padding="md">
           <Container>
             <DetailGrid>
               <div>
@@ -209,7 +217,7 @@ export default function CatDetailPage() {
           title="Cat Not Found"
           compactTitle
         />
-        <Section $padding="lg">
+        <Section $padding="md">
           <Container>
             <ErrorState
               icon="🐱"
@@ -289,7 +297,7 @@ export default function CatDetailPage() {
       />
 
       {/* Main Content */}
-      <Section $padding="lg">
+      <Section $padding="md">
         <Container>
           {/* Status Alert */}
           {!isAvailable && (
@@ -349,7 +357,7 @@ export default function CatDetailPage() {
 
               {/* Personality & Temperament (grouped temperament tags) */}
               {!tagsLoading && hasTemperament && (
-                <InfoSection>
+                <CompactInfoSection>
                   <InfoTitle>Personality &amp; Temperament</InfoTitle>
                   <BadgeGroup>
                     {temperamentTags.map((tag) => (
@@ -358,12 +366,12 @@ export default function CatDetailPage() {
                       </Badge>
                     ))}
                   </BadgeGroup>
-                </InfoSection>
+                </CompactInfoSection>
               )}
 
               {/* Medical Information (grouped medical tags) */}
               {!tagsLoading && hasMedical && (
-                <InfoSection>
+                <CompactInfoSection>
                   <InfoTitle>Medical Information</InfoTitle>
                   <BadgeGroup>
                     {medicalTags.map((tag) => (
@@ -372,15 +380,15 @@ export default function CatDetailPage() {
                       </Badge>
                     ))}
                   </BadgeGroup>
-                </InfoSection>
+                </CompactInfoSection>
               )}
 
               {/* Optional lightweight tags loading state */}
               {tagsLoading && (
-                <InfoSection>
+                <CompactInfoSection>
                   <InfoTitle>Personality &amp; Temperament</InfoTitle>
                   <InfoText>Loading tags...</InfoText>
-                </InfoSection>
+                </CompactInfoSection>
               )}
 
               {/* Optional subtle error when no tags to show */}
@@ -391,7 +399,7 @@ export default function CatDetailPage() {
               )}
 
               {/* Good With */}
-              <InfoSection>
+              <CompactInfoSection>
                 <InfoTitle>Good With</InfoTitle>
                 <InfoList>
                   <InfoListItem>
@@ -407,7 +415,7 @@ export default function CatDetailPage() {
                     <span>{cat.good_with_dogs ? "✅ Yes" : "❌ No"}</span>
                   </InfoListItem>
                 </InfoList>
-              </InfoSection>
+              </CompactInfoSection>
 
               {/* Action Buttons */}
               <ActionButtons>

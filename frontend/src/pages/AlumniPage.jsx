@@ -25,10 +25,10 @@ import PaginationControls from "../components/Common/PaginationControls.jsx";
 
 const FilterSection = styled.div`
   background: ${({ theme }) => theme.colors.white};
-  padding: ${({ theme }) => theme.spacing[6]};
+  padding: ${({ theme }) => theme.spacing[5]};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   box-shadow: ${({ theme }) => theme.shadows.sm};
-  margin-bottom: ${({ theme }) => theme.spacing[8]};
+  margin-bottom: ${({ theme }) => theme.spacing[6]};
   border: 1px solid ${({ theme }) => theme.colors.border};
   max-width: 400px;
 `;
@@ -36,8 +36,8 @@ const FilterSection = styled.div`
 const ResultsCount = styled.p`
   font-size: ${({ theme }) => theme.fontSizes.sm};
   color: ${({ theme }) => theme.colors.text.secondary};
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
-  text-align: center;
+  margin-bottom: ${({ theme }) => theme.spacing[4]};
+  text-align: left;
 `;
 
 const AdoptionDate = styled.p`
@@ -55,7 +55,7 @@ const AdoptionDate = styled.p`
 
 // Updated CardBody with flexbox to push button to bottom
 const CardBody = styled.div`
-  padding: ${({ theme }) => theme.spacing[6]};
+  padding: ${({ theme }) => theme.spacing[5]};
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -153,7 +153,7 @@ export default function AlumniPage() {
       {/* Hero Section */}
       <SectionHero
         variant="gradient"
-        size="md"
+        size="sm"
         title="Alumni Cats"
         subtitle="A keepsake gallery celebrating all the wonderful cats we've placed in loving forever homes. Each one has found their happy ending."
         actions={
@@ -164,7 +164,7 @@ export default function AlumniPage() {
       />
 
       {/* Main Content */}
-      <Section $padding="lg" $bg="light">
+      <Section $padding="md" $bg="light">
         <Container>
           {/* Filter Section */}
           <FilterSection>
