@@ -13,7 +13,7 @@ const PageContainer = styled.div`
 `;
 
 const ControlPanel = styled.div`
-  background: ${({ theme }) => theme.colors.background.secondary};
+  background: ${({ theme }) => theme.colors.light};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   padding: ${({ theme }) => theme.spacing[8]};
   margin-bottom: ${({ theme }) => theme.spacing[8]};
@@ -30,9 +30,9 @@ const ButtonGroup = styled.div`
 const Button = styled.button`
   padding: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]};
   background: ${({ theme, variant }) => 
-    variant === 'danger' ? theme.colors.error?.main || '#dc2626' :
-    variant === 'secondary' ? theme.colors.background.tertiary :
-    theme.colors.primary.main};
+    variant === 'danger' ? theme.colors.danger :
+    variant === 'secondary' ? theme.colors.lightHover :
+    theme.colors.primary};
   color: ${({ theme, variant }) => 
     variant === 'secondary' ? theme.colors.text.primary : 
     variant === 'danger' ? 'white' :
@@ -73,7 +73,7 @@ const StatusGrid = styled.div`
 `;
 
 const StatBox = styled.div`
-  background: ${({ theme }) => theme.colors.background.secondary};
+  background: ${({ theme }) => theme.colors.light};
   padding: ${({ theme }) => theme.spacing[4]};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   text-align: center;
@@ -87,7 +87,7 @@ const StatBox = styled.div`
   .value {
     font-size: ${({ theme }) => theme.fontSizes['2xl']};
     font-weight: ${({ theme }) => theme.fontWeights.bold};
-    color: ${({ theme }) => theme.colors.primary.main};
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
@@ -123,7 +123,7 @@ const Badge = styled.span`
     status === 'running' ? '#dbeafe' :
     status === 'success' ? '#d1fae5' :
     status === 'error' ? '#fee2e2' :
-    theme.colors.background.tertiary};
+    theme.colors.lightHover};
   color: ${({ status }) => 
     status === 'running' ? '#1e40af' :
     status === 'success' ? '#065f46' :
