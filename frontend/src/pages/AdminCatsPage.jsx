@@ -514,6 +514,7 @@ export default function AdminCatsPage() {
 
               {data.total > data.limit && (
                 <PaginationControls
+                  density="compact"
                   page={data.page}
                   limit={data.limit}
                   total={data.total}
