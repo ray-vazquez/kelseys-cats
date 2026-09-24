@@ -1,177 +1,138 @@
-// frontend/src/pages/AdminScraperPage.jsx
-// Admin page for controlling and monitoring the Adopt-a-Pet scraper
-
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { Container } from '../components/Common/StyledComponents.js';
+import { Container, Button } from '../components/Common/StyledComponents.js';
 import http from '../api/http.js';
 
 const PageShell = styled.div`
-  padding: ${({ theme }) => theme.spacing[8]} 0;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: ${({ theme }) => theme.spacing[6]} 0;
-  }
+  padding: ${({ theme }) => theme.spacing[5]} 0 ${({ theme }) => theme.spacing[8]};
 `;
 
 const PageHeader = styled.header`
-  margin-bottom: ${({ theme }) => theme.spacing[5]};
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
 
   h1 {
-    font-size: ${({ theme }) => theme.fontSizes['3xl']};
-    margin-bottom: ${({ theme }) => theme.spacing[1]};
+    font-size: ${({ theme }) => theme.fontSizes['2xl']};
+    margin: 0 0 ${({ theme }) => theme.spacing[1]};
   }
 
   p {
     color: ${({ theme }) => theme.colors.text.secondary};
     margin: 0;
+    font-size: ${({ theme }) => theme.fontSizes.sm};
   }
 `;
 
-const PageContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-const ScraperInfo = styled.div`
-  color: #0c4a6e;
-  line-height: 1.7;
-
-  p + p {
-    margin-top: ${({ theme }) => theme.spacing[2]};
-  }
-
-  .schedule-note {
-    margin-top: ${({ theme }) => theme.spacing[4]};
-    font-size: 14px;
-  }
-`;
-
-const ControlPanel = styled.div`
-  background: ${({ theme }) => theme.colors.light};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
+const Panel = styled.section`
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.base};
   padding: ${({ theme }) => theme.spacing[3]};
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
+  background: ${({ theme }) => theme.colors.white};
 `;
 
-const ButtonGroup = styled.div`
+const PanelTitle = styled.h2`
+  font-size: ${({ theme }) => theme.fontSizes.lg};
+  margin: 0 0 ${({ theme }) => theme.spacing[2]};
+`;
+
+const ControlRow = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing[2]};
   flex-wrap: wrap;
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
-`;
 
-const Button = styled.button`
-  min-height: 40px;
-  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[4]};
-  background: ${({ theme, variant }) => 
-    variant === 'danger' ? theme.colors.danger :
-    variant === 'secondary' ? theme.colors.lightHover :
-    theme.colors.primary};
-  color: ${({ theme, variant }) => 
-    variant === 'secondary' ? theme.colors.text.primary : 
-    variant === 'danger' ? 'white' :
-    variant === 'primary' ? '#1e293b' :
-    'white'};
-  border: none;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-weight: ${({ theme }) => theme.fontWeights.semibold};
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: ${({ theme }) => theme.fontSizes.base};
-  
-  &:hover:not(:disabled) {
-    opacity: 0.9;
-    transform: translateY(-1px);
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    & > * {
+      flex: 1 1 150px;
+    }
   }
-  
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
-const StatusCard = styled.div`
-  background: white;
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  padding: ${({ theme }) => theme.spacing[4]};
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
-  border: 2px solid ${({ theme }) => theme.colors.border};
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 `;
 
 const StatusGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: ${({ theme }) => theme.spacing[3]};
-  margin-top: ${({ theme }) => theme.spacing[3]};
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: ${({ theme }) => theme.spacing[2]};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    grid-template-columns: 1fr;
+  }
 `;
 
-const StatBox = styled.div`
-  background: ${({ theme }) => theme.colors.light};
-  padding: ${({ theme }) => theme.spacing[4]};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  text-align: center;
-  
+const Stat = styled.div`
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+  background: ${({ theme }) => theme.colors.neutral[50]};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+
   .label {
-    font-size: ${({ theme }) => theme.fontSizes.sm};
+    font-size: ${({ theme }) => theme.fontSizes.xs};
     color: ${({ theme }) => theme.colors.text.secondary};
-    margin-bottom: ${({ theme }) => theme.spacing[2]};
   }
-  
-  .value {
-    font-size: ${({ theme }) => theme.fontSizes['2xl']};
-    font-weight: ${({ theme }) => theme.fontWeights.bold};
-    color: ${({ theme }) => theme.colors.primary};
-  }
-`;
 
-const LogContainer = styled.div`
-  background: #1e1e1e;
-  color: #d4d4d4;
-  padding: ${({ theme }) => theme.spacing[4]};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 13px;
-  max-height: 500px;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
-  
-  .log-line {
-    margin-bottom: 4px;
-    
-    &.success { color: #4ade80; }
-    &.error { color: #f87171; }
-    &.warning { color: #fbbf24; }
-    &.info { color: #60a5fa; }
+  .value {
+    margin-top: 2px;
+    font-size: ${({ theme }) => theme.fontSizes.lg};
+    font-weight: ${({ theme }) => theme.fontWeights.bold};
+    color: ${({ theme }) => theme.colors.text.primary};
+    overflow-wrap: anywhere;
   }
 `;
 
 const Badge = styled.span`
   display: inline-block;
-  padding: ${({ theme }) => theme.spacing[1]} ${({ theme }) => theme.spacing[3]};
-  border-radius: ${({ theme }) => theme.borderRadius.full};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
+  padding: 2px ${({ theme }) => theme.spacing[2]};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  font-size: ${({ theme }) => theme.fontSizes.xs};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
-  background: ${({ status, theme }) => 
-    status === 'running' ? '#dbeafe' :
-    status === 'success' ? '#d1fae5' :
-    status === 'error' ? '#fee2e2' :
-    theme.colors.lightHover};
-  color: ${({ status }) => 
-    status === 'running' ? '#1e40af' :
-    status === 'success' ? '#065f46' :
-    status === 'error' ? '#991b1b' :
-    '#4b5563'};
+  background: ${({ status }) => status === 'running' ? '#dbeafe' : '#e5e7eb'};
+  color: ${({ status }) => status === 'running' ? '#1e40af' : '#374151'};
 `;
 
-const Title = styled.h2`
-  font-size: ${({ theme }) => theme.fontSizes.xl};
-  font-weight: ${({ theme }) => theme.fontWeights.bold};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: ${({ theme }) => theme.spacing[3]};
+const ErrorBox = styled.div`
+  margin-top: ${({ theme }) => theme.spacing[3]};
+  padding: ${({ theme }) => theme.spacing[2]} ${({ theme }) => theme.spacing[3]};
+  border: 1px solid ${({ theme }) => theme.colors.danger};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  color: ${({ theme }) => theme.colors.danger};
+  background: ${({ theme }) => theme.colors.dangerLight};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+`;
+
+const LogContainer = styled.div`
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.45;
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  .log-line + .log-line { margin-top: 3px; }
+  .success { color: #4ade80; }
+  .error { color: #f87171; }
+  .warning { color: #fbbf24; }
+  .info { color: #60a5fa; }
+`;
+
+const Details = styled.details`
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  padding-top: ${({ theme }) => theme.spacing[3]};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+
+  summary {
+    cursor: pointer;
+    color: ${({ theme }) => theme.colors.text.primary};
+    font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  }
+
+  p { margin: ${({ theme }) => theme.spacing[2]} 0 0; }
 `;
 
 export default function AdminScraperPage() {
@@ -182,17 +143,13 @@ export default function AdminScraperPage() {
   const [error, setError] = useState(null);
   const logContainerRef = useRef(null);
 
-  // Auto-scroll logs to bottom
   useEffect(() => {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [logs]);
 
-  // Fetch initial status
-  useEffect(() => {
-    fetchStatus();
-  }, []);
+  useEffect(() => { fetchStatus(); }, []);
 
   const fetchStatus = async () => {
     try {
@@ -200,6 +157,7 @@ export default function AdminScraperPage() {
       setStatus(response.data);
     } catch (err) {
       console.error('Error fetching scraper status:', err);
+      setError('Unable to refresh scraper status.');
     }
   };
 
@@ -209,284 +167,132 @@ export default function AdminScraperPage() {
   };
 
   const runFullScrape = async () => {
-    setLoading(true);
-    setError(null);
-    setLogs([]);
-    addLog('🚀 Starting full scrape cycle...', 'info');
-    addLog('⏳ This may take 20-60 seconds...', 'info');
-    
+    setLoading(true); setError(null); setLogs([]);
+    addLog('Starting full scrape cycle...');
     try {
       const response = await http.post('/admin/scrape/full');
       setLastResult(response.data);
-      
-      // Handle nested data structure (response.data.data or response.data.scrape)
       const scrapeData = response.data.data?.scrape || response.data.scrape;
       const cleanupData = response.data.data?.cleanup || response.data.cleanup;
-      
-      addLog('✅ Scrape completed successfully!', 'success');
-      addLog(`📦 Total cats scraped: ${scrapeData?.total || 0}`, 'info');
-      addLog(`➕ Added: ${scrapeData?.added || 0}`, 'success');
-      addLog(`✏️ Updated: ${scrapeData?.updated || 0}`, 'info');
-      addLog(`⏭️ Skipped: ${scrapeData?.skipped || 0}`, 'info');
-      if (scrapeData?.errors > 0) {
-        addLog(`❌ Errors: ${scrapeData.errors}`, 'error');
-      }
-      
-      // Show validation stats if available
+      addLog('Scrape completed successfully.', 'success');
+      addLog(`Total: ${scrapeData?.total || 0}; added: ${scrapeData?.added || 0}; updated: ${scrapeData?.updated || 0}; skipped: ${scrapeData?.skipped || 0}`, 'info');
+      if (scrapeData?.errors > 0) addLog(`Errors: ${scrapeData.errors}`, 'error');
       if (scrapeData?.validation) {
         const val = scrapeData.validation;
-        addLog(`📊 Validation: ${val.valid}/${val.total} valid (${((1 - val.errorRate) * 100).toFixed(1)}%)`, 'info');
-        if (val.withWarnings > 0) {
-          addLog(`⚠️  Warnings: ${val.withWarnings}`, 'warning');
-        }
+        addLog(`Validation: ${val.valid}/${val.total} valid`, val.withWarnings > 0 ? 'warning' : 'info');
       }
-      
-      addLog(`🗑️ Cleaned up: ${cleanupData?.deleted || 0} old entries`, 'info');
-      addLog('✅ Full scrape cycle complete!', 'success');
-      
+      addLog(`Cleaned up: ${cleanupData?.deleted || 0} old entries`, 'info');
       await fetchStatus();
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.message;
-      setError(errorMsg);
-      addLog(`❌ Error: ${errorMsg}`, 'error');
-    } finally {
-      setLoading(false);
-    }
+      setError(errorMsg); addLog(`Error: ${errorMsg}`, 'error');
+    } finally { setLoading(false); }
   };
 
   const runScrapeOnly = async () => {
-    setLoading(true);
-    setError(null);
-    setLogs([]);
-    addLog('🤖 Starting Adopt-a-Pet scrape...', 'info');
-    addLog('⏳ This may take 20-60 seconds...', 'info');
-    
+    setLoading(true); setError(null); setLogs([]);
+    addLog('Starting Adopt-a-Pet scrape...');
     try {
       const response = await http.post('/admin/scrape/adoptapet');
       setLastResult(response.data);
-      
-      // Handle both response formats: direct data or nested under .data
       const scrapeData = response.data.data || response.data;
-      
-      addLog('✅ Scrape completed!', 'success');
-      addLog(`📦 Total cats scraped: ${scrapeData?.total || 0}`, 'info');
-      addLog(`➕ Added: ${scrapeData?.added || 0}`, 'success');
-      addLog(`✏️ Updated: ${scrapeData?.updated || 0}`, 'info');
-      addLog(`⏭️ Skipped: ${scrapeData?.skipped || 0}`, 'info');
-      if (scrapeData?.errors > 0) {
-        addLog(`❌ Errors: ${scrapeData.errors}`, 'error');
-      }
-      
-      // Show validation stats if available
-      if (scrapeData?.validation) {
-        const val = scrapeData.validation;
-        addLog(`📊 Validation: ${val.valid}/${val.total} valid (${((1 - val.errorRate) * 100).toFixed(1)}%)`, 'info');
-        if (val.withWarnings > 0) {
-          addLog(`⚠️  Warnings: ${val.withWarnings}`, 'warning');
-        }
-      }
-      
+      addLog('Scrape completed.', 'success');
+      addLog(`Total: ${scrapeData?.total || 0}; added: ${scrapeData?.added || 0}; updated: ${scrapeData?.updated || 0}; skipped: ${scrapeData?.skipped || 0}`, 'info');
+      if (scrapeData?.errors > 0) addLog(`Errors: ${scrapeData.errors}`, 'error');
       await fetchStatus();
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.message;
-      setError(errorMsg);
-      addLog(`❌ Error: ${errorMsg}`, 'error');
-    } finally {
-      setLoading(false);
-    }
+      setError(errorMsg); addLog(`Error: ${errorMsg}`, 'error');
+    } finally { setLoading(false); }
   };
 
   const runCleanup = async () => {
-    setLoading(true);
-    setError(null);
-    setLogs([]);
-    addLog('🧹 Running cleanup...', 'info');
-    
+    setLoading(true); setError(null); setLogs([]);
+    addLog('Running cleanup...');
     try {
       const response = await http.post('/admin/scrape/cleanup', { daysOld: 7 });
-      addLog('✅ Cleanup completed!', 'success');
-      addLog(`🗑️ Deleted ${response.data.deleted || 0} old entries`, 'info');
-      
+      addLog(`Cleanup completed. Deleted ${response.data.deleted || 0} old entries.`, 'success');
       await fetchStatus();
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.message;
-      setError(errorMsg);
-      addLog(`❌ Error: ${errorMsg}`, 'error');
-    } finally {
-      setLoading(false);
-    }
+      setError(errorMsg); addLog(`Error: ${errorMsg}`, 'error');
+    } finally { setLoading(false); }
   };
 
   const stopScraper = async () => {
     try {
-      addLog('🛑 Stop requested...', 'warning');
+      addLog('Stop requested...', 'warning');
       await http.post('/admin/scrape/stop');
-      addLog('🛑 Scraper will stop after current operation', 'warning');
+      addLog('Scraper will stop after the current operation.', 'warning');
       setLoading(false);
     } catch (err) {
-      addLog(`❌ Could not stop scraper: ${err.message}`, 'error');
+      addLog(`Could not stop scraper: ${err.message}`, 'error');
     }
   };
+
+  const result = lastResult?.data?.scrape || lastResult?.scrape || lastResult?.data || lastResult;
 
   return (
     <PageShell>
       <Container $density="compact">
-        <PageContainer>
-          <PageHeader>
-            <h1>Scraper Control Panel</h1>
-            <p>Manage Voice for the Voiceless cat imports from Adopt-a-Pet</p>
-          </PageHeader>
-            {/* Info - Moved to top */}
-            <StatusCard style={{ background: '#f0f9ff', borderColor: '#bae6fd' }}>
-              <Title>ℹ️ About the Scraper</Title>
-              <ScraperInfo>
-                <p><strong>Full Scrape:</strong> Scrapes all VFV cats from Adopt-a-Pet, saves to database, and removes old entries (7+ days)</p>
-                <p><strong>Scrape Only:</strong> Only fetches and updates cat data without cleanup</p>
-                <p><strong>Cleanup Only:</strong> Removes partner foster cats not updated in 7+ days</p>
-                <p className="schedule-note">
-                  ⏰ <strong>Automatic scraping runs daily at 3:00 AM EST</strong>
-                </p>
-              </ScraperInfo>
-            </StatusCard>
+        <PageHeader>
+          <h1>Scraper</h1>
+          <p>Monitor and run Voice for the Voiceless imports from Adopt-a-Pet.</p>
+        </PageHeader>
 
-            {/* Control Panel */}
-            <ControlPanel>
-              <Title>🎛️ Scraper Controls</Title>
-              <ButtonGroup>
-                <Button 
-                  variant="primary"
-                  onClick={runFullScrape} 
-                  disabled={loading}
-                >
-                  {loading ? '⏳ Running...' : '🚀 Run Full Scrape'}
-                </Button>
-                <Button 
-                  variant="secondary"
-                  onClick={runScrapeOnly} 
-                  disabled={loading}
-                >
-                  🤖 Scrape Only
-                </Button>
-                <Button 
-                  variant="secondary"
-                  onClick={runCleanup} 
-                  disabled={loading}
-                >
-                  🧹 Cleanup Only
-                </Button>
-                <Button 
-                  variant="danger"
-                  onClick={stopScraper}
-                  disabled={!loading}
-                >
-                  🛑 Stop Scraper
-                </Button>
-                <Button 
-                  variant="secondary"
-                  onClick={fetchStatus}
-                  disabled={loading}
-                >
-                  🔄 Refresh Status
-                </Button>
-              </ButtonGroup>
+        <Panel aria-labelledby="scraper-status-title">
+          <PanelTitle id="scraper-status-title">Current status</PanelTitle>
+          <StatusGrid>
+            <Stat><div className="label">State</div><div className="value"><Badge status={loading ? 'running' : 'idle'}>{loading ? 'Running' : 'Idle'}</Badge></div></Stat>
+            <Stat><div className="label">Total partner cats</div><div className="value">{status?.totalPartnerCats ?? '—'}</div></Stat>
+            <Stat><div className="label">In Kelsey’s care</div><div className="value">{status?.catsInKelseysCare ?? '—'}</div></Stat>
+            <Stat><div className="label">Last scrape</div><div className="value" style={{fontSize:'0.875rem'}}>{status?.lastScrapeTime || 'Never'}</div></Stat>
+          </StatusGrid>
+        </Panel>
 
-              {error && (
-                <StatusCard style={{ background: '#fee2e2', borderColor: '#f87171' }}>
-                  <div style={{ color: '#991b1b', fontWeight: 600 }}>
-                    ❌ Error: {error}
-                  </div>
-                </StatusCard>
-              )}
-            </ControlPanel>
+        <Panel aria-labelledby="scraper-controls-title">
+          <PanelTitle id="scraper-controls-title">Controls</PanelTitle>
+          <ControlRow>
+            <Button $size="sm" onClick={runFullScrape} disabled={loading}>{loading ? 'Running…' : 'Run Full Scrape'}</Button>
+            <Button $size="sm" $variant="outline" onClick={runScrapeOnly} disabled={loading}>Scrape Only</Button>
+            <Button $size="sm" $variant="outline" onClick={runCleanup} disabled={loading}>Cleanup Only</Button>
+            <Button $size="sm" $variant="danger" onClick={stopScraper} disabled={!loading}>Stop</Button>
+            <Button $size="sm" $variant="outline" onClick={fetchStatus} disabled={loading}>Refresh Status</Button>
+          </ControlRow>
+          {error && <ErrorBox role="alert">{error}</ErrorBox>}
+        </Panel>
 
-            {/* Current Status */}
-            {status && (
-              <StatusCard>
-                <Title>📊 Current Status</Title>
-                <StatusGrid>
-                  <StatBox>
-                    <div className="label">Total Partner Cats</div>
-                    <div className="value">{status.totalPartnerCats || 0}</div>
-                  </StatBox>
-                  <StatBox>
-                    <div className="label">In Kelsey's Care</div>
-                    <div className="value">{status.catsInKelseysCare || 0}</div>
-                  </StatBox>
-                  <StatBox>
-                    <div className="label">Last Scrape</div>
-                    <div className="value" style={{ fontSize: '14px' }}>
-                      {status.lastScrapeTime || 'Never'}
-                    </div>
-                  </StatBox>
-                  <StatBox>
-                    <div className="label">Status</div>
-                    <div className="value">
-                      <Badge status={loading ? 'running' : 'idle'}>
-                        {loading ? 'Running' : 'Idle'}
-                      </Badge>
-                    </div>
-                  </StatBox>
-                </StatusGrid>
-              </StatusCard>
-            )}
+        {lastResult && (
+          <Panel aria-labelledby="scraper-results-title">
+            <PanelTitle id="scraper-results-title">Last results</PanelTitle>
+            <StatusGrid>
+              <Stat><div className="label">Added</div><div className="value">{result?.added || 0}</div></Stat>
+              <Stat><div className="label">Updated</div><div className="value">{result?.updated || 0}</div></Stat>
+              <Stat><div className="label">Skipped</div><div className="value">{result?.skipped || 0}</div></Stat>
+              <Stat><div className="label">Cleaned up</div><div className="value">{lastResult.cleanup?.deleted || lastResult.data?.cleanup?.deleted || 0}</div></Stat>
+            </StatusGrid>
+          </Panel>
+        )}
 
-            {/* Last Result */}
-            {lastResult && (
-              <StatusCard>
-                <Title>📈 Last Scrape Results</Title>
-                <StatusGrid>
-                  <StatBox>
-                    <div className="label">Added</div>
-                    <div className="value" style={{ color: '#059669' }}>
-                      {lastResult.scrape?.added || lastResult.data?.scrape?.added || lastResult.added || 0}
-                    </div>
-                  </StatBox>
-                  <StatBox>
-                    <div className="label">Updated</div>
-                    <div className="value" style={{ color: '#0284c7' }}>
-                      {lastResult.scrape?.updated || lastResult.data?.scrape?.updated || lastResult.updated || 0}
-                    </div>
-                  </StatBox>
-                  <StatBox>
-                    <div className="label">Skipped</div>
-                    <div className="value" style={{ color: '#6b7280' }}>
-                      {lastResult.scrape?.skipped || lastResult.data?.scrape?.skipped || lastResult.skipped || 0}
-                    </div>
-                  </StatBox>
-                  {(lastResult.cleanup || lastResult.data?.cleanup) && (
-                    <StatBox>
-                      <div className="label">Cleaned Up</div>
-                      <div className="value" style={{ color: '#dc2626' }}>
-                        {lastResult.cleanup?.deleted || lastResult.data?.cleanup?.deleted || 0}
-                      </div>
-                    </StatBox>
-                  )}
-                </StatusGrid>
-              </StatusCard>
-            )}
+        {logs.length > 0 && (
+          <Panel aria-labelledby="scraper-logs-title">
+            <PanelTitle id="scraper-logs-title">Operation log</PanelTitle>
+            <LogContainer ref={logContainerRef} role="log" aria-live="polite">
+              {logs.map((log, index) => <div key={index} className={`log-line ${log.type}`}>{log.message}</div>)}
+              {loading && <div className="log-line info">Processing…</div>}
+            </LogContainer>
+          </Panel>
+        )}
 
-            {/* Logs */}
-            {logs.length > 0 && (
-              <StatusCard>
-                <Title>📋 Operation Logs</Title>
-                <LogContainer ref={logContainerRef}>
-                  {logs.map((log, index) => (
-                    <div 
-                      key={index} 
-                      className={`log-line ${log.type}`}
-                    >
-                      {log.message}
-                    </div>
-                  ))}
-                  {loading && (
-                    <div className="log-line info">
-                      <span>⏳ Processing... (check backend console for live details)</span>
-                    </div>
-                  )}
-                </LogContainer>
-              </StatusCard>
-            )}
-        </PageContainer>
+        <Panel>
+          <Details>
+            <summary>How the scraper works</summary>
+            <p><strong>Full Scrape:</strong> imports all VFV cats and removes entries not updated for 7+ days.</p>
+            <p><strong>Scrape Only:</strong> fetches and updates cat data without cleanup.</p>
+            <p><strong>Cleanup Only:</strong> removes partner foster cats not updated in 7+ days.</p>
+            <p><strong>Schedule:</strong> automatic scraping runs daily at 3:00 AM EST.</p>
+          </Details>
+        </Panel>
       </Container>
     </PageShell>
   );
