@@ -12,14 +12,14 @@ import {
 import SectionHero from '../components/Common/SectionHero.jsx';
 
 const InfoCard = styled(Card)`
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  margin-bottom: ${({ theme }) => theme.spacing[5]};
   border-left: 4px solid ${({ theme }) => theme.colors.primary};
 `;
 
 const CardTitle = styled.h3`
   font-size: ${({ theme }) => theme.fontSizes['2xl']};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
+  margin-bottom: ${({ theme }) => theme.spacing[3]};
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
@@ -61,7 +61,7 @@ const StepNumber = styled.div`
 const StepItem = styled.div`
   display: flex;
   align-items: flex-start;
-  margin-bottom: ${({ theme }) => theme.spacing[6]};
+  margin-bottom: ${({ theme }) => theme.spacing[5]};
 
   &:last-child {
     margin-bottom: 0;
@@ -146,7 +146,7 @@ const ResourceItem = styled.li`
 
 const CTASection = styled.div`
   text-align: center;
-  padding: ${({ theme }) => theme.spacing[12]} 0;
+  padding: ${({ theme }) => theme.spacing[8]} 0 ${({ theme }) => theme.spacing[4]};
 `;
 
 export default function AdoptionPage() {
@@ -166,10 +166,10 @@ export default function AdoptionPage() {
       />
 
       {/* Main Content */}
-      <Section $padding="lg">
+      <Section $padding="md">
         <Container $size="md">
           {/* Important Notice - Link inherits dark blue color from Alert component */}
-          <Alert $variant="info" style={{ marginBottom: '3rem' }}>
+          <Alert $variant="info" style={{ marginBottom: '2rem' }}>
             <strong>Ready to adopt?</strong> Contact us at{' '}
             <a href="mailto:kelsey@example.org">
               kelsey@example.org
@@ -179,7 +179,7 @@ export default function AdoptionPage() {
 
           {/* Adoption Process */}
           <InfoCard>
-            <CardBody $padding={8}>
+            <CardBody $padding={6}>
               <CardTitle>Adoption Process</CardTitle>
               <div>
                 <StepItem>
@@ -242,7 +242,7 @@ export default function AdoptionPage() {
 
           {/* Requirements */}
           <InfoCard>
-            <CardBody $padding={8}>
+            <CardBody $padding={6}>
               <CardTitle>Adoption Requirements</CardTitle>
               <InfoText>
                 To ensure the best outcomes for our cats, we have a few basic requirements for potential adopters:
@@ -269,7 +269,7 @@ export default function AdoptionPage() {
 
           {/* External Resources */}
           <InfoCard>
-            <CardBody $padding={8}>
+            <CardBody $padding={6}>
               <CardTitle>Additional Resources</CardTitle>
               <InfoText>
                 Explore these trusted resources for more information about cat adoption and care:
