@@ -3,6 +3,17 @@
 
 export const theme = {
   colors: {
+    // Public site concept; kept separate from existing admin-facing tokens.
+    publicSite: {
+      pine: '#214d42',
+      pineDeep: '#173b33',
+      seafoam: '#d9eee4',
+      seafoamLight: '#edf6ef',
+      paper: '#faf9f4',
+      ink: '#233a33',
+      muted: '#52645d',
+      line: '#d2dfd5',
+    },
     // Brand colors — warmed from cold teal to rich terracotta-tinged teal
     primary: '#2a9d8f',
     primaryHover: '#21867a',
