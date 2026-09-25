@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 
 const Nav = styled.nav`
-  background-color: ${({ theme, $scrolled, $opaque }) =>
-    $opaque || $scrolled ? theme.colors.secondary : 'transparent'};
-  padding: ${({ theme, $scrolled, $opaque }) =>
-    $opaque || $scrolled ? `${theme.spacing[3]} 0` : `${theme.spacing[5]} 0`};
+  background-color: ${({ theme }) => theme.colors.publicSite.pine};
+  padding: ${({ theme }) => `${theme.spacing[3]} 0`};
   position: sticky;
   top: 0;
   z-index: ${({ theme }) => theme.zIndex.sticky};
@@ -14,8 +12,8 @@ const Nav = styled.nav`
     background-color ${({ theme }) => theme.transitions.slow},
     padding ${({ theme }) => theme.transitions.slow},
     box-shadow ${({ theme }) => theme.transitions.slow};
-  box-shadow: ${({ theme, $scrolled, $opaque }) =>
-    $opaque || $scrolled ? theme.shadows.md : 'none'};
+  box-shadow: ${({ theme, $scrolled }) =>
+    $scrolled ? theme.shadows.md : 'none'};
 `;
 
 const NavContainer = styled.div`
@@ -77,7 +75,7 @@ const NavLink = styled(Link)`
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   letter-spacing: 0.02em;
   color: ${({ $isActive, theme }) =>
-    $isActive ? theme.colors.primaryLight : 'rgba(255,255,255,0.85)'};
+    $isActive ? theme.colors.publicSite.seafoam : 'rgba(255,255,255,0.9)'};
   text-decoration: none;
   padding: ${({ theme }) => `${theme.spacing[2]} ${theme.spacing[3]}`};
   border-radius: ${({ theme }) => theme.borderRadius.base};
@@ -93,7 +91,7 @@ const NavLink = styled(Link)`
     left: ${({ theme }) => theme.spacing[3]};
     right: ${({ theme }) => theme.spacing[3]};
     height: 2px;
-    background: ${({ theme }) => theme.colors.primaryLight};
+    background: ${({ theme }) => theme.colors.publicSite.seafoam};
     border-radius: 2px;
     transform: scaleX(${({ $isActive }) => ($isActive ? 1 : 0)});
     transition: transform ${({ theme }) => theme.transitions.base};
@@ -115,8 +113,8 @@ const AdoptBtn = styled(Link)`
   font-family: ${({ theme }) => theme.fonts.body};
   font-size: ${({ theme }) => theme.fontSizes.sm};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
-  background-color: ${({ theme }) => theme.colors.accent};
-  color: ${({ theme }) => theme.colors.white};
+  background-color: ${({ theme }) => theme.colors.publicSite.seafoam};
+  color: ${({ theme }) => theme.colors.publicSite.pineDeep};
   padding: ${({ theme }) => `${theme.spacing[2]} ${theme.spacing[5]}`};
   border-radius: ${({ theme }) => theme.borderRadius.full};
   text-decoration: none;
@@ -130,11 +128,11 @@ const AdoptBtn = styled(Link)`
   line-height: 1;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.accentHover};
+    background-color: white;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(231, 111, 81, 0.4);
+    box-shadow: 0 4px 12px rgba(10, 54, 39, 0.15);
     text-decoration: none;
-    color: ${({ theme }) => theme.colors.white};
+    color: ${({ theme }) => theme.colors.publicSite.pineDeep};
   }
 
   &:active {
@@ -201,7 +199,7 @@ const HamLine = styled.span`
 `;
 
 const MobileMenu = styled.div`
-  background: ${({ theme }) => theme.colors.secondary};
+  background: ${({ theme }) => theme.colors.publicSite.pine};
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   position: sticky;
   top: 0;
@@ -227,7 +225,7 @@ const MobileNavLink = styled(Link)`
   font-size: ${({ theme }) => theme.fontSizes.base};
   font-weight: ${({ theme }) => theme.fontWeights.semibold};
   color: ${({ $isActive, theme }) =>
-    $isActive ? theme.colors.primaryLight : 'rgba(255,255,255,0.85)'};
+    $isActive ? theme.colors.publicSite.seafoam : 'rgba(255,255,255,0.9)'};
   text-decoration: none;
   padding: ${({ theme }) => `${theme.spacing[3]} ${theme.spacing[2]}`};
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -256,16 +254,16 @@ const MobileAdoptBtn = styled(Link)`
   font-family: ${({ theme }) => theme.fonts.body};
   font-size: ${({ theme }) => theme.fontSizes.base};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
-  background: ${({ theme }) => theme.colors.accent};
-  color: white;
+  background: ${({ theme }) => theme.colors.publicSite.seafoam};
+  color: ${({ theme }) => theme.colors.publicSite.pineDeep};
   padding: ${({ theme }) => theme.spacing[3]};
   border-radius: ${({ theme }) => theme.borderRadius.full};
   text-decoration: none;
   transition: background-color ${({ theme }) => theme.transitions.fast};
 
   &:hover {
-    background: ${({ theme }) => theme.colors.accentHover};
-    color: white;
+    background: white;
+    color: ${({ theme }) => theme.colors.publicSite.pineDeep};
     text-decoration: none;
   }
 `;
@@ -275,8 +273,6 @@ export default function PublicNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuButtonRef = useRef(null);
-
-  const isHome = location.pathname === '/';
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -314,7 +310,6 @@ export default function PublicNavbar() {
     <>
       <Nav
         $scrolled={scrolled || mobileOpen}
-        $opaque={!isHome}
         role="navigation"
         aria-label="Main navigation"
       >
